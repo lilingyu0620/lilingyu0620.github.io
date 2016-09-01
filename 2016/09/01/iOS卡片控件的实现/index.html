@@ -84,15 +84,27 @@
 
 
 
-<meta name="description" content="耿直的一Boy">
-<meta property="og:type" content="website">
-<meta property="og:title" content="lly's Blog">
-<meta property="og:url" content="http://yoursite.com/archives/2016/index.html">
+<meta name="description" content="###需求
+最近公司给了个需求，实现上面卡片效果，这种控件网上也有现成的demo，但有些地方还是要自己研究下才能满足使用，下面记录一下我的研究成果。
+1.使用UICollectionView控件。
+如果这是单纯的轮播图片，使用UIScrollView就可以满足需要，但是上面的效果有缩放还有渐变，用UIScrollView的话代码量大，实现比较复杂，而且数据处理起来也没有用UICollectionV">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iOS卡片控件的实现">
+<meta property="og:url" content="http://yoursite.com/2016/09/01/iOS卡片控件的实现/index.html">
 <meta property="og:site_name" content="lly's Blog">
-<meta property="og:description" content="耿直的一Boy">
+<meta property="og:description" content="###需求
+最近公司给了个需求，实现上面卡片效果，这种控件网上也有现成的demo，但有些地方还是要自己研究下才能满足使用，下面记录一下我的研究成果。
+1.使用UICollectionView控件。
+如果这是单纯的轮播图片，使用UIScrollView就可以满足需要，但是上面的效果有缩放还有渐变，用UIScrollView的话代码量大，实现比较复杂，而且数据处理起来也没有用UICollectionV">
+<meta property="og:image" content="http://ww3.sinaimg.cn/large/763206fdjw1f7e20ldzxeg20pw0f87jh.gif">
+<meta property="og:updated_time" content="2016-09-01T06:44:59.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="lly's Blog">
-<meta name="twitter:description" content="耿直的一Boy">
+<meta name="twitter:title" content="iOS卡片控件的实现">
+<meta name="twitter:description" content="###需求
+最近公司给了个需求，实现上面卡片效果，这种控件网上也有现成的demo，但有些地方还是要自己研究下才能满足使用，下面记录一下我的研究成果。
+1.使用UICollectionView控件。
+如果这是单纯的轮播图片，使用UIScrollView就可以满足需要，但是上面的效果有缩放还有渐变，用UIScrollView的话代码量大，实现比较复杂，而且数据处理起来也没有用UICollectionV">
+<meta name="twitter:image" content="http://ww3.sinaimg.cn/large/763206fdjw1f7e20ldzxeg20pw0f87jh.gif">
 
 
 
@@ -113,9 +125,9 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/archives/2016/"/>
+  <link rel="canonical" href="http://yoursite.com/2016/09/01/iOS卡片控件的实现/"/>
 
-  <title> 归档 | lly's Blog </title>
+  <title> iOS卡片控件的实现 | lly's Blog </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -136,7 +148,7 @@
     
   
 
-  <div class="container one-collumn sidebar-position-left  page-archive  ">
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -214,103 +226,129 @@
           <div id="content" class="content">
             
 
-  <section id="posts" class="posts-collapse">
-    <span class="archive-move-on"></span>
-
-    <span class="archive-page-counter">
-      
-      
-      
-        
-      
-      嗯..! 目前共计 2 篇日志。 继续努力。
-    </span>
-
+  <div id="posts" class="posts-expand">
     
-
-      
-      
-      
-
-      
-        
-        <div class="collection-title">
-          <h2 class="archive-year motion-element" id="archive-year-2016">2016</h2>
-        </div>
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2016/09/01/iOS卡片控件的实现/" itemprop="url">
-              
-                <span itemprop="name">iOS卡片控件的实现</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2016-09-01T13:59:01+08:00"
-              content="2016-09-01" >
-          09-01
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
-      
-      
-      
-
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2016/08/30/个人博客的搭建/" itemprop="url">
-              
-                <span itemprop="name">个人博客的搭建</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2016-08-30T14:56:54+08:00"
-              content="2016-08-30" >
-          08-30
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
-  </section>
 
   
+  
 
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                iOS卡片控件的实现
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-09-01T13:59:01+08:00" content="2016-09-01">
+              2016-09-01
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/09/01/iOS卡片控件的实现/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/09/01/iOS卡片控件的实现/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>###需求<br><img src="http://ww3.sinaimg.cn/large/763206fdjw1f7e20ldzxeg20pw0f87jh.gif" alt="CardPageDemo"></p>
+<p>最近公司给了个需求，实现上面卡片效果，这种控件网上也有现成的<a href="http://www.jianshu.com/p/6af5fb818b5d" target="_blank" rel="external">demo</a>，但有些地方还是要自己研究下才能满足使用，下面记录一下我的研究成果。</p>
+<p>1.使用UICollectionView控件。</p>
+<p>如果这是单纯的轮播图片，使用UIScrollView就可以满足需要，但是上面的效果有缩放还有渐变，用UIScrollView的话代码量大，实现比较复杂，而且数据处理起来也没有用UICollectionView方便，这里再放一个用UIScrollView实现的<a href="https://github.com/kejinlu/KKPagedFlowView" target="_blank" rel="external">demo</a>,有需要的可以对比一下。</p>
+<p>2.自定义UICollecionViewFlowLayout类。</p>
+<p>使用过UICollectionView的同学们对这个类应该都不陌生吧，瀑布流布局类，可以通过自定义这个类实现各种瀑布流的效果，我要实现的这个效果当然也是需要自定义这个类了。</p>
+<p>先来看看prepareLayout这个函数的实现吧，这个是布局初始化的时候调用的，可以在这个函数里面自定义每一个cell的大小，cell之前的间距等属性</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/08/30/个人博客的搭建/" rel="next" title="个人博客的搭建">
+                <i class="fa fa-chevron-left"></i> 个人博客的搭建
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
 
 
           </div>
@@ -318,6 +356,14 @@
 
 
           
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/09/01/iOS卡片控件的实现/"
+           data-title="iOS卡片控件的实现" data-url="http://yoursite.com/2016/09/01/iOS卡片控件的实现/">
+      </div>
+    
+  </div>
+
 
         </div>
         
@@ -337,8 +383,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview sidebar-panel  sidebar-panel-active ">
+      <section class="site-overview sidebar-panel ">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/avatar.gif"
@@ -374,6 +429,17 @@
 
       </section>
 
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
       
 
     </div>
@@ -470,11 +536,9 @@
   
 
   
-  
-    <script type="text/javascript" id="motion.page.archive">
-      $('.archive-year').velocity('transition.slideLeftIn');
-    </script>
-  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
 
 
   

@@ -238,6 +238,113 @@
             
               
                 
+                <a class="post-title-link" href="/2016/09/01/iOS卡片控件的实现/" itemprop="url">
+                  iOS卡片控件的实现
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-09-01T13:59:01+08:00" content="2016-09-01">
+              2016-09-01
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/09/01/iOS卡片控件的实现/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/09/01/iOS卡片控件的实现/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>###需求<br><img src="http://ww3.sinaimg.cn/large/763206fdjw1f7e20ldzxeg20pw0f87jh.gif" alt="CardPageDemo"></p>
+<p>最近公司给了个需求，实现上面卡片效果，这种控件网上也有现成的<a href="http://www.jianshu.com/p/6af5fb818b5d" target="_blank" rel="external">demo</a>，但有些地方还是要自己研究下才能满足使用，下面记录一下我的研究成果。</p>
+<p>1.使用UICollectionView控件。</p>
+<p>如果这是单纯的轮播图片，使用UIScrollView就可以满足需要，但是上面的效果有缩放还有渐变，用UIScrollView的话代码量大，实现比较复杂，而且数据处理起来也没有用UICollectionView方便，这里再放一个用UIScrollView实现的<a href="https://github.com/kejinlu/KKPagedFlowView" target="_blank" rel="external">demo</a>,有需要的可以对比一下。</p>
+<p>2.自定义UICollecionViewFlowLayout类。</p>
+<p>使用过UICollectionView的同学们对这个类应该都不陌生吧，瀑布流布局类，可以通过自定义这个类实现各种瀑布流的效果，我要实现的这个效果当然也是需要自定义这个类了。</p>
+<p>先来看看prepareLayout这个函数的实现吧，这个是布局初始化的时候调用的，可以在这个函数里面自定义每一个cell的大小，cell之前的间距等属性</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/08/30/个人博客的搭建/" itemprop="url">
                   个人博客的搭建
                 </a>
@@ -364,7 +471,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">1</span>
+              <span class="site-state-item-count">2</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
