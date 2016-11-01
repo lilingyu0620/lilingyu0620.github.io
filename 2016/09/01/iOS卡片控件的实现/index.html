@@ -100,7 +100,8 @@
 <meta property="og:image" content="http://ww1.sinaimg.cn/large/763206fdjw1f7e3nzupk6j20pp0gwt9k.jpg">
 <meta property="og:image" content="http://ww2.sinaimg.cn/large/763206fdjw1f7nbwdjtqyj20pw0glwfe.jpg">
 <meta property="og:image" content="http://ww3.sinaimg.cn/large/763206fdjw1f7ndvj1t0xg20hw0doazp.gif">
-<meta property="og:updated_time" content="2016-09-09T07:53:15.000Z">
+<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/%E8%BD%AE%E6%92%AD.gif">
+<meta property="og:updated_time" content="2016-11-01T03:19:10.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="iOS卡片控件的实现">
 <meta name="twitter:description" content="###需求
@@ -319,6 +320,7 @@
 <p>1.应该让 前后cell超出显示在屏幕上的宽度（图中的width）固定 即上面说的第二种情况，且width的大小不宜过大。</p>
 <p>2.cell的背景色和UICollectionView的背景色色差不宜过大。</p>
 <hr>
+<p>###轮播补充<br>上面这种实现方式在处理最后一张到第一张的衔接的时候效果不太好，最近研究了下，比较好的实现方式是放多个section，初始化的时候手动滚动到中间section，每个section内容相同，这样在滑动的时候就不会出现上面跳一下的问题。这里要注意的就是处理好每个section之间的间距问题，具体参考我的demo。<br>新demo的效果如下：<br><img src="http://ofy1hyquv.bkt.clouddn.com/%E8%BD%AE%E6%92%AD.gif" alt="轮播"></p>
 <p><a href="https://github.com/lilingyu0620/PageCardDemo" target="_blank" rel="external">这里是我的demo，请下载</a>。</p>
 
       
