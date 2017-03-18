@@ -94,7 +94,10 @@
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/200504-03-04.gif">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/200504-03-05.gif">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/200504-03-06.gif">
-<meta property="og:updated_time" content="2017-03-16T15:24:06.000Z">
+<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/200504-03-07.gif">
+<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/200504-03-08.gif">
+<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/200504-03-09.gif">
+<meta property="og:updated_time" content="2017-03-18T04:49:33.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="H.264文件结构学习笔记">
 <meta name="twitter:description" content="简介相关研究显示 H.264/AVC 与 MPEG-2 及 MPEG-4 相较之下，无论是压缩率或视讯质量皆有大幅的提升，而且H.264/AVC也首次将 视讯编码层(Video Coding Layer，VCL)与网络提取层(Network Abstraction Layer，NAL)的概念涵盖进来，以往视讯标准着重的是压缩效能部分，而H.264/AVC包含一个内建的NAL网络协议适应层，即由NA">
@@ -325,8 +328,13 @@
 <p>第一层是多个序列帧（多个GOP）。</p>
 <p>第二层是每个序列帧中具体的IPB帧。</p>
 <p>第三层是每一帧具体的数据（NALU）。</p>
-<h3 id="NALU"><a href="#NALU" class="headerlink" title="NALU"></a>NALU</h3><p>NALU类型 </p>
-<p>标识NAL单元中的RBSP数据类型，其中，nal_unit_type为1， 2， 3， 4， 5及12的NAL单元称为VCL的NAL单元，其他类型的NAL单元为非VCL的NAL单元。 </p>
+<h3 id="NALU"><a href="#NALU" class="headerlink" title="NALU"></a>NALU</h3><h4 id="NAL单元格式："><a href="#NAL单元格式：" class="headerlink" title="NAL单元格式："></a>NAL单元格式：</h4><p>NAL头 + RBSP</p>
+<p>RBSP：封装于网络抽象单元的数据称之为原始字节序列载荷RBSP，它是NAL的基本传输单元。其中，RBSP又分为视频编码数据和控制数据。其基本结构是：在原始编码数据的后面填加了结尾比特。一个bit“1”若干比特“0”，以便字节对齐。</p>
+<p>RBSP的类型： </p>
+<p>RBSP 类型之一 PS: 包括序列参数集 SPS  和 图像参数集 PPS </p>
+<p>SPS：包含的是针对一连续编码视频序列的参数，如标识符 seq_parameter_set_id、帧数及 POC 的约束、参考帧数目、解码图像尺寸和帧场编码模式选择标识等等。 </p>
+<p>PPS：对应的是一个序列中某一幅图像或者某几幅图像，其参数如标识符 pic_parameter_set_id、可选的 seq_parameter_set_id、熵编码模式选择标识、片组数目、初始量化参数和去方块滤波系数调整标识等等。 </p>
+<h4 id="NALU类型"><a href="#NALU类型" class="headerlink" title="NALU类型"></a>NALU类型</h4><p>标识NAL单元中的RBSP数据类型，其中，nal_unit_type为1， 2， 3， 4， 5及12的NAL单元称为VCL的NAL单元，其他类型的NAL单元为非VCL的NAL单元。 </p>
 <p>0：未规定 </p>
 <p>1：非IDR图像中不采用数据划分的片段 </p>
 <p>2：非IDR图像中A类数据划分片段 </p>
@@ -354,6 +362,12 @@
 <p><img src="http://ofy1hyquv.bkt.clouddn.com/200504-03-05.gif" alt=""></p>
 <p>SI-slice</p>
 <p><img src="http://ofy1hyquv.bkt.clouddn.com/200504-03-06.gif" alt=""></p>
+<h4 id="画面内预测技术-Intra-frame-Prediction-帧内压缩"><a href="#画面内预测技术-Intra-frame-Prediction-帧内压缩" class="headerlink" title="画面内预测技术(Intra-frame Prediction)-帧内压缩"></a>画面内预测技术(Intra-frame Prediction)-帧内压缩</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/200504-03-07.gif" alt=""></p>
+<p>以往的压缩标准在进行intra-prediction时，多半只是将转换系数做差值编码，而H.264/AVC在空间领域(spatial domain)来进行像点之间的预测，而不是用转换过的系数，它提供两种intra-prediction的型式：intra_4x4及intra_16x16，所谓的intra_4x4是以Luma 4x4 sub-block为单位，找出它的参考对象(predictor)后，再将其与参考对象相减后所产生的差余影像(residual)送入转换算法，而寻找参考对象的模式共有9种预测的方向(上图)，以mode 0 (vertical)为例，{a,e,i,m}、{b,f,j,n}、{c,g,k,o}、{d,h,l,p}的参考对象分别为A、B、C、D；Luma intra_16x16与Chroma的模式跟Luma intra_4x4类似</p>
+<h4 id="画面间预测技术-Inter-frame-Prediction-帧间压缩"><a href="#画面间预测技术-Inter-frame-Prediction-帧间压缩" class="headerlink" title="画面间预测技术(Inter-frame Prediction)-帧间压缩"></a>画面间预测技术(Inter-frame Prediction)-帧间压缩</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/200504-03-08.gif" alt=""></p>
+<p>至于横跨每张画面之间的预测技术，H.264/AVC提供了更丰富的编码模式，计有下述几种区块分割(partition)的方法：16x16、16x8、8x16、8x8、8x4、4x8、4x4，多样的分割方式可以让移动向量的预测更准确，如上图所示，画面中有些移动的区域并不是正方形，使用长方形或较小的4x4分割来做预测的区域，可以大幅降低差余影像的数值来增加了压缩比，但也因此P-slice中的MB最多可有16个移动向量(motion vector)，而B-slice中的MB最多可拥有32个移动向量，虽然这些会增加移动向量档头(header)的容量，但整体来说对压缩比仍有正面的益处。</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/200504-03-09.gif" alt=""></p>
+<p>以往的压缩标准所使用的动态估测(motion estimation)，只有使用前一张图像来作为预测的对象，H.264/AVC提供了多重参考图像(multiple reference frames)的概念，使得移动向量不再只限于前后相邻的影像，而是可以跨过多张影像，如上图所示，在时间点t的图块，可以使用t-1到t-2图像中的图块来作为预测的对象，当影片有周期重复性的内容时，例如：背景影像周期性的出现或被遮盖、对象有来回跳动的行为、形状忽大忽小，或是摄影机在拍摄时，因为有多处的取景点，并且摄影画面在取景点之间来回移动，这种情形在球类比赛转播时常出现，这些状况都能得到较好的动态预测结果，因而提高了压缩的效能。</p>
 
       
     </div>
@@ -489,7 +503,7 @@
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#简介"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#编码核心思想"><span class="nav-number">2.</span> <span class="nav-text">编码核心思想</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#关于序列的说明"><span class="nav-number">3.</span> <span class="nav-text">关于序列的说明</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IPB帧"><span class="nav-number">4.</span> <span class="nav-text">IPB帧</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#I帧"><span class="nav-number">4.1.</span> <span class="nav-text">I帧</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#P帧"><span class="nav-number">4.2.</span> <span class="nav-text">P帧</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#B帧"><span class="nav-number">4.3.</span> <span class="nav-text">B帧</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#压缩方法"><span class="nav-number">5.</span> <span class="nav-text">压缩方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#网络提取层（NAL）"><span class="nav-number">6.</span> <span class="nav-text">网络提取层（NAL）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NALU"><span class="nav-number">7.</span> <span class="nav-text">NALU</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#视讯编码层-VCL"><span class="nav-number">8.</span> <span class="nav-text">视讯编码层(VCL)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#H-264-AVC影像格式阶层架构"><span class="nav-number">8.1.</span> <span class="nav-text">H.264/AVC影像格式阶层架构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Slice的编码模式-IPB帧"><span class="nav-number">8.2.</span> <span class="nav-text">Slice的编码模式(IPB帧)</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#简介"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#编码核心思想"><span class="nav-number">2.</span> <span class="nav-text">编码核心思想</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#关于序列的说明"><span class="nav-number">3.</span> <span class="nav-text">关于序列的说明</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IPB帧"><span class="nav-number">4.</span> <span class="nav-text">IPB帧</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#I帧"><span class="nav-number">4.1.</span> <span class="nav-text">I帧</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#P帧"><span class="nav-number">4.2.</span> <span class="nav-text">P帧</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#B帧"><span class="nav-number">4.3.</span> <span class="nav-text">B帧</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#压缩方法"><span class="nav-number">5.</span> <span class="nav-text">压缩方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#网络提取层（NAL）"><span class="nav-number">6.</span> <span class="nav-text">网络提取层（NAL）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NALU"><span class="nav-number">7.</span> <span class="nav-text">NALU</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#NAL单元格式："><span class="nav-number">7.1.</span> <span class="nav-text">NAL单元格式：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#NALU类型"><span class="nav-number">7.2.</span> <span class="nav-text">NALU类型</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#视讯编码层-VCL"><span class="nav-number">8.</span> <span class="nav-text">视讯编码层(VCL)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#H-264-AVC影像格式阶层架构"><span class="nav-number">8.1.</span> <span class="nav-text">H.264/AVC影像格式阶层架构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Slice的编码模式-IPB帧"><span class="nav-number">8.2.</span> <span class="nav-text">Slice的编码模式(IPB帧)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#画面内预测技术-Intra-frame-Prediction-帧内压缩"><span class="nav-number">8.3.</span> <span class="nav-text">画面内预测技术(Intra-frame Prediction)-帧内压缩</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#画面间预测技术-Inter-frame-Prediction-帧间压缩"><span class="nav-number">8.4.</span> <span class="nav-text">画面间预测技术(Inter-frame Prediction)-帧间压缩</span></a></li></ol></li></ol></div>
             
           </div>
         </section>
