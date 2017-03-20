@@ -228,6 +228,133 @@
             
               
                 
+                <a class="post-title-link" href="/2017/03/20/RTMP协议学习笔记/" itemprop="url">
+                  RTMP协议学习笔记
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-03-20T17:58:21+08:00" content="2017-03-20">
+              2017-03-20
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/03/20/RTMP协议学习笔记/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/03/20/RTMP协议学习笔记/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>RTMP协议是Real Time Message Protocol(实时信息传输协议)的缩写，它是由Adobe公司提出的一种应用层的协议，用来解决多媒体数据传输流的多路复用（Multiplexing）和分包（packetizing）的问题。随着VR技术的发展，视频直播等领域逐渐活跃起来，RTMP作为业内广泛使用的协议也重新被相关开发者重视起来。</p>
+<h3 id="rtmp协议简介"><a href="#rtmp协议简介" class="headerlink" title="rtmp协议简介"></a>rtmp协议简介</h3><p>RTMP协议是应用层协议，是要靠底层可靠的传输层协议（通常是TCP）来保证信息传输的可靠性的。在基于传输层协议的链接建立完成后，RTMP协议也要客户端和服务器通过“握手”来建立基于传输层链接之上的RTMP Connection链接，在Connection链接上会传输一些控制信息，如SetChunkSize,SetACKWindowSize。其中CreateStream命令会创建一个Stream链接，用于传输具体的音视频数据和控制这些信息传输的命令信息。RTMP协议传输时会对数据做自己的格式化，这种格式的消息我们称之为RTMP Message，而实际传输的时候为了更好地实现多路复用、分包和信息的公平性，发送端会把Message划分为带有Message ID的Chunk，每个Chunk可能是一个单独的Message，也可能是Message的一部分，在接受端会根据chunk中包含的data的长度，message id和message的长度把chunk还原成完整的Message，从而实现信息的收发。</p>
+<h3 id="建立rtmp连接-三次握手"><a href="#建立rtmp连接-三次握手" class="headerlink" title="建立rtmp连接(三次握手)"></a>建立rtmp连接(三次握手)</h3><p>一个RTMP连接以握手开始。这里的握手和其他协议的握手不一样。这里的握手由三个固定大小的块组成，而不是可变大小的块加上头。</p>
+<p>客户端（发起连接的一方）和服务端各自发送三个相同的块。这些块如果是客户端发送的话记为C0，C1和C2，如果是服务端发送的话记为S0，S1和S2。</p>
+<h4 id="握手队列"><a href="#握手队列" class="headerlink" title="握手队列"></a>握手队列</h4><p>握手开始于客户端发送C0，C1块。</p>
+<p>在发送C2之前客户端必须等待接收S1 。</p>
+<p>在发送任何数据之前客户端必须等待接收S2。</p>
+<p>服务端在发送S0和S1之前必须等待接收C0，也可以等待接收C1。</p>
+<p>服务端在发送S2之前必须等待接收C1。</p>
+<p>服务端在发送任何数据之前必须等待接收C2。</p>
+<h4 id="C0-S0-消息格式"><a href="#C0-S0-消息格式" class="headerlink" title="C0/S0 消息格式"></a>C0/S0 消息格式</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/c0s0.png" alt=""></p>
+<p>C0 和 S0是单独的一个字节，表示当前选择的RTMP版本</p>
+<p>我现在看的资料当前rtmp版本是3。0-2是早期产品所用的，已被丢弃；4-31保留在未来使用 ；32-255不允许使用 （为了区分其他以某一字符开始的文本协议）。如果服务无法识别客户端请求的版本，应该返回3 。客户端可以选择减到版本3或选择取消握手。</p>
+<h4 id="C1-S1-消息格式"><a href="#C1-S1-消息格式" class="headerlink" title="C1/S1 消息格式"></a>C1/S1 消息格式</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/c1s1.png" alt=""></p>
+<p>C1和S1消息有1536字节长，由上面字段组成</p>
+<p>时间：4字节,本字段包含时间戳。该时间戳应该是发送这个数据块的端点的后续块的时间起始点。可以是0，或其他的任何值。为了同步多个流，端点可能发送其块流的当前值。</p>
+<p>零：4字节,本字段必须是全零。</p>
+<p>随机数据：1528字节,本字段可以包含任何值。因为每个端点必须用自己初始化的握手和对端初始化的握手来区分身份，所以这个数据应有充分的随机性。但是并不需要加密安全的随机值，或者动态值。</p>
+<h4 id="C2-S2-消息格式"><a href="#C2-S2-消息格式" class="headerlink" title="C2/S2 消息格式"></a>C2/S2 消息格式</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/c2s2.png" alt=""></p>
+<p>C2和S2消息有1536字节长。是S1和C1的回复。本消息由以上字段组成。</p>
+<p>时间：4字节，本字段必须包含对等段发送的时间（对C2来说是S1，对S2来说是C1）。</p>
+<p>时间2：4字节，本字段必须包含先前发送的并被对端读取的包的时间戳。</p>
+<p>随机回复：1528字节，本字段必须包含对端发送的随机数据字段（对C2来说是S1，对S2来说是C1）。</p>
+<p>每个对等端可以用时间和时间2字段中的时间戳来快速地估计带宽和延迟。但这样做可能并不实用。</p>
+<h4 id="握手示意图"><a href="#握手示意图" class="headerlink" title="握手示意图"></a>握手示意图</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/woshouliucheng.png" alt=""></p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/liuchengbiao.png" alt=""></p>
+<p>流程和状态的对应表</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2017/03/16/H-264文件结构学习笔记/" itemprop="url">
                   H.264文件结构学习笔记
                 </a>
@@ -1494,115 +1621,13 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/08/30/个人博客的搭建/" itemprop="url">
-                  个人博客的搭建
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-08-30T14:56:54+08:00" content="2016-08-30">
-              2016-08-30
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2016/08/30/个人博客的搭建/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/08/30/个人博客的搭建/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>如何搭建一个自己的博客呢？<br>看<a href="http://dukecuichen.com/2016/04/08/基于Hexo框架-GitHub-Pages搭建个人博客/" target="_blank" rel="external">这一篇文章</a>就够了。</p>
-<p>##补充：</p>
-<p>1.安装Node.js的时候出现问题,直接从官网下载的安装包安装后没用，这个时候可以选择通过命令行来安装，参考<a href="https://hexo.io/docs/" target="_blank" rel="external">这篇文章</a>,通过命令行安装的时候还是会有问题，目录不存在的问题，解决方法在<a href="http://stackoverflow.com/questions/16904658/node-version-manager-install-nvm-command-not-found" target="_blank" rel="external">这里</a> 。</p>
-<p>  2.配置SSH-Key的一般步骤很简单，网上有很多教程，随手搬<a href="http://blog.csdn.net/hustpzb/article/details/8230454/" target="_blank" rel="external">这篇</a>过来,这是配置一个账号的，如果你同时拥有多个账号（比如公司一个账号，自己还有一个账号），可以参考<a href="http://www.jianshu.com/p/f7f4142a1556" target="_blank" rel="external">这一篇文章</a>。</p>
-<p>  3.使用过程中可能对markdown语法不太熟悉的小伙伴，可以看看<a href="http://www.jianshu.com/p/1e402922ee32/" target="_blank" rel="external">这一篇文章</a>.</p>
-<p>  以上是我在搭建自己的个人博客时遇到的问题，做一下记录，方便后来者。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
+  <nav class="pagination">
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
+  </nav>
+
 
 
           </div>
@@ -1641,7 +1666,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">10</span>
+              <span class="site-state-item-count">11</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
