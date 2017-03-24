@@ -108,7 +108,14 @@ rtmp协议简介RTMP协议是应用层协议，是要靠">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/sample-chunk1-result.png">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/sample-chunk2.png">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/sample-chunk2-result.png">
-<meta property="og:updated_time" content="2017-03-23T10:11:38.000Z">
+<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/set-chunksize.png">
+<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/abort%EF%BC%8Dmessage.png">
+<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/ACK-message.png">
+<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/ACK-windowsize.png">
+<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/Peer-Bandwidth.png">
+<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/publish-flow.png">
+<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/play-flow.png">
+<meta property="og:updated_time" content="2017-03-24T09:53:11.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="RTMP协议学习笔记">
 <meta name="twitter:description" content="前言RTMP协议是Real Time Message Protocol(实时信息传输协议)的缩写，它是由Adobe公司提出的一种应用层的协议，用来解决多媒体数据传输流的多路复用（Multiplexing）和分包（packetizing）的问题。随着VR技术的发展，视频直播等领域逐渐活跃起来，RTMP作为业内广泛使用的协议也重新被相关开发者重视起来。
@@ -364,6 +371,84 @@ rtmp协议简介RTMP协议是应用层协议，是要靠">
 <p>第三个chunk要发送的Data的长度为307-128-128=51个字节，还是采用Type＝3，共占用1+51＝52个字节。</p>
 <p>最后实际发送的chunk如下：</p>
 <p><img src="http://ofy1hyquv.bkt.clouddn.com/sample-chunk2-result.png" alt=""></p>
+<h3 id="协议控制消息（Protocol-Control-Message）"><a href="#协议控制消息（Protocol-Control-Message）" class="headerlink" title="协议控制消息（Protocol Control Message）"></a>协议控制消息（Protocol Control Message）</h3><p>在RTMP的chunk流会用一些特殊的值来代表协议的控制消息，它们的Message Stream ID必须为0（代表控制流信息），CSID必须为2，Message Type ID可以为1，2，3，5，6，具体代表的消息会在下面依次说明。控制消息的接受端会忽略掉chunk中的时间戳，收到后立即生效。</p>
+<h4 id="Set-Chunk-Size-Message-Type-ID-1"><a href="#Set-Chunk-Size-Message-Type-ID-1" class="headerlink" title="Set Chunk Size(Message Type ID=1)"></a>Set Chunk Size(Message Type ID=1)</h4><p>设置chunk中Data字段所能承载的最大字节数，默认为128B，通信过程中可以通过发送该消息来设置chunk Size的大小（不得小于128B），而且通信双方会各自维护一个chunkSize，两端的chunkSize是独立的。比如当A想向B发送一个200B的Message，但默认的chunkSize是128B，因此就要将该消息拆分为Data分别为128B和72B的两个chunk发送，如果此时先发送一个设置chunkSize为256B的消息，再发送Data为200B的chunk，本地不再划分Message，B接受到Set Chunk Size的协议控制消息时会调整的接受的chunk的Data的大小，也不用再将两个chunk组成为一个Message。</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/set-chunksize.png" alt=""></p>
+<h4 id="Abort-Message-Message-Type-ID-2"><a href="#Abort-Message-Message-Type-ID-2" class="headerlink" title="Abort Message(Message Type ID=2)"></a>Abort Message(Message Type ID=2)</h4><p>当一个Message被切分为多个chunk，接受端只接收到了部分chunk时，发送该控制消息表示发送端不再传输同Message的chunk，接受端接收到这个消息后要丢弃这些不完整的chunk。Data数据中只需要一个CSID，表示丢弃该CSID的所有已接收到的chunk。</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/abort%EF%BC%8Dmessage.png" alt=""></p>
+<h4 id="Acknowledgement-Message-Type-ID-3"><a href="#Acknowledgement-Message-Type-ID-3" class="headerlink" title="Acknowledgement(Message Type ID=3)"></a>Acknowledgement(Message Type ID=3)</h4><p>当收到对端的消息大小等于窗口大小（Window Size）时接受端要回馈一个ACK给发送端告知对方可以继续发送数据。窗口大小就是指收到接受端返回的ACK前最多可以发送的字节数量，返回的ACK中会带有从发送上一个ACK后接收到的字节数。</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/ACK-message.png" alt=""></p>
+<h4 id="Window-Acknowledgement-Size-Message-Type-ID-5"><a href="#Window-Acknowledgement-Size-Message-Type-ID-5" class="headerlink" title="Window Acknowledgement Size(Message Type ID=5)"></a>Window Acknowledgement Size(Message Type ID=5)</h4><p>发送端在接收到接受端返回的两个ACK间最多可以发送的字节数。</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/ACK-windowsize.png" alt=""></p>
+<h4 id="Set-Peer-Bandwidth-Message-Type-ID-6"><a href="#Set-Peer-Bandwidth-Message-Type-ID-6" class="headerlink" title="Set Peer Bandwidth(Message Type ID=6)"></a>Set Peer Bandwidth(Message Type ID=6)</h4><p>限制对端的输出带宽。接受端接收到该消息后会通过设置消息中的Window ACK Size来限制已发送但未接受到反馈的消息的大小来限制发送端的发送带宽。如果消息中的Window ACK Size与上一次发送给发送端的size不同的话要回馈一个Window Acknowledgement Size的控制消息。</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/Peer-Bandwidth.png" alt=""></p>
+<p>Hard(Limit Type＝0)接受端应该将Window Ack Size设置为消息中的值</p>
+<p>Soft(Limit Type=1)接受端可以将Window Ack Size设为消息中的值，也可以保存原来的值（前提是原来的Size小与该控制消息中的Window Ack Size）</p>
+<p>Dynamic(Limit Type=2)如果上次的Set Peer Bandwidth消息中的Limit Type为0，本次也按Hard处理，否则忽略本消息，不去设置Window Ack Size。</p>
+<h3 id="不同类型的RTMP-Message"><a href="#不同类型的RTMP-Message" class="headerlink" title="不同类型的RTMP Message"></a>不同类型的RTMP Message</h3><h4 id="Command-Message-命令消息，Message-Type-ID＝17或20"><a href="#Command-Message-命令消息，Message-Type-ID＝17或20" class="headerlink" title="Command Message(命令消息，Message Type ID＝17或20)"></a>Command Message(命令消息，Message Type ID＝17或20)</h4><p>表示在客户端和服务器间传递的在对端执行某些操作的命令消息。如<br>connect表示连接对端，对端如果同意连接的话会记录发送端信息并返回连接成功消息。publish表示开始向对方推流，接受端接到命令后准备好接受对端发送的流信息，下面会对比较常见的Command Message具体介绍。当信息使用AMF0编码时，Message Type ID＝20，AMF3编码时Message Type ID＝17.</p>
+<p>发送端发送时会带有命令的名字，如connect，TransactionID表示此次命令的标识，Command Object表示相关参数。接受端收到命令后，会返回以下三种消息中的一种：_result 消息表示接受该命令，对端可以继续往下执行流程，_error消息代表拒绝该命令要执行的操作，method name消息代表要在之前命令的发送端执行的函数名称。这三种回应的消息都要带有收到的命令消息中的Transaction Id来表示本次的回应作用于哪个命令。</p>
+<p>可以认为发送命令消息的对象有两种，一种是NetConnection，表示双端的上层连接，一种是NetStream，表示流信息的传输通道，控制流信息的状态，如Play播放流，Pause暂停。</p>
+<h5 id="NetConnection-Commands-连接层的命令"><a href="#NetConnection-Commands-连接层的命令" class="headerlink" title="NetConnection Commands(连接层的命令)"></a>NetConnection Commands(连接层的命令)</h5><p>用来管理双端之间的连接状态，同时也提供了异步远程方法调用（RPC）在对端执行某方法，以下是常见的连接层的命令：</p>
+<ul>
+<li><p>connect:用于客户端向服务器发送连接请求 </p>
+</li>
+<li><p>Call:用于在对端执行某函数，即常说的RPC：远程进程调用</p>
+</li>
+<li><p>Create Stream：创建传递具体信息的通道，从而可以在这个流中传递具体信息，传输信息单元为Chunk</p>
+</li>
+</ul>
+<h5 id="NetStream-Commands-流连接上的命令"><a href="#NetStream-Commands-流连接上的命令" class="headerlink" title="NetStream Commands(流连接上的命令)"></a>NetStream Commands(流连接上的命令)</h5><p>Netstream建立在NetConnection之上，通过NetConnection的createStream命令创建，用于传输具体的音频、视频等信息。在传输层协议之上只能连接一个NetConnection，但一个NetConnection可以建立多个NetStream来建立不同的流通道传输数据。</p>
+<p>以下会列出一些常用的NetStream Commands，服务端收到命令后会通过onStatus的命令来响应客户端，表示当前NetStream的状态。</p>
+<ul>
+<li><p>play(播放):由客户端向服务器发起请求从服务器端接受数据（如果传输的信息是视频的话就是请求开始播流），可以多次调用，这样本地就会形成一组数据流的接收者。注意其中有一个reset字段，表示是覆盖之前的播流（设为true）还是重新开始一路播放（设为false）。</p>
+</li>
+<li><p>play2（播放）：和上面的play命令不同的是，play2命令可以将当前正在播放的流切换到同样数据但不同比特率的流上，服务器端会维护多种比特率的文件来供客户端使用play2命令来切换。</p>
+</li>
+<li><p>deleteStream(删除流)：用于客户端告知服务器端本地的某个流对象已被删除，不需要再传输此路流。</p>
+</li>
+<li><p>receiveAudio(接收音频)：通知服务器端该客户端是否要发送音频</p>
+</li>
+<li><p>receiveVideo(接收视频)：通知服务器端该客户端是否要发送视频</p>
+</li>
+<li><p>publish(推送数据)：由客户端向服务器发起请求推流到服务器。</p>
+</li>
+<li><p>seek(定位流的位置)：定位到视频或音频的某个位置，以毫秒为单位。</p>
+</li>
+<li><p>pause（暂停）：客户端告知服务端停止或恢复播放。<br>如果Pause为true即表示客户端请求暂停的话，服务端暂停对应的流会返回NetStream.Pause.Notify的onStatus命令来告知客户端当前流处于暂停的状态，当Pause为false时，服务端会返回NetStream.Unpause.Notify的命令来告知客户端当前流恢复。如果服务端对该命令响应失败，返回_error信息。</p>
+</li>
+</ul>
+<h3 id="RTMP-推流和播放流程图"><a href="#RTMP-推流和播放流程图" class="headerlink" title="RTMP 推流和播放流程图"></a>RTMP 推流和播放流程图</h3><h4 id="推流"><a href="#推流" class="headerlink" title="推流"></a>推流</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/publish-flow.png" alt=""></p>
+<p>命令执行过程中的消息流是：</p>
+<ul>
+<li><p>1.客户端发送连接命令到服务端，请求与一个服务应用实例建立连接。</p>
+</li>
+<li><p>2.接收到连接命令后，服务端发送”窗口确认（致谢）消息”到客户端。服务端同时连接到连接命令中提到的应用。</p>
+</li>
+<li><p>3.服务端发送”设置带宽”协议消息到客户端。</p>
+</li>
+<li><p>4.在处理完”设置带宽”消息后，客户端发送”窗口确认（致谢）大小”消息到服务端。</p>
+</li>
+<li><p>5.服务端发送用户控制消息中的流开始消息到客户端。</p>
+</li>
+<li><p>6.服务端发送结果命令消息通知客户端连接状态。该命令指定传输ID（对于连接命令总是1）。同时还指定一些属性，例如，Flash media server 版本（字符串），能力（数字），以及其他的连接信息，例如，层（字符串），代码（字符串），描述（字符串），对象编码（数字）等。</p>
+</li>
+</ul>
+<h4 id="播放"><a href="#播放" class="headerlink" title="播放"></a>播放</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/play-flow.png" alt=""></p>
+<p>命令执行过程中的消息流是：</p>
+<ul>
+<li><p>1.客户端发送连接命令到服务端，请求与一个服务应用实例建立连接。</p>
+</li>
+<li><p>2.接收到连接命令后，服务端发送”窗口确认（致谢）消息”到客户端。服务端同时连接到连接命令中提到的应用。</p>
+</li>
+<li><p>3.服务端发送”设置带宽”协议消息到客户端。</p>
+</li>
+<li><p>4.在处理完”设置带宽”消息后，客户端发送”窗口确认（致谢）大小”消息到服务端。</p>
+</li>
+<li><p>5.服务端发送用户控制消息中的流开始消息到客户端。</p>
+</li>
+<li><p>6.服务端发送结果命令消息通知客户端连接状态。该命令指定传输ID（对于连接命令总是1）。同时还指定一些属性，例如，Flash media server 版本（字符串），能力（数字），以及其他的连接信息，例如，层（字符串），代码（字符串），描述（字符串），对象编码（数字）等。</p>
+</li>
+</ul>
 
       
     </div>
@@ -503,7 +588,7 @@ rtmp协议简介RTMP协议是应用层协议，是要靠">
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#rtmp协议简介"><span class="nav-number">2.</span> <span class="nav-text">rtmp协议简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#建立rtmp连接-三次握手"><span class="nav-number">3.</span> <span class="nav-text">建立rtmp连接(三次握手)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#握手队列"><span class="nav-number">3.1.</span> <span class="nav-text">握手队列</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#C0-S0-消息格式"><span class="nav-number">3.2.</span> <span class="nav-text">C0/S0 消息格式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#C1-S1-消息格式"><span class="nav-number">3.3.</span> <span class="nav-text">C1/S1 消息格式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#C2-S2-消息格式"><span class="nav-number">3.4.</span> <span class="nav-text">C2/S2 消息格式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#握手示意图"><span class="nav-number">3.5.</span> <span class="nav-text">握手示意图</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Message分块（Chunking）"><span class="nav-number">4.</span> <span class="nav-text">Message分块（Chunking）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Basic-Header-基本的头信息"><span class="nav-number">4.1.</span> <span class="nav-text">Basic Header (基本的头信息)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Message-Header（消息的头信息）"><span class="nav-number">4.2.</span> <span class="nav-text">Message Header（消息的头信息）</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Type＝0"><span class="nav-number">4.2.1.</span> <span class="nav-text">Type＝0:</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Type-1"><span class="nav-number">4.2.2.</span> <span class="nav-text">Type = 1:</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Type-2"><span class="nav-number">4.2.3.</span> <span class="nav-text">Type = 2:</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Type-3"><span class="nav-number">4.2.4.</span> <span class="nav-text">Type = 3</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Extended-Timestamp（扩展时间戳）："><span class="nav-number">4.3.</span> <span class="nav-text">Extended Timestamp（扩展时间戳）：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Chunk-Data（块数据）"><span class="nav-number">4.4.</span> <span class="nav-text">Chunk Data（块数据）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#chunk示例"><span class="nav-number">4.5.</span> <span class="nav-text">chunk示例</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#chunk示例2"><span class="nav-number">4.6.</span> <span class="nav-text">chunk示例2</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#rtmp协议简介"><span class="nav-number">2.</span> <span class="nav-text">rtmp协议简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#建立rtmp连接-三次握手"><span class="nav-number">3.</span> <span class="nav-text">建立rtmp连接(三次握手)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#握手队列"><span class="nav-number">3.1.</span> <span class="nav-text">握手队列</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#C0-S0-消息格式"><span class="nav-number">3.2.</span> <span class="nav-text">C0/S0 消息格式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#C1-S1-消息格式"><span class="nav-number">3.3.</span> <span class="nav-text">C1/S1 消息格式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#C2-S2-消息格式"><span class="nav-number">3.4.</span> <span class="nav-text">C2/S2 消息格式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#握手示意图"><span class="nav-number">3.5.</span> <span class="nav-text">握手示意图</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Message分块（Chunking）"><span class="nav-number">4.</span> <span class="nav-text">Message分块（Chunking）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Basic-Header-基本的头信息"><span class="nav-number">4.1.</span> <span class="nav-text">Basic Header (基本的头信息)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Message-Header（消息的头信息）"><span class="nav-number">4.2.</span> <span class="nav-text">Message Header（消息的头信息）</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Type＝0"><span class="nav-number">4.2.1.</span> <span class="nav-text">Type＝0:</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Type-1"><span class="nav-number">4.2.2.</span> <span class="nav-text">Type = 1:</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Type-2"><span class="nav-number">4.2.3.</span> <span class="nav-text">Type = 2:</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Type-3"><span class="nav-number">4.2.4.</span> <span class="nav-text">Type = 3</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Extended-Timestamp（扩展时间戳）："><span class="nav-number">4.3.</span> <span class="nav-text">Extended Timestamp（扩展时间戳）：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Chunk-Data（块数据）"><span class="nav-number">4.4.</span> <span class="nav-text">Chunk Data（块数据）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#chunk示例"><span class="nav-number">4.5.</span> <span class="nav-text">chunk示例</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#chunk示例2"><span class="nav-number">4.6.</span> <span class="nav-text">chunk示例2</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#协议控制消息（Protocol-Control-Message）"><span class="nav-number">5.</span> <span class="nav-text">协议控制消息（Protocol Control Message）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Set-Chunk-Size-Message-Type-ID-1"><span class="nav-number">5.1.</span> <span class="nav-text">Set Chunk Size(Message Type ID=1)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Abort-Message-Message-Type-ID-2"><span class="nav-number">5.2.</span> <span class="nav-text">Abort Message(Message Type ID=2)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Acknowledgement-Message-Type-ID-3"><span class="nav-number">5.3.</span> <span class="nav-text">Acknowledgement(Message Type ID=3)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Window-Acknowledgement-Size-Message-Type-ID-5"><span class="nav-number">5.4.</span> <span class="nav-text">Window Acknowledgement Size(Message Type ID=5)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Set-Peer-Bandwidth-Message-Type-ID-6"><span class="nav-number">5.5.</span> <span class="nav-text">Set Peer Bandwidth(Message Type ID=6)</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#不同类型的RTMP-Message"><span class="nav-number">6.</span> <span class="nav-text">不同类型的RTMP Message</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Command-Message-命令消息，Message-Type-ID＝17或20"><span class="nav-number">6.1.</span> <span class="nav-text">Command Message(命令消息，Message Type ID＝17或20)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#NetConnection-Commands-连接层的命令"><span class="nav-number">6.1.1.</span> <span class="nav-text">NetConnection Commands(连接层的命令)</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#NetStream-Commands-流连接上的命令"><span class="nav-number">6.1.2.</span> <span class="nav-text">NetStream Commands(流连接上的命令)</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RTMP-推流和播放流程图"><span class="nav-number">7.</span> <span class="nav-text">RTMP 推流和播放流程图</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#推流"><span class="nav-number">7.1.</span> <span class="nav-text">推流</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#播放"><span class="nav-number">7.2.</span> <span class="nav-text">播放</span></a></li></ol></li></ol></div>
             
           </div>
         </section>
