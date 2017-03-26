@@ -228,6 +228,132 @@
             
               
                 
+                <a class="post-title-link" href="/2017/03/26/3-0学习笔记-着色器和程序/" itemprop="url">
+                  3.0学习笔记-着色器和程序
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-03-26T15:21:00+08:00" content="2017-03-26">
+              2017-03-26
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/03/26/3-0学习笔记-着色器和程序/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/03/26/3-0学习笔记-着色器和程序/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><p>如果需要使用着色器进行渲染的话，则首先必须有两个对象，分别是着色器对象及程序对象。那么如何理解这两者呢？可以将其理解为C语言的编译器和链接器。 </p>
+<p>流程是这样的，源代码中提供着色器对象，然后着色器被编译成一个目标形式，再然后链接到一个程序对象。一个程序对象对应多个着色器对象，每个程序对象必须有一个顶点着色器和一个片段着色器。 </p>
+<p>流程如下： </p>
+<p>1.创建一个顶点着色器和一个片段着色器 </p>
+<p>2.将源代码连接到每个着色器对象 </p>
+<p>3.编译着色器对象 </p>
+<p>4.创建一个程序对象 </p>
+<p>5.将上面得到的着色器对象链接进程序对象中 </p>
+<p>6.链接程序对象</p>
+<h3 id="创建和编译一个着色器"><a href="#创建和编译一个着色器" class="headerlink" title="创建和编译一个着色器"></a>创建和编译一个着色器</h3><h4 id="创建"><a href="#创建" class="headerlink" title="创建"></a>创建</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">GLuint shader;</div><div class="line">GLint compiled;</div><div class="line"></div><div class="line">// Create the shader object</div><div class="line">shader = glCreateShader ( type );</div><div class="line"></div><div class="line">if ( shader == 0 )</div><div class="line">&#123;</div><div class="line">   return 0;</div><div class="line">&#125;</div><div class="line"></div><div class="line">//type </div><div class="line">#define GL_FRAGMENT_SHADER        0x8B30 </div><div class="line">#define GL_VERTEX_SHADER          0x8B31</div></pre></td></tr></table></figure>
+<h4 id="删除"><a href="#删除" class="headerlink" title="删除"></a>删除</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">glDeleteShader ( shader );</div></pre></td></tr></table></figure>
+<p>删除着色器对象的句柄 </p>
+<p>注：如果着色器已经链接到程序对象中的话，这时候直接调用glDeleteShader不会立刻去删除着色器，而是将其标注，等到着色器不在连接到任何程序对象时，其就会被删除 </p>
+<h4 id="提供着色器源代码"><a href="#提供着色器源代码" class="headerlink" title="提供着色器源代码"></a>提供着色器源代码</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">void glShaderSource(GLuint shader, //指向着色器的句柄 </div><div class="line">GLsizei count, //着色器源字符串的数量，虽然每个着色器可以有多个源字符串组成，但是每个着色器只有一个main函数 </div><div class="line">const GLchar *const*string, //指向保存数量为count的着色器源字符串的数组指针 </div><div class="line">const GLint *length //指向保存了每个着色器字符串大小且元素大小为count的整数数组指针 </div><div class="line">) </div><div class="line"> </div><div class="line">char vShaderStr[] =</div><div class="line">#version 300 es                          </div><div class="line">layout(location = 0) in vec4 vPosition;  </div><div class="line">void main()                              </div><div class="line">&#123;                                        </div><div class="line">  gl_Position = vPosition;              </div><div class="line">&#125;                                         </div><div class="line">     </div><div class="line">glShaderSource (shader, 1, &amp;shaderSrc, NULL );</div></pre></td></tr></table></figure>
+<h4 id="编译着色器"><a href="#编译着色器" class="headerlink" title="编译着色器"></a>编译着色器</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">// Compile the shader</div><div class="line">glCompileShader ( shader );</div></pre></td></tr></table></figure>
+<p>调用glCompileShader将编译已经保存在着色器对象的着色器源代码。和常规的语言编译器一样，编译之后你想知道的第一件事情是有没有错误。你可以使用glGetShaderiv查询查询这一信息和其他有关着色器对象的信息。</p>
+<h4 id="检测着色器是否成功编译"><a href="#检测着色器是否成功编译" class="headerlink" title="检测着色器是否成功编译"></a>检测着色器是否成功编译</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">// Check the compile status</div><div class="line">glGetShaderiv ( shader, GL_COMPILE_STATUS, &amp;compiled );</div><div class="line"></div><div class="line">if ( !compiled )</div><div class="line">&#123;</div><div class="line">   GLint infoLen = 0;</div><div class="line"></div><div class="line">   glGetShaderiv ( shader, GL_INFO_LOG_LENGTH, &amp;infoLen );</div><div class="line"></div><div class="line">   if ( infoLen &gt; 1 )</div><div class="line">   &#123;</div><div class="line">      char *infoLog = malloc ( sizeof ( char ) * infoLen );</div><div class="line"></div><div class="line">      glGetShaderInfoLog ( shader, infoLen, NULL, infoLog );</div><div class="line">      esLogMessage ( &quot;Error compiling shader:\n%s\n&quot;, infoLog );</div><div class="line"></div><div class="line">      free ( infoLog );</div><div class="line">   &#125;</div><div class="line"></div><div class="line">   glDeleteShader ( shader );</div><div class="line">   return 0;</div><div class="line">&#125;</div><div class="line"></div><div class="line">return shader;</div></pre></td></tr></table></figure>
+<h3 id="创建和链接程序"><a href="#创建和链接程序" class="headerlink" title="创建和链接程序"></a>创建和链接程序</h3><h4 id="创建程序"><a href="#创建程序" class="headerlink" title="创建程序"></a>创建程序</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">GLuint programObject;</div><div class="line"></div><div class="line">// Create the program object</div><div class="line">programObject = glCreateProgram ( );</div></pre></td></tr></table></figure>
+<h4 id="删除程序"><a href="#删除程序" class="headerlink" title="删除程序"></a>删除程序</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">glDeleteProgram ( programObject );</div></pre></td></tr></table></figure>
+<h4 id="关联着色器和程序"><a href="#关联着色器和程序" class="headerlink" title="关联着色器和程序"></a>关联着色器和程序</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">glAttachShader ( programObject, vertexShader );</div><div class="line">glAttachShader ( programObject, fragmentShader );</div></pre></td></tr></table></figure>
+<p>注：对于程序对象和着色器对象的连接没有具体的时间要求，但是没有程序对象只能有一个顶点着色器和片段着色器与之连接</p>
+<h4 id="断开着色器和程序"><a href="#断开着色器和程序" class="headerlink" title="断开着色器和程序"></a>断开着色器和程序</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">void glDetachShader(GLuint program, GLuint shader)</div></pre></td></tr></table></figure>
+<h4 id="链接着色器和程序"><a href="#链接着色器和程序" class="headerlink" title="链接着色器和程序"></a>链接着色器和程序</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">// Link the program</div><div class="line">glLinkProgram ( programObject );</div></pre></td></tr></table></figure>
+<p>上述的工作都已经完成了之后需要链接程序的对象了。连接操作负责生成最终的可执行程序。在连接的时候将检查各种对象的数量，确保可以链接成功。</p>
+<h4 id="检测链接是否成功"><a href="#检测链接是否成功" class="headerlink" title="检测链接是否成功"></a>检测链接是否成功</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">// Check the link status</div><div class="line">  glGetProgramiv ( programObject, GL_LINK_STATUS, &amp;linked );</div><div class="line"></div><div class="line">  if ( !linked )</div><div class="line">  &#123;</div><div class="line">     GLint infoLen = 0;</div><div class="line"></div><div class="line">     glGetProgramiv ( programObject, GL_INFO_LOG_LENGTH, &amp;infoLen );</div><div class="line"></div><div class="line">     if ( infoLen &gt; 1 )</div><div class="line">     &#123;</div><div class="line">        char *infoLog = malloc ( sizeof ( char ) * infoLen );</div><div class="line"></div><div class="line">        glGetProgramInfoLog ( programObject, infoLen, NULL, infoLog );</div><div class="line">        esLogMessage ( &quot;Error linking program:\n%s\n&quot;, infoLog );</div><div class="line"></div><div class="line">        free ( infoLog );</div><div class="line">     &#125;</div><div class="line"></div><div class="line">     glDeleteProgram ( programObject );</div><div class="line">     return FALSE;</div><div class="line">  &#125;</div></pre></td></tr></table></figure>
+<h4 id="设置程序对象为活动对象"><a href="#设置程序对象为活动对象" class="headerlink" title="设置程序对象为活动对象"></a>设置程序对象为活动对象</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">void Draw ( ESContext *esContext )</div><div class="line">&#123;</div><div class="line">   UserData *userData = esContext-&gt;userData;</div><div class="line">   GLfloat vVertices[] = &#123;  0.0f,  0.5f, 0.0f,</div><div class="line">                            -0.5f, -0.5f, 0.0f,</div><div class="line">                            0.5f, -0.5f, 0.0f</div><div class="line">                         &#125;;</div><div class="line"></div><div class="line">   // Set the viewport</div><div class="line">   glViewport ( 0, 0, esContext-&gt;width, esContext-&gt;height );</div><div class="line"></div><div class="line">   // Clear the color buffer</div><div class="line">   glClear ( GL_COLOR_BUFFER_BIT );</div><div class="line"></div><div class="line">   // Use the program object</div><div class="line">   glUseProgram ( userData-&gt;programObject );</div><div class="line"></div><div class="line">   // Load the vertex data</div><div class="line">   glVertexAttribPointer ( 0, 3, GL_FLOAT, GL_FALSE, 0, vVertices );</div><div class="line">   glEnableVertexAttribArray ( 0 );</div><div class="line"></div><div class="line">   glDrawArrays ( GL_TRIANGLES, 0, 3 );</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2017/03/24/RTMP推流流程详解/" itemprop="url">
                   RTMP推流流程详解
                 </a>
@@ -1650,124 +1776,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/10/11/菲李莫属隐私政策/" itemprop="url">
-                  菲李莫属隐私政策
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-10-11T09:44:14+08:00" content="2016-10-11">
-              2016-10-11
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2016/10/11/菲李莫属隐私政策/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/10/11/菲李莫属隐私政策/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>个人信息保护政策</p>
-<p>为切实保护菲李莫属用户隐私权，优化用户体验，我公司根据现行法规及政策，制定本《个人信息保护政策》。 本《个人信息保护政策》将详细说明菲李莫属在获取、管理及保护用户个人信息方面的政策及措施。本《个人信息保护政策》适用于菲李莫属向您提供的所有服务，无论您是通过计算机设备、移动终端或其他设备获得的菲李莫属服务。</p>
-<p>个人信息的收集</p>
-<p>您已知悉且同意，在您注册菲李莫属帐号或使用菲李莫属提供的服务时，菲李莫属将记录您提供的相关个人信息，如：姓名、手机号码等，上述个人信息是您获得菲李莫属提供服务的基础。同时，基于优化用户体验之目的，菲李莫属会获取与提升菲李莫属服务有关的其他信息，例如当您访问菲李莫属时，我们可能会收集哪些服务的受欢迎程度、浏览器软件信息等以便优化我们的服务。</p>
-<p>个人信息的管理</p>
-<p>为了向您提供更好的服务或产品，菲李莫属会在下述情形使用您的个人信息：<br>1）根据相关法律法规的要求；<br>2）根据您的授权；<br>3）根据菲李莫属相关服务条款、应用许可使用协议的约定。</p>
-<p>此外，您已知悉并同意：在现行法律法规允许的范围内，菲李莫属可能会将您非隐私的个人信息用于市场营销，使用方式包括但不限于：在菲李莫属平台中向您展示或提供广告和促销资料，向您通告或推荐菲李莫属的服务或产品信息，以及其他此类根据您使用菲李莫属服务或产品的情况所认为您可能会感兴趣的信息。其中也包括您在采取授权等某动作时选择分享的信息，例如当您新增朋友、在动态中新增地标、使用菲李莫属的联络人汇入工具等。</p>
-<p>未经您本人允许，菲李莫属不会向任何第三方披露您的个人信息，下列情形除外：<br>1）菲李莫属已经取得您或您监护人的授权；<br>2）司法机关或行政机关给予法定程序要求菲李莫属披露的；<br>3）菲李莫属为维护自身合法权益而向用户提起诉讼或仲裁时；<br>4）根据您与菲李莫属相关服务条款、应用许可使用协议的约定；<br>5）法律法规规定的其他情形。</p>
-<p>个人信息的保护</p>
-<p>菲李莫属将尽一切合理努力保护其获得的用户个人信息。为防止用户个人信息在意外的、未经授权的情况下被非法访问、复制、修改、传送、遗失、破坏、处理或使用，菲李莫属已经并将继续采取以下措施保护您的个人信息：<br>1）以适当的方式对用户的个人信息进行加密处理；<br>2）在适当的位置使用密码对用户个人信息进行保护；<br>3）限制对用户个人信息的访问；<br>4）其他的合理措施。</p>
-<p>尽管已经采取了上述合理有效措施，并已经遵守了相关法律规定要求的标准，但菲李莫属仍然无法保证您的个人信息通过不安全途径进行交流时的安全性。因此，用户个人应采取积极措施保证个人信息的安全，如：定期修改帐号密码，不将自己的帐号密码等个人信息透露给他人。</p>
-<p>您知悉：菲李莫属提供的个人信息保护措施仅适用于菲李莫属平台，一旦您离开菲李莫属，浏览或使用其他网站、服务及内容资源，菲李莫属即没有能力及义务保护您在菲李莫属以外的网站提交的任何个人信息，无论您登陆或浏览上述网站是否基于菲李莫属的链接或引导。</p>
-<p>个人信息的访问</p>
-<p>当您完成菲李莫属的帐号注册后，您可以查阅或修改您提交给菲李莫属的个人信息。一般情况下，您可随时浏览、修改自己提交的信息，但出于安全性和身份识别（如号码申诉服务）的考虑，您可能无法修改注册时提供的某些初始注册信息及验证信息。</p>
-<p>对未成年人个人信息的特别保护<br>菲李莫属非常重视对未成年人个人信息的保护。若您是18周岁以下的未成年人，在使用菲李莫属的服务前，应确保事先取得监护人的同意，如您在菲李莫属上申请注册账号，菲李莫属将默认为您已得到前述同意。菲李莫属将根据国家相关法律法规及本《个人信息保护政策》的规定保护未成年人的个人信息。</p>
-<p>隐私保护政策的修改</p>
-<p>菲李莫属有权随时修改《个人信息保护政策》的任何条款，一旦《个人信息保护政策》的内容发生变动，菲李莫属将会直接在网站上公布修改之后的《个人信息保护政策》，该公布行为视为菲李莫属已经通知您修改内容。菲李莫属也可通过其他适当方式向用户提示修改内容。如果您不同意菲李莫属对本《个人信息保护政策》相关条款所做的修改，您有权停止使用菲李莫属服务。如果您继续使用菲李莫属服务，则视为您接受本公司对本协议相关条款所做的修改。</p>
-<pre><code>菲李莫属 ©llyblog.com 10-11 09:39
-</code></pre>
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1813,7 +1821,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">13</span>
+              <span class="site-state-item-count">14</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
