@@ -1,0 +1,605 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="动态消息解析你可以动态地提供一个方法的实现。例如我们可以用@dynamic关键字在类的实现文件中修饰一个属性：
+1@dynamic propertyName;
+这表明我们会为这个属性动态提供存取方法，也就是说编译器不会再默认为我们生成setPropertyName:和propertyName方法，而需要我们自己实现或者动态提供。
+我们可以通过分别重载resolveInstanceMethod:和r">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iOS Runtime-动态消息解析和消息转发机制">
+<meta property="og:url" content="http://yoursite.com/2017/04/01/iOS-Runtime-动态消息解析和消息转发机制/index.html">
+<meta property="og:site_name" content="lly's Blog">
+<meta property="og:description" content="动态消息解析你可以动态地提供一个方法的实现。例如我们可以用@dynamic关键字在类的实现文件中修饰一个属性：
+1@dynamic propertyName;
+这表明我们会为这个属性动态提供存取方法，也就是说编译器不会再默认为我们生成setPropertyName:和propertyName方法，而需要我们自己实现或者动态提供。
+我们可以通过分别重载resolveInstanceMethod:和r">
+<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/runtimemessageforward.jpg">
+<meta property="og:updated_time" content="2017-04-01T06:54:30.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="iOS Runtime-动态消息解析和消息转发机制">
+<meta name="twitter:description" content="动态消息解析你可以动态地提供一个方法的实现。例如我们可以用@dynamic关键字在类的实现文件中修饰一个属性：
+1@dynamic propertyName;
+这表明我们会为这个属性动态提供存取方法，也就是说编译器不会再默认为我们生成setPropertyName:和propertyName方法，而需要我们自己实现或者动态提供。
+我们可以通过分别重载resolveInstanceMethod:和r">
+<meta name="twitter:image" content="http://ofy1hyquv.bkt.clouddn.com/runtimemessageforward.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/04/01/iOS-Runtime-动态消息解析和消息转发机制/"/>
+
+  <title> iOS Runtime-动态消息解析和消息转发机制 | lly's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">lly's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">用心记录点滴</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                iOS Runtime-动态消息解析和消息转发机制
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-04-01T10:29:00+08:00" content="2017-04-01">
+              2017-04-01
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/04/01/iOS-Runtime-动态消息解析和消息转发机制/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/04/01/iOS-Runtime-动态消息解析和消息转发机制/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="动态消息解析"><a href="#动态消息解析" class="headerlink" title="动态消息解析"></a>动态消息解析</h3><p>你可以动态地提供一个方法的实现。例如我们可以用@dynamic关键字在类的实现文件中修饰一个属性：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">@dynamic propertyName;</div></pre></td></tr></table></figure>
+<p>这表明我们会为这个属性动态提供存取方法，也就是说编译器不会再默认为我们生成setPropertyName:和propertyName方法，而需要我们自己实现或者动态提供。</p>
+<p>我们可以通过分别重载resolveInstanceMethod:和resolveClassMethod:方法分别添加实例方法实现和类方法实现。因为当 Runtime 系统在Cache和方法分发表中（包括超类）找不到要执行的方法时，Runtime会调用resolveInstanceMethod:或resolveClassMethod:来给程序员一次动态添加方法实现的机会。</p>
+<p>我们需要用class_addMethod函数完成向特定类添加特定方法实现的操作：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">void dynamicMethodIMP(id self, SEL _cmd) &#123;</div><div class="line">    // implementation ....</div><div class="line">&#125;</div><div class="line">@implementation MyClass</div><div class="line">+ (BOOL)resolveInstanceMethod:(SEL)aSEL</div><div class="line">&#123;</div><div class="line">    if (aSEL == @selector(resolveThisMethodDynamically)) &#123;</div><div class="line">          class_addMethod([self class], aSEL, (IMP) dynamicMethodIMP, &quot;v@:&quot;);</div><div class="line">          return YES;</div><div class="line">    &#125;</div><div class="line">    return [super resolveInstanceMethod:aSEL];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>上面的例子为resolveThisMethodDynamically方法添加了实现内容，也就是dynamicMethodIMP方法中的代码。其中 “v@:” 表示返回值和参数.</p>
+<p>PS：动态方法解析会在消息转发机制浸入前执行。如果 respondsToSelector: 或 instancesRespondToSelector:方法被执行，动态方法解析器将会被首先给予一个提供该方法选择器对应的IMP的机会。如果你想让该方法选择器被传送到转发机制，那么就让resolveInstanceMethod:返回NO。</p>
+<h4 id="实例方法和类方法的解析对比"><a href="#实例方法和类方法的解析对比" class="headerlink" title="实例方法和类方法的解析对比"></a>实例方法和类方法的解析对比</h4><p>.h文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">#import &lt;Foundation/Foundation.h&gt;</div><div class="line"></div><div class="line">@interface Student : NSObject</div><div class="line">+ (void)learnClass:(NSString *) string;</div><div class="line">- (void)goToSchool:(NSString *) name;</div><div class="line">@end</div></pre></td></tr></table></figure>
+<p>.m文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#import &quot;Student.h&quot;</div><div class="line">#import &lt;objc/runtime.h&gt;</div><div class="line"></div><div class="line">@implementation Student</div><div class="line">+ (BOOL)resolveClassMethod:(SEL)sel &#123;</div><div class="line">    if (sel == @selector(learnClass:)) &#123;</div><div class="line">        class_addMethod(object_getClass(self), sel, class_getMethodImplementation(object_getClass(self), @selector(myClassMethod:)), &quot;v@:&quot;);</div><div class="line">        return YES;</div><div class="line">    &#125;</div><div class="line">    return [class_getSuperclass(self) resolveClassMethod:sel];</div><div class="line">&#125;</div><div class="line"></div><div class="line">+ (BOOL)resolveInstanceMethod:(SEL)aSEL</div><div class="line">&#123;</div><div class="line">    if (aSEL == @selector(goToSchool:)) &#123;</div><div class="line">        class_addMethod([self class], aSEL, class_getMethodImplementation([self class], @selector(myInstanceMethod:)), &quot;v@:&quot;);</div><div class="line">        return YES;</div><div class="line">    &#125;</div><div class="line">    return [super resolveInstanceMethod:aSEL];</div><div class="line">&#125;</div><div class="line"></div><div class="line">+ (void)myClassMethod:(NSString *)string &#123;</div><div class="line">    NSLog(@&quot;myClassMethod = %@&quot;, string);</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (void)myInstanceMethod:(NSString *)string &#123;</div><div class="line">    NSLog(@&quot;myInstanceMethod = %@&quot;, string);</div><div class="line">&#125;</div><div class="line">@end</div></pre></td></tr></table></figure>
+<p>需要深刻理解 [self class] 与 object_getClass(self) 甚至 object_getClass([self class]) 的关系，其实并不难，重点在于 self 的类型：</p>
+<ul>
+<li><p>当 self 为实例对象时，[self class] 与 object_getClass(self) 等价，因为前者会调用后者。object_getClass([self class]) 得到元类。</p>
+</li>
+<li><p>当 self 为类对象时，[self class] 返回值为自身，还是 self。object_getClass(self) 与 object_getClass([self class]) 等价。</p>
+</li>
+</ul>
+<h3 id="消息转发"><a href="#消息转发" class="headerlink" title="消息转发"></a>消息转发</h3><p><img src="http://ofy1hyquv.bkt.clouddn.com/runtimemessageforward.jpg" alt=""></p>
+<h4 id="重定向"><a href="#重定向" class="headerlink" title="重定向"></a>重定向</h4><p>在消息转发机制执行前，Runtime 系统会再给我们一次偷梁换柱的机会，即通过重载- (id)forwardingTargetForSelector:(SEL)aSelector方法替换消息的接受者为其他对象：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">- (id)forwardingTargetForSelector:(SEL)aSelector</div><div class="line">&#123;</div><div class="line">    //如果代理对象能处理，则转接给代理对象</div><div class="line">    if ([proxyObj respondsToSelector:aSelector]) &#123;</div><div class="line">        return proxyObj;</div><div class="line">    &#125;</div><div class="line">    //不能处理进入转发流程</div><div class="line">    return nil;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>毕竟消息转发要耗费更多时间，抓住这次机会将消息重定向给别人是个不错的选择。 如果此方法返回nil或self,则会进入消息转发机制(forwardInvocation:);否则将向返回的对象重新发送消息。</p>
+<h4 id="转发"><a href="#转发" class="headerlink" title="转发"></a>转发</h4><p>当动态方法解析不作处理返回nil时，消息转发机制会被触发。</p>
+<p>这时下面两个方法需要被重写： </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">//获取该方法的方法签名</div><div class="line">- (NSMethodSignature *)methodSignatureForSelector:(SEL)aSelector</div><div class="line"></div><div class="line">//手动调用该方法</div><div class="line">- (void)forwardInvocation:(NSInvocation *)anInvocation</div></pre></td></tr></table></figure>
+<p>ps: 如果 methodSignatureForSelector 返回的NSMethodSignature 是 nil 的话不会继续执行 forwardInvocation，转发流程终止，抛出无法处理的异常。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">- (NSMethodSignature *)methodSignatureForSelector:(SEL)aSelector</div><div class="line">&#123;</div><div class="line">    NSMethodSignature *sig = [BBMessageForwardProxy instanceMethodSignatureForSelector:@selector(bb_dealNotRecognizedMessage:)];</div><div class="line">    return sig;</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (void)forwardInvocation:(NSInvocation *)anInvocation</div><div class="line">&#123;</div><div class="line">    NSString *debugInfo = [NSString stringWithFormat:@&quot;[debug]unRecognizedMessage:[%@] sent to [%@]&quot;,NSStringFromSelector(anInvocation.selector),NSStringFromClass([self class])];</div><div class="line">    //重定向方法</div><div class="line">    [anInvocation setSelector:@selector(bb_dealNotRecognizedMessage:)];</div><div class="line">    //传递调用信息</div><div class="line">    [anInvocation setArgument:&amp;debugInfo atIndex:2];</div><div class="line">    //BBMessageForwardProxy对象接收转发的消息并打印调用信息</div><div class="line">    [anInvocation invokeWithTarget:[BBMessageForwardProxy new]];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>forwardInvocation:方法就像一个不能识别的消息的分发中心，将这些消息转发给不同接收对象。或者它也可以象一个运输站将所有的消息都发送给同一个接收对象。它可以将一个消息翻译成另外一个消息，或者简单的”吃掉“某些消息，因此没有响应也没有错误。forwardInvocation:方法也可以对不同的消息提供同样的响应，这一切都取决于方法的具体实现。该方法所提供是将不同的对象链接到消息链的能力。</p>
+<p>ps：forwardInvocation:方法只有在消息接收对象中无法正常响应消息时才会被调用。 所以，如果我们希望一个对象将negotiate消息转发给其它对象，则这个对象不能有negotiate方法。否则，forwardInvocation:将不可能会被调用。</p>
+<p>至此 消息的整个转发过程结束。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/03/31/HTTP协议学习笔记/" rel="next" title="HTTP协议学习笔记">
+                <i class="fa fa-chevron-left"></i> HTTP协议学习笔记
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/04/01/iOS-Runtime-动态消息解析和消息转发机制/"
+           data-title="iOS Runtime-动态消息解析和消息转发机制" data-url="http://yoursite.com/2017/04/01/iOS-Runtime-动态消息解析和消息转发机制/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/head.png"
+               alt="lly" />
+          <p class="site-author-name" itemprop="name">lly</p>
+          <p class="site-description motion-element" itemprop="description">耿直的一Boy</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">16</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#动态消息解析"><span class="nav-number">1.</span> <span class="nav-text">动态消息解析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#实例方法和类方法的解析对比"><span class="nav-number">1.1.</span> <span class="nav-text">实例方法和类方法的解析对比</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#消息转发"><span class="nav-number">2.</span> <span class="nav-text">消息转发</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#重定向"><span class="nav-number">2.1.</span> <span class="nav-text">重定向</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#转发"><span class="nav-number">2.2.</span> <span class="nav-text">转发</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lly</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"llyblog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
