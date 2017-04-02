@@ -228,6 +228,170 @@
             
               
                 
+                <a class="post-title-link" href="/2017/04/01/DNS解析学习笔记/" itemprop="url">
+                  DNS解析学习笔记
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-04-01T17:57:48+08:00" content="2017-04-01">
+              2017-04-01
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/04/01/DNS解析学习笔记/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/04/01/DNS解析学习笔记/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="什么是域名解析"><a href="#什么是域名解析" class="headerlink" title="什么是域名解析"></a>什么是域名解析</h3><p>Internet上的计算机是通过IP地址来定位的，给出一个IP地址，就可以找到Internet上的某台主机。而因为IP地址难于记忆，又发明了域名来代替IP地址。但通过域名并不能直接找到要访问的主机，中间要加一个从域名查找IP地址的过程，这个过程就是域名解析。</p>
+<p>负责将域名解析成为IP地址的服务器，叫做域名解析服务器，英文简称是DNS。Internet上所有的DNS通过域的层次关系连接在一起。</p>
+<p>当Internet用户打开浏览器，输入一个网址的时候，比如<a href="http://www.google.com，用户的计算机并不知道www.google.com是哪一台主机，因此计算机向Internet的DNS发出查询请求，DNS将查询到的IP地址返回给用户的计算机，用户计算机就可以根据IP地址连接www.google.com主机，把网页下载下来。" target="_blank" rel="external">http://www.google.com，用户的计算机并不知道www.google.com是哪一台主机，因此计算机向Internet的DNS发出查询请求，DNS将查询到的IP地址返回给用户的计算机，用户计算机就可以根据IP地址连接www.google.com主机，把网页下载下来。</a></p>
+<h3 id="相关名词"><a href="#相关名词" class="headerlink" title="相关名词"></a>相关名词</h3><h4 id="根域"><a href="#根域" class="headerlink" title="根域"></a>根域</h4><p>就是所谓的“.”，其实我们的网址www.baidu.com在配置当中应该是www.baidu.com.（最后有一点），一般我们在浏览器里输入时会省略后面的点，而这也已经成为了习惯。</p>
+<p>根域服务器我们知道有13台，但是这是错误的观点。</p>
+<p>根域服务器只是具有13个IP地址，但机器数量却不是13台，因为这些IP地址借助了任播的技术，所以我们可以在全球设立这些IP的镜像站点，你访问到的这个IP并不是唯一的那台主机。</p>
+<h4 id="域的划分"><a href="#域的划分" class="headerlink" title="域的划分"></a>域的划分</h4><p>根域下面就是顶级域或者叫一级域.</p>
+<p>有两种划分方式，一种互联网刚兴起时的按照行业性质划分的com. net.等，一种是按国家划分的如cn. jp.等。</p>
+<p>每个域都会有域名服务器，也叫权威域名服务器。</p>
+<p>google.com就是一个顶级域名，而www.google.com却不是顶级域名，是在google.com这个域里的一叫做www的主机。</p>
+<p>一级域之后还有二级域，三级域，只要我买了一个顶级域，并且我搭建了自己BIND服务器（或者其他软件搭建的）注册到互联网中，那么我就可以随意在前面多加几个域了（当然长度是有限制的）。</p>
+<p>比如lly.www.google.com，在这个网址中，www.google.com变成了一个二级域而不是一台主机，主机名是lly。</p>
+<h4 id="域名服务器"><a href="#域名服务器" class="headerlink" title="域名服务器"></a>域名服务器</h4><p>能提供域名解析的服务器，上面的记录类型可以是A(address)记录，NS记录（name server），MX（mail），CNAME等。</p>
+<p>A记录是什么意思呢，就是记录一个IP地址和一个主机名字，比如我这个域名服务器所在的域test.google.com，我们知道这是一个二级的域名，然后我在里面有一条A记录,记录了主机为lly的IP，查到了就返回给你了。</p>
+<p>如果我现在要想google.com这个域名服务器查询lly.test.google.com，那么这个顶级域名服务器就会发现你请求的这个网址在test.google.com这个域中，我这里记录了这个二级域的域名服务器test.google.com的NS的IP。我返回给你这个地址你再去查主机名为lly的主机。</p>
+<h3 id="DNS解析原理"><a href="#DNS解析原理" class="headerlink" title="DNS解析原理"></a>DNS解析原理</h3><p>DNS解析主要有递归查询，就是在某个DNS服务器缓存中查找不到相应的域名与IP地址对应关系时，自动跳转到到下一步骤通过下一个DNS服务器进行查找。具体可见如下两图：</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/dnsflow.jpg" alt=""></p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/dnssearchflow.jpg" alt=""></p>
+<h3 id="DNS解析过程"><a href="#DNS解析过程" class="headerlink" title="DNS解析过程"></a>DNS解析过程</h3><p>以下步骤中，当DNS缓存中存在域名对应IP时则DNS解析成功，用户计算机将直接访问服务器，若DNS服务器缓存中不存在域名对应IP，则自动进入下一步。</p>
+<ul>
+<li>浏览器缓存</li>
+</ul>
+<p>当用户通过浏览器访问某域名时，浏览器首先会在自己的缓存中查找是否有该域名对应的IP地址（若曾经访问过该域名且没有清空缓存便存在）；</p>
+<ul>
+<li>系统缓存</li>
+</ul>
+<p>当浏览器缓存中无域名对应IP则会自动检查用户计算机系统Hosts文件DNS缓存是否有该域名对应IP；</p>
+<ul>
+<li>路由器缓存</li>
+</ul>
+<p>当浏览器及系统缓存中均无域名对应IP则进入路由器缓存中检查，以上三步均为客服端的DNS缓存；</p>
+<ul>
+<li>ISP（互联网服务提供商）DNS缓存</li>
+</ul>
+<p>当在用户客服端查找不到域名对应IP地址，则将进入ISP DNS缓存中进行查询。比如你用的是电信的网络，则会进入电信的DNS缓存服务器中进行查找；</p>
+<ul>
+<li>根域名服务器</li>
+</ul>
+<p>当以上均未完成，则进入根服务器进行查询。全球仅有13台根域名服务器，1个主根域名服务器，其余12为辅根域名服务器。根域名收到请求后会查看区域文件记录，若无则将其管辖范围内顶级域名（如.com）服务器IP告诉本地DNS服务器；</p>
+<ul>
+<li>顶级域名服务器</li>
+</ul>
+<p>顶级域名服务器收到请求后查看区域文件记录，若无则将其管辖范围内主域名（如google.com）服务器的IP地址告诉本地DNS服务器；</p>
+<ul>
+<li>主域名服务器</li>
+</ul>
+<p>主域名服务器接受到请求后查询自己的缓存，如果没有则进入下一级域名服务器（www.google.com）进行查找，并重复该步骤直至找到正确纪录；</p>
+<ul>
+<li>保存结果至缓存</li>
+</ul>
+<p>本地域名服务器把返回的结果保存到缓存，以备下一次使用，同时将该结果反馈给客户端，客户端通过这个IP地址与web服务器建立链接。</p>
+<h3 id="DNS优化如何实现"><a href="#DNS优化如何实现" class="headerlink" title="DNS优化如何实现"></a>DNS优化如何实现</h3><p>一般域名商或服务器商都会提供免费的DNS服务，然而，很多情况下这些免费的DNS服务器速度较慢，故可做一定优化，具体可从以下几方面：</p>
+<ul>
+<li>增加DNS服务器数量</li>
+</ul>
+<p>减小服务器压力，当单位服务器需要处理的DNS请求数量较少时速度会更快；</p>
+<ul>
+<li>全国多地分布DNS服务器</li>
+</ul>
+<p>用户网络访问速度跟用户计算机到服务器的距离有关，若可以让用户就近访问所在省份的服务器便可以加速DNS解析速度；</p>
+<ul>
+<li>识别用户线路反馈相应线路IP</li>
+</ul>
+<p>当用户网络线路跟服务器网络线路一致时速度较快，而不一致时则较慢，如：用户使用电信的线路但服务器是联通的线路，这样就会造成用户访问网站速度下降，如果可以识别用户访问线路并反馈相应IP则会加速网站访问。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2017/04/01/SSL-TLS协议学习笔记/" itemprop="url">
                   SSL/TLS协议学习笔记
                 </a>
@@ -1627,163 +1791,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/02/18/OpenGL-ES-3-0学习笔记-简介/" itemprop="url">
-                  OpenGL ES 3.0学习笔记-简介
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-02-18T17:10:53+08:00" content="2017-02-18">
-              2017-02-18
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2017/02/18/OpenGL-ES-3-0学习笔记-简介/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/18/OpenGL-ES-3-0学习笔记-简介/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="可编程管线的各个阶段"><a href="#可编程管线的各个阶段" class="headerlink" title="可编程管线的各个阶段"></a>可编程管线的各个阶段</h2><h3 id="1-顶点着色器"><a href="#1-顶点着色器" class="headerlink" title="1.顶点着色器"></a>1.顶点着色器</h3><p>顶点着色器实现了顶点操作的通用可编程方法。</p>
-<p>顶点着色器的输入包括：</p>
-<ul>
-<li><p>着色器程序–描述顶点上执行操作的顶点着色器程序源代码或者可执行文件。</p>
-</li>
-<li><p>顶点着色器输入（或者属性）– 用顶点数组提供的每个顶点的数据。</p>
-</li>
-<li><p>统一变量– 顶点（或者片段）着色器使用的不变数据</p>
-</li>
-<li><p>采样器–代表顶点着色器使用纹理的特殊统一变量类型</p>
-</li>
-</ul>
-<p>顶点着色器可以用于通过矩阵变换位置，计算照明公式来生成逐顶点颜色以及生成或者变换纹理坐标等基于顶点的传统操作。此外，因为顶点着色器由应用程序规定，所以它可以用于执行自定义计算，实施新的变换，照明或者传统的固定功能管线所不允许的基于顶点的效果。</p>
-<p>简单实例</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">#version 300 es//版本号                        </div><div class="line">uniform mat4 u_mvpMatrix;//变换矩阵</div><div class="line">//输入数据</div><div class="line">in vec4 a_position;//顶点坐标</div><div class="line">in vec4 a_color;//顶点颜色</div><div class="line">//输出数据</div><div class="line">out vec4 v_color;//顶点颜色</div><div class="line"> void main()                              </div><div class="line"> &#123;             </div><div class="line"> 	  v_color = a_color;                           </div><div class="line">     gl_Position = a_position * u_mvpMatrix;              </div><div class="line"> &#125;</div></pre></td></tr></table></figure>
-<h3 id="2-图元装配"><a href="#2-图元装配" class="headerlink" title="2.图元装配"></a>2.图元装配</h3><p>顶点着色器之后，管线的下一个阶段是图元装配。<br>图元是三角形，直线或者点精灵等几何对象。</p>
-<p>对于每个图元，必须确定图元是否位于视锥体（屏幕上可见的3D空间区域）内，如果图元没有完全在视锥体内，则可能需要进行裁剪，如果图元完全处于该区域之外，它就会被抛弃。裁剪之后，顶点位置被转换为屏幕坐标。也可以执行一次淘汰操作，根据图元面向前方或者后方抛弃它们，裁剪和淘汰之后，图元便准备传递给管线的下一个阶段–光栅化阶段。</p>
-<h3 id="3-光栅化"><a href="#3-光栅化" class="headerlink" title="3.光栅化"></a>3.光栅化</h3><p>光栅化是将图元转化为一组二维片段的过程，然后，这些片段由片段着色器处理。这些二维片段代表着可在屏幕上绘制的像素。</p>
-<h3 id="4-片段着色器"><a href="#4-片段着色器" class="headerlink" title="4.片段着色器"></a>4.片段着色器</h3><p>片段着色器为片段上的操作实现了通用的可编程方法。<br>片段着色器的输入：</p>
-<ul>
-<li><p>着色器程序–描述片段上所执行操作的片段着色器程序源代码或者可执行文件。</p>
-</li>
-<li><p>输入变量–光栅化单元用插值为每个片段生成的顶点着色器输出。</p>
-</li>
-<li><p>统一变量–片段（或者顶点）着色器使用的不变数据。</p>
-</li>
-<li><p>采样器–代表片段着色器所用纹理的特殊统一变量类型。</p>
-</li>
-</ul>
-<p>简单实例:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">#version 300 es                              </div><div class="line"> precision mediump float;//默认的精度限定符</div><div class="line"> in vec4 v_color;</div><div class="line">                      </div><div class="line"> out vec4 fragColor;                          </div><div class="line"> void main()                                  </div><div class="line"> &#123;                                            </div><div class="line">    fragColor = v_color;  </div><div class="line"> &#125;</div></pre></td></tr></table></figure>
-<h3 id="5-逐片段操作"><a href="#5-逐片段操作" class="headerlink" title="5.逐片段操作"></a>5.逐片段操作</h3><p>在逐片段操作阶段，在每个片段上执行如下功能：</p>
-<ul>
-<li><p>像素归属测试–这个测试确定帧缓冲区中位置（Xw,Yw）的像素目前是不是归OpenGL ES 所有。</p>
-</li>
-<li><p>裁剪测试–裁剪测试确定（Xw,Yw）是否位于作为OpenGL ES状态的一部分的裁剪矩形范围内。如果该片段位于裁剪区域之外，则被抛弃。</p>
-</li>
-<li><p>模板和深度测试–这些测试在输入片段的模板和深度值上进行，以确保片段是否应该被拒绝。</p>
-</li>
-<li><p>混合–混合将新生成的片段颜色值与保存在帧缓冲区（Xw,Yw）位置的颜色值组合起来。</p>
-</li>
-<li><p>抖动–抖动可用于最小化因为使用有限精度在帧缓冲区中保存颜色值而产生的伪像。</p>
-</li>
-</ul>
-<p>在逐片段操作的最后，片段或者被拒绝，或者在帧缓冲区的（Xw,Yw）位置写入片段的代码，深度或者模板值。写入片段颜色 深度和模板值取决于启用的相应写入掩码。写入掩码可以更精细的控制写入相关缓冲区的颜色，深度和模板值。</p>
-<h2 id="OpenGL-ES-3-0新功能"><a href="#OpenGL-ES-3-0新功能" class="headerlink" title="OpenGL ES 3.0新功能"></a>OpenGL ES 3.0新功能</h2><ul>
-<li><p>纹理</p>
-</li>
-<li><p>着色器</p>
-</li>
-<li><p>几何形状</p>
-</li>
-<li><p>缓冲区对象</p>
-</li>
-<li><p>帧缓冲区</p>
-</li>
-</ul>
-<h2 id="OpenGL-ES-3-0-和向后兼容性"><a href="#OpenGL-ES-3-0-和向后兼容性" class="headerlink" title="OpenGL ES 3.0 和向后兼容性"></a>OpenGL ES 3.0 和向后兼容性</h2><h2 id="EGL（iOS不支持）"><a href="#EGL（iOS不支持）" class="headerlink" title="EGL（iOS不支持）"></a>EGL（iOS不支持）</h2>
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1829,7 +1836,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">17</span>
+              <span class="site-state-item-count">18</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
