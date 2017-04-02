@@ -94,7 +94,7 @@
 负责将域名解析成为IP地址的服务器，叫做域名解析服务器，英文简称是DNS。Internet上所有的DNS通过域的层次关系连接在">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/dnsflow.jpg">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/dnssearchflow.jpg">
-<meta property="og:updated_time" content="2017-04-02T10:50:00.000Z">
+<meta property="og:updated_time" content="2017-04-02T11:01:55.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="DNS解析学习笔记">
 <meta name="twitter:description" content="什么是域名解析Internet上的计算机是通过IP地址来定位的，给出一个IP地址，就可以找到Internet上的某台主机。而因为IP地址难于记忆，又发明了域名来代替IP地址。但通过域名并不能直接找到要访问的主机，中间要加一个从域名查找IP地址的过程，这个过程就是域名解析。
@@ -281,8 +281,8 @@
       
         <h3 id="什么是域名解析"><a href="#什么是域名解析" class="headerlink" title="什么是域名解析"></a>什么是域名解析</h3><p>Internet上的计算机是通过IP地址来定位的，给出一个IP地址，就可以找到Internet上的某台主机。而因为IP地址难于记忆，又发明了域名来代替IP地址。但通过域名并不能直接找到要访问的主机，中间要加一个从域名查找IP地址的过程，这个过程就是域名解析。</p>
 <p>负责将域名解析成为IP地址的服务器，叫做域名解析服务器，英文简称是DNS。Internet上所有的DNS通过域的层次关系连接在一起。</p>
-<p>当Internet用户打开浏览器，输入一个网址的时候，比如<a href="http://www.google.com，用户的计算机并不知道www.google.com是哪一台主机，因此计算机向Internet的DNS发出查询请求，DNS将查询到的IP地址返回给用户的计算机，用户计算机就可以根据IP地址连接www.google.com主机，把网页下载下来。" target="_blank" rel="external">http://www.google.com，用户的计算机并不知道www.google.com是哪一台主机，因此计算机向Internet的DNS发出查询请求，DNS将查询到的IP地址返回给用户的计算机，用户计算机就可以根据IP地址连接www.google.com主机，把网页下载下来。</a></p>
-<h3 id="相关名词"><a href="#相关名词" class="headerlink" title="相关名词"></a>相关名词</h3><h4 id="根域"><a href="#根域" class="headerlink" title="根域"></a>根域</h4><p>就是所谓的“.”，其实我们的网址www.baidu.com在配置当中应该是www.baidu.com.（最后有一点），一般我们在浏览器里输入时会省略后面的点，而这也已经成为了习惯。</p>
+<p>当Internet用户打开浏览器，输入一个网址的时候，比如<a href="http://www.google.com" target="_blank" rel="external">http://www.google.com</a> 用户的计算机并不知道www.google.com是哪一台主机，因此计算机向Internet的DNS发出查询请求，DNS将查询到的IP地址返回给用户的计算机，用户计算机就可以根据IP地址连接www.google.com主机，把网页下载下来。</p>
+<h3 id="相关名词"><a href="#相关名词" class="headerlink" title="相关名词"></a>相关名词</h3><h4 id="根域"><a href="#根域" class="headerlink" title="根域"></a>根域</h4><p>就是所谓的“.”，其实我们的网址www.google.com在配置当中应该是www.google.com.（最后有一点），一般我们在浏览器里输入时会省略后面的点，而这也已经成为了习惯。</p>
 <p>根域服务器我们知道有13台，但是这是错误的观点。</p>
 <p>根域服务器只是具有13个IP地址，但机器数量却不是13台，因为这些IP地址借助了任播的技术，所以我们可以在全球设立这些IP的镜像站点，你访问到的这个IP并不是唯一的那台主机。</p>
 <h4 id="域的划分"><a href="#域的划分" class="headerlink" title="域的划分"></a>域的划分</h4><p>根域下面就是顶级域或者叫一级域.</p>
