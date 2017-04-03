@@ -1,0 +1,653 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="Socket是基于传输层TCP、UDP协议封装的一套API接口，它本身并不是一种协议。
+网络通信模型
+传输层中的协议传输控制协议 (TCP)TCP全称是Transmission Control Protocol，中文名为传输控制协议，它可以提供可靠的、面向连接的网络数据传递服务。
+传输控制协议主要包含下列任务和功能：
+确保IP数据报的成功传递
+
+对程序发送的大块数据进行分段和重组
+
+确保正确排序及">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iOS Socket编程学习笔记">
+<meta property="og:url" content="http://yoursite.com/2017/04/03/iOS-Socket编程学习笔记/index.html">
+<meta property="og:site_name" content="lly's Blog">
+<meta property="og:description" content="Socket是基于传输层TCP、UDP协议封装的一套API接口，它本身并不是一种协议。
+网络通信模型
+传输层中的协议传输控制协议 (TCP)TCP全称是Transmission Control Protocol，中文名为传输控制协议，它可以提供可靠的、面向连接的网络数据传递服务。
+传输控制协议主要包含下列任务和功能：
+确保IP数据报的成功传递
+
+对程序发送的大块数据进行分段和重组
+
+确保正确排序及">
+<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/networkmodel.png">
+<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/socketflow.png">
+<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/tcpconnect.png">
+<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/tcpdisconnect.png">
+<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/udpflow.png">
+<meta property="og:updated_time" content="2017-04-03T16:24:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="iOS Socket编程学习笔记">
+<meta name="twitter:description" content="Socket是基于传输层TCP、UDP协议封装的一套API接口，它本身并不是一种协议。
+网络通信模型
+传输层中的协议传输控制协议 (TCP)TCP全称是Transmission Control Protocol，中文名为传输控制协议，它可以提供可靠的、面向连接的网络数据传递服务。
+传输控制协议主要包含下列任务和功能：
+确保IP数据报的成功传递
+
+对程序发送的大块数据进行分段和重组
+
+确保正确排序及">
+<meta name="twitter:image" content="http://ofy1hyquv.bkt.clouddn.com/networkmodel.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/04/03/iOS-Socket编程学习笔记/"/>
+
+  <title> iOS Socket编程学习笔记 | lly's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">lly's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">用心记录点滴</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                iOS Socket编程学习笔记
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-04-03T23:06:10+08:00" content="2017-04-03">
+              2017-04-03
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/04/03/iOS-Socket编程学习笔记/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/04/03/iOS-Socket编程学习笔记/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>Socket是基于传输层TCP、UDP协议封装的一套API接口，它本身并不是一种协议。</p>
+<h3 id="网络通信模型"><a href="#网络通信模型" class="headerlink" title="网络通信模型"></a>网络通信模型</h3><p><img src="http://ofy1hyquv.bkt.clouddn.com/networkmodel.png" alt=""></p>
+<h3 id="传输层中的协议"><a href="#传输层中的协议" class="headerlink" title="传输层中的协议"></a>传输层中的协议</h3><h4 id="传输控制协议-TCP"><a href="#传输控制协议-TCP" class="headerlink" title="传输控制协议 (TCP)"></a>传输控制协议 (TCP)</h4><p>TCP全称是Transmission Control Protocol，中文名为传输控制协议，它可以提供可靠的、面向连接的网络数据传递服务。</p>
+<h5 id="传输控制协议主要包含下列任务和功能："><a href="#传输控制协议主要包含下列任务和功能：" class="headerlink" title="传输控制协议主要包含下列任务和功能："></a>传输控制协议主要包含下列任务和功能：</h5><ul>
+<li><p>确保IP数据报的成功传递</p>
+</li>
+<li><p>对程序发送的大块数据进行分段和重组</p>
+</li>
+<li><p>确保正确排序及按顺序传递分段的数据</p>
+</li>
+<li><p>通过计算校验和，进行传输数据的完整性检查</p>
+</li>
+<li><p>根据数据是否接收成功发送肯定消息。通过使用选择性确认，也对没有收到的数据发送否定确认</p>
+</li>
+</ul>
+<h5 id="TCP工作流程"><a href="#TCP工作流程" class="headerlink" title="TCP工作流程"></a>TCP工作流程</h5><p><img src="http://ofy1hyquv.bkt.clouddn.com/socketflow.png" alt=""></p>
+<p>TCP的连接建立过程又称为TCP三次握手</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/tcpconnect.png" alt=""></p>
+<p>一旦初始的三次握手完成，client和server就可以相互发送信息。</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/tcpdisconnect.png" alt=""></p>
+<p>而断开连接时，就不分client和server了，先请求断开的即为主动方，主动方会先发送断开请求，被动发在收到断开请求后会先给主动方一个确认，然后待被动方处理完所有的传输事务后，再给主动方一个断开连接的请求，<br>主动方收到被动方的断开请求，给被动方一个断开确认。至此断开成功。</p>
+<p>TCP工作过程比较复杂，包括的内容如下:</p>
+<ul>
+<li><p>TCP连接关闭：发送方主机和目的主机建立TCP连接并完成数据传输后，会发送一个将结束标记置1的数据包，以关闭这个TCP连接，并同时释放该连接占用的缓冲区空间。</p>
+</li>
+<li><p>TCP重置：TCP允许在传输的过程中突然中断连接。</p>
+</li>
+<li><p>TCP数据排序和确认*：在传输的过程中使用序列号和确认号来跟踪数据的接收情况。</p>
+</li>
+<li><p>TCP重传：在TCP的传输过程中，如果在重传超时时间内没有收到接收方主机对某数据包的确认回复，发送方主机就认为此数据包丢失，并再次发送这个数据包给接收方。</p>
+</li>
+<li><p>TCP延迟确认：TCP并不总是在接收到数据后立即对其进行确认，它允许主机在接收数据的同时发送自己的确认信息给对方。</p>
+</li>
+<li><p>TCP数据保护（校验）：TCP是可靠传输的协议，它提供校验和计算来实现数据在传输过程中的完整性。</p>
+</li>
+</ul>
+<h4 id="用户数据报协议（UDP）"><a href="#用户数据报协议（UDP）" class="headerlink" title="用户数据报协议（UDP）"></a>用户数据报协议（UDP）</h4><p>UDP全称是User Datagram Protocol，中文名为用户数据报协议。UDP 提供无连接的网络服务，该服务对消息中传输的数据提供不可靠的、最大努力传送。这意味着它不保证数据报的到达，也不保证所传送数据包的顺序是否正确。</p>
+<p>虽然TCP中植入了各种安全保障功能，但是在实际执行的过程中会占用大量的系统开销，无疑使速度受到严重的影响。反观UDP由于排除了信息可靠传递机制，将安全和排序等功能移交给上层应用来完成，极大地降低了执行时间，使速度得到了保证。</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/udpflow.png" alt=""></p>
+<h3 id="Socket编程-Client"><a href="#Socket编程-Client" class="headerlink" title="Socket编程-Client"></a>Socket编程-Client</h3><p>iOS中实现Socekt编程这种方式：</p>
+<ul>
+<li>BSDSocket iOS系统基于unix，所以支持底层的BSD Socket。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">//相关api位于下面这个文件中</div><div class="line">#import &lt;sys/socket.h&gt;</div></pre></td></tr></table></figure>
+<ul>
+<li>CFSocket 对底层BSD Socket进行轻量级的封装</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">//相关api位于下面这个文件中</div><div class="line">#import &lt;CoreFoundation/CFSocket.h&gt;</div></pre></td></tr></table></figure>
+<ul>
+<li>CocoaAsyncSocket 使用OC封装的一个socket框架（支持TCP和UDP）<br><a href="https://github.com/robbiehanson/CocoaAsyncSocket" target="_blank" rel="external">github</a></li>
+</ul>
+<p>这里使用的是CFSocket结合BSDSocket</p>
+<h4 id="创建socket对象并连接服务器"><a href="#创建socket对象并连接服务器" class="headerlink" title="创建socket对象并连接服务器"></a>创建socket对象并连接服务器</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div></pre></td><td class="code"><pre><div class="line">- (void)connectServerWithServerIP:(NSString *)serverIP&#123;</div><div class="line"></div><div class="line">    CFSocketContext socketContext = &#123;</div><div class="line">        0,//结构体的版本，必须为0</div><div class="line">        (__bridge void *)(self),</div><div class="line">        NULL,</div><div class="line">        NULL,</div><div class="line">        NULL,</div><div class="line">    &#125;;</div><div class="line">    </div><div class="line">    _mSocket = CFSocketCreate(kCFAllocatorDefault,//为新对象分配内存，可以为nil</div><div class="line">                              PF_INET,//协议族，如果为0或者负数，则默认为PF_INET</div><div class="line">                              SOCK_STREAM,//套接字类型，如果协议族为PF_INET,则它会默认为SOCK_STREAM</div><div class="line">                              IPPROTO_TCP,//套接字协议，如果协议族是PF_INET且协议是0或者负数，它会默认为IPPROTO_TCP</div><div class="line">                              kCFSocketConnectCallBack,//触发回调函数的socket消息类型，具体见Callback Types</div><div class="line">                              socketMessageCallBack,//上面情况下触发的回调函数</div><div class="line">                              &amp;socketContext);//一个持有CFSocket结构信息的对象，可以为nil</div><div class="line">    if (_mSocket != NULL) &#123;</div><div class="line">        struct sockaddr_in addr4;//IPV4</div><div class="line">        memset(&amp;addr4, 0, sizeof(addr4));</div><div class="line">        addr4.sin_len = sizeof(addr4);</div><div class="line">        addr4.sin_family = AF_INET;</div><div class="line">        addr4.sin_port = htons(8888);</div><div class="line">        addr4.sin_addr.s_addr = inet_addr([serverIP UTF8String]);//把字符串的地址转换为机器可识别的网络地址</div><div class="line"></div><div class="line">        //把sockaddr_in结构体中的地址转换为Data</div><div class="line">        CFDataRef address = CFDataCreate(kCFAllocatorDefault,</div><div class="line">                                         (UInt8 *)&amp;addr4, sizeof(addr4));</div><div class="line">        CFSocketConnectToAddress(_mSocket,//当前连接的socket</div><div class="line">                                 address,//CFDataRef类型的包含上面socket的远程地址的对象</div><div class="line">                                 -1);//连接超时时间，如果为负，则不尝试连接，而是把连接放在后台进行，如果_socket消息类型为kCFSocketConnectCallBack，将会在连接成功或失败的时候在后台触发回调函数</div><div class="line">        </div><div class="line">        CFRunLoopRef cRunRef = CFRunLoopGetCurrent();//获取当前线程的循环</div><div class="line">        //创建一个循环，但并没有真正加如到循环中，需要调用CFRunLoopAddSource</div><div class="line">        CFRunLoopSourceRef sourceRef = CFSocketCreateRunLoopSource(kCFAllocatorDefault, _mSocket, 0);</div><div class="line">        CFRunLoopAddSource(cRunRef, sourceRef, kCFRunLoopCommonModes);</div><div class="line">        CFRelease(cRunRef);</div><div class="line">        CFRelease(sourceRef);</div><div class="line">        </div><div class="line">        NSLog(@&quot;start connect&quot;);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="接收数据"><a href="#接收数据" class="headerlink" title="接收数据"></a>接收数据</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">case kCFSocketConnectCallBack:</div><div class="line">        &#123;</div><div class="line">            NSLog(@&quot;connect callback&quot;);</div><div class="line">            //data为回调的错误码,为NULL则为成功</div><div class="line">            if (data != NULL)</div><div class="line">            &#123;</div><div class="line">                NSLog(@&quot;连接失败&quot;);</div><div class="line">                return;</div><div class="line">            &#125;</div><div class="line">            else&#123;</div><div class="line">                //更新界面需要在主线程</div><div class="line">                dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">                    [mSelf ShowMsg:@&quot;服务器连接成功,现在可以开始通信了!!!&quot;];</div><div class="line">                &#125;);</div><div class="line">                //持续的接收数据，不能在主线程做，会阻塞当前线程，放到一个子线程去做。</div><div class="line">                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^&#123;</div><div class="line">                    [mSelf readMessageLoop];</div><div class="line">                &#125;);</div><div class="line">            &#125;</div><div class="line"></div><div class="line">        &#125;</div><div class="line">            break;</div></pre></td></tr></table></figure>
+<p>判断当前连接成功后，可以开一个线程监听是否接收到数据。</p>
+<p>注意这里的监听需要在子线程中进行。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">- (void)readMessageLoop&#123;</div><div class="line"></div><div class="line">    while (1) &#123;</div><div class="line">        char buffer[1024];</div><div class="line">        ssize_t recvLen = recv(CFSocketGetNative(_mSocket), buffer, sizeof(buffer), 0);</div><div class="line">        if (recvLen &gt; 0) &#123;</div><div class="line">            @autoreleasepool &#123;</div><div class="line">                NSString *str = @&quot;服务器发来数据：&quot;;</div><div class="line">                NSData *data = [NSData dataWithBytes:buffer length:recvLen];</div><div class="line">                str = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];</div><div class="line">                //回界面显示信息</div><div class="line">                dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">                    [self ShowMsg:str];</div><div class="line">                &#125;);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="发送数据"><a href="#发送数据" class="headerlink" title="发送数据"></a>发送数据</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">// 发送数据</div><div class="line">- (void)sendMessage &#123;</div><div class="line">    const char *sData = [self.sendContentTextField.text UTF8String];</div><div class="line">    send(CFSocketGetNative(_mSocket), sData, strlen(sData) + 1, 0);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="断开连接"><a href="#断开连接" class="headerlink" title="断开连接"></a>断开连接</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">- (IBAction)closeServerConnectBtnClicked:(id)sender &#123;</div><div class="line">    if (_mSocket) &#123;</div><div class="line">        CFSocketInvalidate(_mSocket);</div><div class="line">        CFRelease(_mSocket);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><a href="https://github.com/lilingyu0620/LLYSocketDemo.git" target="_blank" rel="external">iOS Socket Demo</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/04/01/DNS解析学习笔记/" rel="next" title="DNS解析学习笔记">
+                <i class="fa fa-chevron-left"></i> DNS解析学习笔记
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/04/03/iOS-Socket编程学习笔记/"
+           data-title="iOS Socket编程学习笔记" data-url="http://yoursite.com/2017/04/03/iOS-Socket编程学习笔记/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/head.png"
+               alt="lly" />
+          <p class="site-author-name" itemprop="name">lly</p>
+          <p class="site-description motion-element" itemprop="description">耿直的一Boy</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">19</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#网络通信模型"><span class="nav-number">1.</span> <span class="nav-text">网络通信模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#传输层中的协议"><span class="nav-number">2.</span> <span class="nav-text">传输层中的协议</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#传输控制协议-TCP"><span class="nav-number">2.1.</span> <span class="nav-text">传输控制协议 (TCP)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#传输控制协议主要包含下列任务和功能："><span class="nav-number">2.1.1.</span> <span class="nav-text">传输控制协议主要包含下列任务和功能：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#TCP工作流程"><span class="nav-number">2.1.2.</span> <span class="nav-text">TCP工作流程</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#用户数据报协议（UDP）"><span class="nav-number">2.2.</span> <span class="nav-text">用户数据报协议（UDP）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Socket编程-Client"><span class="nav-number">3.</span> <span class="nav-text">Socket编程-Client</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#创建socket对象并连接服务器"><span class="nav-number">3.1.</span> <span class="nav-text">创建socket对象并连接服务器</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#接收数据"><span class="nav-number">3.2.</span> <span class="nav-text">接收数据</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#发送数据"><span class="nav-number">3.3.</span> <span class="nav-text">发送数据</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#断开连接"><span class="nav-number">3.4.</span> <span class="nav-text">断开连接</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lly</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"llyblog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
