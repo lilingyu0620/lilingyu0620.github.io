@@ -93,7 +93,7 @@
 <meta property="og:description" content="简介SceneKit是苹果爸爸在2014年发布的一个3D框架，应该是高度封装了OpenGL ES相关的内容，使用起来比OpenGL方便了不止100倍，当然功能上肯定不能和手撸OpenGL相比较啦，但是一些简单的3D场景用它做起来还是比较方便的。比如加载显示个3D模型啥的。
 需求产品想在咱的app里面加一套勋章体系，这个也不是啥新鲜功能啦，纵观各大直播app,勋章体系做的都是66的，但是呢，咱们产品">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/qqmedel.gif">
-<meta property="og:updated_time" content="2017-06-02T07:32:07.000Z">
+<meta property="og:updated_time" content="2017-06-02T07:34:04.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="SceneKit的那些坑">
 <meta name="twitter:description" content="简介SceneKit是苹果爸爸在2014年发布的一个3D框架，应该是高度封装了OpenGL ES相关的内容，使用起来比OpenGL方便了不止100倍，当然功能上肯定不能和手撸OpenGL相比较啦，但是一些简单的3D场景用它做起来还是比较方便的。比如加载显示个3D模型啥的。
@@ -300,6 +300,7 @@
 <h5 id="属性的选择"><a href="#属性的选择" class="headerlink" title="属性的选择"></a>属性的选择</h5><p>然后就是选择改变node的哪个属性来实现旋转了，SCNNode有好几个属性都是可以旋转node，比如transform,pivot,rotation等,不同点是前两个是矩阵运算，后一个是向量运算。这里我也做了2种尝试，最初我使用的是pivot，在处理旋转角度小于M_PI时还行，但是如果想让勋章旋转一圈或者几圈时，无论我的角度设置的是多大，最终效果都只能旋转M_PI。好吧，然后我就转向使用rotation旋转勋章，这里还有一点需要注意的，要保证勋章是平滑的转动而不会出现突出旋转到某个方向，必须要在勋章的初始角度上进行加减，并保存勋章旋转后的角度以便下一次旋转时计算角度值。</p>
 <h5 id="动画"><a href="#动画" class="headerlink" title="动画"></a>动画</h5><p>当手指离开屏幕后，勋章会根据手指滑动的速率和方向做一个旋转的弹簧动画，因为SCNNode本身是支持CA动画的，所以我首先想到的就是使用CA动画去做，ok,第一次旋转是木有问题的，但是动画结束之后，如果你再去旋转勋章你会发现，勋章完全不动了，不管你的旋转角度是多少。。。我想可能是因为CA动画本身并没有改变rotation的值，所以当我再次旋转时计算的角度值并不是从当前勋章的其实角度开始的。</p>
 <p>CA动画不行，还好Scenekit提供了另外一种动画的实现方式，SCNTransaction动画，类似于CATransaction的使用方式。好吧 动画这块的效果终于差不多搞定了。</p>
+<p><a href="https://github.com/lilingyu0620/LLYSceneKitDemo" target="_blank" rel="external">这是我的demo</a></p>
 
       
     </div>
