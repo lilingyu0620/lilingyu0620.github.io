@@ -84,20 +84,20 @@
 
 
 
-<meta name="description" content="简介SceneKit是苹果爸爸在2014年发布的一个3D框架，应该是高度封装了OpenGL ES相关的内容，使用起来比OpenGL方便了不止100倍，当然功能上肯定不能和手撸OpenGL相比较啦，但是一些简单的3D场景用它做起来还是比较方便的。比如加载显示个3D模型啥的。
-需求产品想在咱的app里面加一套勋章体系，这个也不是啥新鲜功能啦，纵观各大直播app,勋章体系做的都是66的，但是呢，咱们产品">
+<meta name="description" content="简介SceneKit是苹果爸爸自带的一个3D引擎，应该是高度封装了OpenGL ES相关的内容，使用起来比OpenGL方便了不止100倍，当然功能上肯定不能和手撸OpenGL相比较啦，但是一些简单的3D场景用它做起来还是比较方便的。比如加载显示个3D模型啥的。
+需求产品想在咱的app里面加一套勋章体系，这个也不是啥新鲜功能啦，纵观各大直播app,勋章体系做的都是66的，但是呢，咱们产品大大看上了Q">
 <meta property="og:type" content="article">
 <meta property="og:title" content="SceneKit的那些坑">
 <meta property="og:url" content="http://yoursite.com/2017/05/27/SceneKit的那些坑/index.html">
 <meta property="og:site_name" content="lly's Blog">
-<meta property="og:description" content="简介SceneKit是苹果爸爸在2014年发布的一个3D框架，应该是高度封装了OpenGL ES相关的内容，使用起来比OpenGL方便了不止100倍，当然功能上肯定不能和手撸OpenGL相比较啦，但是一些简单的3D场景用它做起来还是比较方便的。比如加载显示个3D模型啥的。
-需求产品想在咱的app里面加一套勋章体系，这个也不是啥新鲜功能啦，纵观各大直播app,勋章体系做的都是66的，但是呢，咱们产品">
+<meta property="og:description" content="简介SceneKit是苹果爸爸自带的一个3D引擎，应该是高度封装了OpenGL ES相关的内容，使用起来比OpenGL方便了不止100倍，当然功能上肯定不能和手撸OpenGL相比较啦，但是一些简单的3D场景用它做起来还是比较方便的。比如加载显示个3D模型啥的。
+需求产品想在咱的app里面加一套勋章体系，这个也不是啥新鲜功能啦，纵观各大直播app,勋章体系做的都是66的，但是呢，咱们产品大大看上了Q">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/qqmedel.gif">
-<meta property="og:updated_time" content="2017-06-02T07:34:04.000Z">
+<meta property="og:updated_time" content="2017-06-13T10:14:59.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="SceneKit的那些坑">
-<meta name="twitter:description" content="简介SceneKit是苹果爸爸在2014年发布的一个3D框架，应该是高度封装了OpenGL ES相关的内容，使用起来比OpenGL方便了不止100倍，当然功能上肯定不能和手撸OpenGL相比较啦，但是一些简单的3D场景用它做起来还是比较方便的。比如加载显示个3D模型啥的。
-需求产品想在咱的app里面加一套勋章体系，这个也不是啥新鲜功能啦，纵观各大直播app,勋章体系做的都是66的，但是呢，咱们产品">
+<meta name="twitter:description" content="简介SceneKit是苹果爸爸自带的一个3D引擎，应该是高度封装了OpenGL ES相关的内容，使用起来比OpenGL方便了不止100倍，当然功能上肯定不能和手撸OpenGL相比较啦，但是一些简单的3D场景用它做起来还是比较方便的。比如加载显示个3D模型啥的。
+需求产品想在咱的app里面加一套勋章体系，这个也不是啥新鲜功能啦，纵观各大直播app,勋章体系做的都是66的，但是呢，咱们产品大大看上了Q">
 <meta name="twitter:image" content="http://ofy1hyquv.bkt.clouddn.com/qqmedel.gif">
 
 
@@ -278,7 +278,7 @@
       
 
       
-        <h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>SceneKit是苹果爸爸在2014年发布的一个3D框架，应该是高度封装了OpenGL ES相关的内容，使用起来比OpenGL方便了不止100倍，当然功能上肯定不能和手撸OpenGL相比较啦，但是一些简单的3D场景用它做起来还是比较方便的。比如加载显示个3D模型啥的。</p>
+        <h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>SceneKit是苹果爸爸自带的一个3D引擎，应该是高度封装了OpenGL ES相关的内容，使用起来比OpenGL方便了不止100倍，当然功能上肯定不能和手撸OpenGL相比较啦，但是一些简单的3D场景用它做起来还是比较方便的。比如加载显示个3D模型啥的。</p>
 <h3 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h3><p>产品想在咱的app里面加一套勋章体系，这个也不是啥新鲜功能啦，纵观各大直播app,勋章体系做的都是66的，但是呢，咱们产品大大看上了QQ的勋章展示方式，如下图：</p>
 <p><img src="http://ofy1hyquv.bkt.clouddn.com/qqmedel.gif" alt=""></p>
 <p>第一反应是OpenGL ES，后来同事推荐了SceneKit这个框架，于是有了这一篇踩坑之旅。</p>
@@ -300,6 +300,10 @@
 <h5 id="属性的选择"><a href="#属性的选择" class="headerlink" title="属性的选择"></a>属性的选择</h5><p>然后就是选择改变node的哪个属性来实现旋转了，SCNNode有好几个属性都是可以旋转node，比如transform,pivot,rotation等,不同点是前两个是矩阵运算，后一个是向量运算。这里我也做了2种尝试，最初我使用的是pivot，在处理旋转角度小于M_PI时还行，但是如果想让勋章旋转一圈或者几圈时，无论我的角度设置的是多大，最终效果都只能旋转M_PI。好吧，然后我就转向使用rotation旋转勋章，这里还有一点需要注意的，要保证勋章是平滑的转动而不会出现突出旋转到某个方向，必须要在勋章的初始角度上进行加减，并保存勋章旋转后的角度以便下一次旋转时计算角度值。</p>
 <h5 id="动画"><a href="#动画" class="headerlink" title="动画"></a>动画</h5><p>当手指离开屏幕后，勋章会根据手指滑动的速率和方向做一个旋转的弹簧动画，因为SCNNode本身是支持CA动画的，所以我首先想到的就是使用CA动画去做，ok,第一次旋转是木有问题的，但是动画结束之后，如果你再去旋转勋章你会发现，勋章完全不动了，不管你的旋转角度是多少。。。我想可能是因为CA动画本身并没有改变rotation的值，所以当我再次旋转时计算的角度值并不是从当前勋章的其实角度开始的。</p>
 <p>CA动画不行，还好Scenekit提供了另外一种动画的实现方式，SCNTransaction动画，类似于CATransaction的使用方式。好吧 动画这块的效果终于差不多搞定了。</p>
+<h4 id="自定义贴图"><a href="#自定义贴图" class="headerlink" title="自定义贴图"></a>自定义贴图</h4><p>勋章的背面需要显示用户的相关信息，这些信息都是动态的，不可能是美工同学在建模的时候加，只能是通过代码的方式动态的加上去。</p>
+<p>因为图片可以直接作为材质的contents，so 我将需要显示的信息放到一个label上，然后对这个label做截图操作就可以得到我想要的图片文件了。</p>
+<p>SCNNode有很多的材质相关的属性，而且还有一个材质列表，模型所有使用的材质都在这个列表中可以找到，所以我的做法就是取出你需要改变的材质，将自定义贴图和当前材质做一个合并，然后使用合并后的材质替换之前的。</p>
+<p>这里有点需要注意的就是调试贴图到正确的位置，因为图片的坐标系是01坐标系，所以在调试的时候参数需要尽量小，慢慢调，如果你合并材质和替换都成功了但是在模型上面看不到图片，可能就是图片的位置不对。</p>
 <p><a href="https://github.com/lilingyu0620/LLYSceneKitDemo" target="_blank" rel="external">这是我的demo</a></p>
 
       
@@ -436,7 +440,7 @@
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#简介"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#需求"><span class="nav-number">2.</span> <span class="nav-text">需求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#学习资料"><span class="nav-number">3.</span> <span class="nav-text">学习资料</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#坑s"><span class="nav-number">4.</span> <span class="nav-text">坑s</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#通过id加载"><span class="nav-number">4.1.</span> <span class="nav-text">通过id加载</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#通过name加载"><span class="nav-number">4.2.</span> <span class="nav-text">通过name加载</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#自定义材质-Material"><span class="nav-number">4.3.</span> <span class="nav-text">自定义材质(Material)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#材质叠加"><span class="nav-number">4.4.</span> <span class="nav-text">材质叠加</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#添加射灯"><span class="nav-number">4.5.</span> <span class="nav-text">添加射灯</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#勋章的旋转"><span class="nav-number">4.6.</span> <span class="nav-text">勋章的旋转</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#手势的选择"><span class="nav-number">4.6.1.</span> <span class="nav-text">手势的选择</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#属性的选择"><span class="nav-number">4.6.2.</span> <span class="nav-text">属性的选择</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#动画"><span class="nav-number">4.6.3.</span> <span class="nav-text">动画</span></a></li></ol></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#简介"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#需求"><span class="nav-number">2.</span> <span class="nav-text">需求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#学习资料"><span class="nav-number">3.</span> <span class="nav-text">学习资料</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#坑s"><span class="nav-number">4.</span> <span class="nav-text">坑s</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#通过id加载"><span class="nav-number">4.1.</span> <span class="nav-text">通过id加载</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#通过name加载"><span class="nav-number">4.2.</span> <span class="nav-text">通过name加载</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#自定义材质-Material"><span class="nav-number">4.3.</span> <span class="nav-text">自定义材质(Material)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#材质叠加"><span class="nav-number">4.4.</span> <span class="nav-text">材质叠加</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#添加射灯"><span class="nav-number">4.5.</span> <span class="nav-text">添加射灯</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#勋章的旋转"><span class="nav-number">4.6.</span> <span class="nav-text">勋章的旋转</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#手势的选择"><span class="nav-number">4.6.1.</span> <span class="nav-text">手势的选择</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#属性的选择"><span class="nav-number">4.6.2.</span> <span class="nav-text">属性的选择</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#动画"><span class="nav-number">4.6.3.</span> <span class="nav-text">动画</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#自定义贴图"><span class="nav-number">4.7.</span> <span class="nav-text">自定义贴图</span></a></li></ol></li></ol></div>
             
           </div>
         </section>
