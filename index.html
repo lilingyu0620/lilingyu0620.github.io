@@ -306,7 +306,7 @@
 <p>SCNNode有很多的材质相关的属性，而且还有一个材质列表，模型所有使用的材质都在这个列表中可以找到，所以我的做法就是取出你需要改变的材质，将自定义贴图和当前材质做一个合并，然后使用合并后的材质替换之前的。</p>
 <p>这里有点需要注意的就是调试贴图到正确的位置，因为图片的坐标系是01坐标系，所以在调试的时候参数需要尽量小，慢慢调，如果你合并材质和替换都成功了但是在模型上面看不到图片，可能就是图片的位置不对。</p>
 <h4 id="模型的动态加载"><a href="#模型的动态加载" class="headerlink" title="模型的动态加载"></a>模型的动态加载</h4><p>Xcode在build的时候，会把项目中引用了的.dae模型(这里指本地模型)通过一个脚本copy到.ipa中，copy的过程中可能对模型的格式进行了特殊处理，因为copy后的文件比原文件小了很多。</p>
-<p>如果我们要动态加载模型的话，Xcode是没有对模型进行copy操作的，我们直接使用设计给的模型文件，在模型被保存到沙盒中后，通过文件路径加载无法正常加载出模型，后来在网上找到<a href="https://the-nerd.be/2014/11/07/dynamically-load-collada-files-in-scenekit-at-runtime/#more-457" target="_blank" rel="external">这个解决方案</a>，<a href="http://www.jianshu.com/p/78be2688ef4c" target="_blank" rel="external">这里还有一篇中文的，内容差不多</a>，先将模型用Xcode在build时使用的脚步copy一份，然后把copy的模型文件给服务器，下载后就可能正常显示了。</p>
+<p>如果我们要动态加载模型的话，Xcode是没有对模型进行copy操作的，我们直接使用设计给的模型文件，在模型被保存到沙盒中后，通过文件路径加载无法正常加载出模型，后来在网上找到<a href="https://the-nerd.be/2014/11/07/dynamically-load-collada-files-in-scenekit-at-runtime/#more-457" target="_blank" rel="external">这个解决方案</a>，<a href="http://www.jianshu.com/p/78be2688ef4c" target="_blank" rel="external">这里还有一篇中文的，内容差不多</a>，先将模型用Xcode在build时使用的脚步copy一份，然后把copy的模型文件给服务器，下载后就可以正常显示了。</p>
 <p>相当于我们帮Xcode做了copy的操作。</p>
 <p><a href="https://github.com/lilingyu0620/LLYSceneKitDemo" target="_blank" rel="external">这是我的demo</a></p>
 
