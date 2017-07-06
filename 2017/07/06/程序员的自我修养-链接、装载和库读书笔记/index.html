@@ -104,7 +104,7 @@ Hello World 被输出的整个流程的思考…
 计算机的关键部件：中央处理器CPU,内存和I/O控制芯片
 北桥和南桥的概念
 SMP（对称">
-<meta property="og:updated_time" content="2017-07-06T12:15:58.000Z">
+<meta property="og:updated_time" content="2017-07-06T12:23:29.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="程序员的自我修养--链接、装载和库读书笔记">
 <meta name="twitter:description" content="第一章 温故而知新从 Hello World说起1234567#include&amp;lt;stdio.h&amp;gt;int mian()&amp;#123;	printf(&amp;quot;Hello World\n&amp;quot;);	return 0;&amp;#125;
@@ -303,7 +303,7 @@ SMP（对称">
 <li>北桥和南桥的概念</li>
 <li>SMP（对称多处理器）和多核</li>
 </ul>
-<h4 id="站得高，忘得远"><a href="#站得高，忘得远" class="headerlink" title="站得高，忘得远"></a>站得高，忘得远</h4><ul>
+<h4 id="站得高，望得远"><a href="#站得高，望得远" class="headerlink" title="站得高，望得远"></a>站得高，望得远</h4><ul>
 <li>系统软件分类：平台性的（系统工具类）和开发类的（IDE,汇编器，链接器等）</li>
 <li><p>计算机软件体系结构</p>
 <pre><code>从上到下
@@ -325,7 +325,7 @@ SMP（对称">
 <pre><code>扇片-磁道（65536）-扇区（1024）
 </code></pre></li>
 </ul>
-<h4 id="内存不够怎么办"><a href="#内存不够怎么办" class="headerlink" title="内存不够怎么办"></a>内存不够怎么办</h4><p>直接顺序问题的问题：</p>
+<h4 id="内存不够怎么办"><a href="#内存不够怎么办" class="headerlink" title="内存不够怎么办"></a>内存不够怎么办</h4><p>直接顺序分配的问题：</p>
 <ol>
 <li>地址空间不隔离</li>
 <li>内存使用率低</li>
@@ -348,12 +348,12 @@ SMP（对称">
 <h4 id="众人拾柴火焰高"><a href="#众人拾柴火焰高" class="headerlink" title="众人拾柴火焰高"></a>众人拾柴火焰高</h4><h5 id="线程基础"><a href="#线程基础" class="headerlink" title="线程基础"></a>线程基础</h5><ul>
 <li>线程有时被称为轻量级进程。</li>
 <li>由线程ID,当前指令指针（PC），寄存器集合和堆栈组成。</li>
-<li>一个进程由一个到多个线程组成，个线程共享程序的内存空间（代码段，数据段，堆等）。</li>
+<li>一个进程由一个到多个线程组成，每个线程共享进程的内存空间（代码段，数据段，堆等）。</li>
 <li>线程的私有存储空间包括栈，线程局部存储（TLS）和寄存器。</li>
 <li>线程的访问权限有私有权限和线程共享权限两种。</li>
 <li>私有权限包括局部变量，函数的参数和TLS数据</li>
 <li>线程的状态包括运行，就绪和等待。</li>
-<li>处理运行中的线程拥有一段可以执行的时间称为时间片。</li>
+<li>处于运行中的线程拥有一段可以执行的时间称为时间片。</li>
 <li>线程调度方案包括优先级调度和轮转法调度。</li>
 <li>I/O密集型线程（频繁等待的线程）优先级更容易改变</li>
 <li>CPU密集型线程（很少等待的线程）容易饿死其他低优先级的线程</li>
@@ -379,7 +379,7 @@ SMP（对称">
 <ul>
 <li>一对一，线程并发是真正的并发，线程数受内核限制，上线文切换开销大。</li>
 <li>多对一，如果一个用户线程堵塞，其他用户线程也会阻塞。</li>
-<li>多对多，结合和上面两种的优点。（常用）</li>
+<li>多对多，结合了上面两种的优点。（常用）</li>
 </ul>
 
       
@@ -516,7 +516,7 @@ SMP（对称">
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#第一章-温故而知新"><span class="nav-number">1.</span> <span class="nav-text">第一章 温故而知新</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#从-Hello-World说起"><span class="nav-number">1.1.</span> <span class="nav-text">从 Hello World说起</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#万变不离其宗"><span class="nav-number">1.2.</span> <span class="nav-text">万变不离其宗</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#站得高，忘得远"><span class="nav-number">1.3.</span> <span class="nav-text">站得高，忘得远</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#操作系统做什么"><span class="nav-number">1.4.</span> <span class="nav-text">操作系统做什么</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#不让CPU打盹"><span class="nav-number">1.4.1.</span> <span class="nav-text">不让CPU打盹</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#设备驱动"><span class="nav-number">1.4.2.</span> <span class="nav-text">设备驱动</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#内存不够怎么办"><span class="nav-number">1.5.</span> <span class="nav-text">内存不够怎么办</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#关于隔离"><span class="nav-number">1.5.1.</span> <span class="nav-text">关于隔离</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#分段"><span class="nav-number">1.5.2.</span> <span class="nav-text">分段</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#分页"><span class="nav-number">1.5.3.</span> <span class="nav-text">分页</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#众人拾柴火焰高"><span class="nav-number">1.6.</span> <span class="nav-text">众人拾柴火焰高</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#线程基础"><span class="nav-number">1.6.1.</span> <span class="nav-text">线程基础</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#线程安全"><span class="nav-number">1.6.2.</span> <span class="nav-text">线程安全</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#多线程内部情况"><span class="nav-number">1.6.3.</span> <span class="nav-text">多线程内部情况</span></a></li></ol></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#第一章-温故而知新"><span class="nav-number">1.</span> <span class="nav-text">第一章 温故而知新</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#从-Hello-World说起"><span class="nav-number">1.1.</span> <span class="nav-text">从 Hello World说起</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#万变不离其宗"><span class="nav-number">1.2.</span> <span class="nav-text">万变不离其宗</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#站得高，望得远"><span class="nav-number">1.3.</span> <span class="nav-text">站得高，望得远</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#操作系统做什么"><span class="nav-number">1.4.</span> <span class="nav-text">操作系统做什么</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#不让CPU打盹"><span class="nav-number">1.4.1.</span> <span class="nav-text">不让CPU打盹</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#设备驱动"><span class="nav-number">1.4.2.</span> <span class="nav-text">设备驱动</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#内存不够怎么办"><span class="nav-number">1.5.</span> <span class="nav-text">内存不够怎么办</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#关于隔离"><span class="nav-number">1.5.1.</span> <span class="nav-text">关于隔离</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#分段"><span class="nav-number">1.5.2.</span> <span class="nav-text">分段</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#分页"><span class="nav-number">1.5.3.</span> <span class="nav-text">分页</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#众人拾柴火焰高"><span class="nav-number">1.6.</span> <span class="nav-text">众人拾柴火焰高</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#线程基础"><span class="nav-number">1.6.1.</span> <span class="nav-text">线程基础</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#线程安全"><span class="nav-number">1.6.2.</span> <span class="nav-text">线程安全</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#多线程内部情况"><span class="nav-number">1.6.3.</span> <span class="nav-text">多线程内部情况</span></a></li></ol></li></ol></li></ol></div>
             
           </div>
         </section>
