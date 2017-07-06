@@ -228,6 +228,140 @@
             
               
                 
+                <a class="post-title-link" href="/2016/09/01/iOS卡片控件的实现/" itemprop="url">
+                  iOS卡片控件的实现
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-09-01T13:59:01+08:00" content="2016-09-01">
+              2016-09-01
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/09/01/iOS卡片控件的实现/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/09/01/iOS卡片控件的实现/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>###需求<br><img src="http://ww3.sinaimg.cn/large/763206fdjw1f7e20ldzxeg20pw0f87jh.gif" alt="CardPageDemo"></p>
+<p>最近公司给了个需求，实现上面卡片效果，这种控件网上也有现成的<a href="http://www.jianshu.com/p/6af5fb818b5d" target="_blank" rel="external">demo</a>，但有些地方还是要自己研究下才能满足使用，下面记录一下我的研究成果。</p>
+<p>1.使用UICollectionView控件。</p>
+<p>如果这是单纯的轮播图片，使用UIScrollView就可以满足需要，但是上面的效果有缩放还有渐变，用UIScrollView的话代码量大，实现比较复杂，而且数据处理起来也没有用UICollectionView方便，这里再放一个用UIScrollView实现的<a href="https://github.com/kejinlu/KKPagedFlowView" target="_blank" rel="external">demo</a>,有需要的可以对比一下。</p>
+<p>2.自定义UICollecionViewFlowLayout类。</p>
+<p>使用过UICollectionView的同学们对这个类应该都不陌生吧，瀑布流布局类，可以通过自定义这个类实现各种瀑布流的效果，我要实现的这个效果当然也是需要自定义这个类了。</p>
+<p>先来看看prepareLayout这个函数的实现吧，这个是布局初始化的时候调用的，可以在这个函数里面自定义每一个cell的大小，cell之间的间距等属性</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">- (void)prepareLayout&#123;</div><div class="line">    </div><div class="line">    [super prepareLayout];</div><div class="line">    //滑动方向</div><div class="line">    self.scrollDirection = UICollectionViewScrollDirectionHorizontal;</div><div class="line">    //两个cell的间距</div><div class="line">    self.minimumLineSpacing = kLineSpace;</div><div class="line">    //计算cell超出显示的宽度</div><div class="line">    CGFloat width = ((self.collectionView.frame.size.width - kPageCardWidth)-(kLineSpace*2))/2;</div><div class="line">    //第一个cell和最后一个cell相对于屏幕的偏移</div><div class="line">    self.sectionInset = UIEdgeInsetsMake(0, kLineSpace+width, 0, kLineSpace+width);</div><div class="line">    //每个cell实际的大小</div><div class="line">    self.itemSize = CGSizeMake(kPageCardWidth,kPageCardHeight);</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>结合下面这两张图片，几个属性的关系就很清楚了:</p>
+<p>首尾cell<br><img src="http://ww1.sinaimg.cn/large/763206fdjw1f7e3nzupk6j20pp0gwt9k.jpg" alt="首尾cell"></p>
+<p>中间cell<br><img src="http://ww2.sinaimg.cn/large/763206fdjw1f7nbwdjtqyj20pw0glwfe.jpg" alt="中间cell"></p>
+<p>要保证每一次cell滑动之后都能精确的移动到屏幕的中间，就必须计算出图上标的这几个参数的值，这里有两种情况：</p>
+<p>1.cell宽度固定。</p>
+<p>当cell的宽度是一个常量，两个cell之间的间距（minimumLineSpacing）一般都是不变的，很容易计算出前后两个cell超出显示在屏幕上的宽度 CGFloat width = ((self.collectionView.frame.size.width - kPageCardWidth)-(kLineSpace*2))/2;（参考中间cell这张图），首尾情况时，只要让sectionInset左右的偏移量 ＝ width＋minimumLineSpacing，左右的空白宽度等于了另一边的非空白的宽度（参考首尾cell这张图），这样无论滑到哪个cell，就能精确计算出移动到屏幕中间所需要的偏移量了。</p>
+<p>2.前后cell超出显示在屏幕上的宽度（图中的width）固定。<br> 这种情况就要根据屏幕宽度计算出cell的宽度kPageCardWidth = self.collectionView.frame.size.width - (kLineSpace x 2) -(width x 2); sectionInset左右的偏移量计算方法和第一种情况一样。</p>
+<p>我这里的cell的宽度是固定值，所以计算起来相对简单，如果要让每个cell都在屏幕的中心点，对于第一个cell，只需要sectionInset左右边的偏移量 = width + minimumLineSpacing。</p>
+<p>而对于后面的cell，则需要通过控制每一次滑动后当前显示cell的中心坐标。这个坐标当然是有方法来返回的，看下面这个函数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">- (CGPoint)targetContentOffsetForProposedContentOffset:(CGPoint)proposedContentOffset withScrollingVelocity:(CGPoint)velocity &#123;</div><div class="line">    // 分页以1/3处</div><div class="line">    if (proposedContentOffset.x &gt; self.previousOffsetX + self.itemSize.width / 3.0) &#123;</div><div class="line">        self.previousOffsetX += kPageCardWidth+kLineSpace ;</div><div class="line">        self.pageNum = self.previousOffsetX/(kPageCardWidth+kLineSpace);</div><div class="line">        if ([self.delegate respondsToSelector:@selector(scrollToPageIndex:)]) &#123;</div><div class="line">            [self.delegate scrollToPageIndex:self.pageNum];</div><div class="line">        &#125;</div><div class="line">    &#125; else if (proposedContentOffset.x &lt; self.previousOffsetX  - self.itemSize.width / 3.0) &#123;</div><div class="line">        self.previousOffsetX -= kPageCardWidth+kLineSpace;</div><div class="line">        self.pageNum = self.previousOffsetX/(kPageCardWidth+kLineSpace);</div><div class="line">        if ([self.delegate respondsToSelector:@selector(scrollToPageIndex:)]) &#123;</div><div class="line">            [self.delegate scrollToPageIndex:self.pageNum];</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    //将当前cell移动到屏幕中间位置</div><div class="line">    proposedContentOffset.x = self.previousOffsetX;</div><div class="line">    </div><div class="line">    return proposedContentOffset;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这个函数返回当前cell的中心点移动到哪个坐标点。</p>
+<p>以第一个cell为基准（第一个cell已经在屏幕的中心），后面的每一个cell如果要移动到屏幕中心，X方向上的位移应该为2个cell中心点之前的距离，即previousOffsetX = kPageCardWidth（cell的宽度）+kLineSpace（2个cell的间距）。</p>
+<p>OK，完成了一半了，然后就是缩放和渐变。</p>
+<p>直接上代码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line">- (NSArray&lt;UICollectionViewLayoutAttributes *&gt; *)layoutAttributesForElementsInRect:(CGRect)rect &#123;</div><div class="line">    NSArray *superAttributes = [super layoutAttributesForElementsInRect:rect];</div><div class="line">    NSArray *attributes = [[NSArray alloc] initWithArray:superAttributes copyItems:YES];</div><div class="line">    </div><div class="line">    CGRect visibleRect = CGRectMake(self.collectionView.contentOffset.x,</div><div class="line">                                    self.collectionView.contentOffset.y,</div><div class="line">                                    self.collectionView.frame.size.width,</div><div class="line">                                    self.collectionView.frame.size.height);</div><div class="line">    CGFloat offset = CGRectGetMidX(visibleRect);</div><div class="line">    </div><div class="line">    [attributes enumerateObjectsUsingBlock:^(UICollectionViewLayoutAttributes *attribute, NSUInteger idx, BOOL * _Nonnull stop) &#123;</div><div class="line">        CGFloat distance = offset - attribute.center.x;</div><div class="line">        // 越往中心移动，值越小，那么缩放就越小，从而显示就越大</div><div class="line">        // 同样，超过中心后，越往左、右走，缩放就越大，显示就越小</div><div class="line">        CGFloat scaleForDistance = distance / self.itemSize.width;</div><div class="line">        // 0.1可调整，值越大，显示就越大</div><div class="line">        CGFloat scaleForCell = 1 + 0.1 * (1 - fabs(scaleForDistance));</div><div class="line">        </div><div class="line">        //只在Y轴方向做缩放</div><div class="line">        attribute.transform3D =  CATransform3DMakeScale(1, scaleForCell, 1);</div><div class="line">        attribute.zIndex = 1;</div><div class="line">        </div><div class="line">        //渐变</div><div class="line">        CGFloat scaleForAlpha = 1 - fabsf(scaleForDistance)*0.4;</div><div class="line">        attribute.alpha = scaleForAlpha;</div><div class="line">    &#125;];</div><div class="line">    </div><div class="line">    return attributes;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>上面这个函数返回一个UICollectionViewLayoutAttributes *类型的数组，简单点说就是滑动过程中动态计算每一个cell的属性然后传给UICollectionView显示出来，在这里动态修改每个cell的属性，显示的结果就是渐变和动画的效果了,具体可参考代码注释。根据位移控制好属性改变的系数即可。</p>
+<hr>
+<p>###补充需求－－轮播</p>
+<p><img src="http://ww3.sinaimg.cn/large/763206fdjw1f7ndvj1t0xg20hw0doazp.gif" alt="轮播"></p>
+<p>还是原来的配方，还是熟悉的问题，轮播还是用的前后各加一个数据源的方式实现。具体参考我下面的demo。</p>
+<p>这里我总结一下，如果要让轮播的过度看上去不那么明显应该注意两点：</p>
+<p>1.应该让 前后cell超出显示在屏幕上的宽度（图中的width）固定 即上面说的第二种情况，且width的大小不宜过大。</p>
+<p>2.cell的背景色和UICollectionView的背景色色差不宜过大。</p>
+<hr>
+<p>###轮播补充<br>上面这种实现方式在处理最后一张到第一张的衔接的时候效果不太好，最近研究了下，比较好的实现方式是放多个section，初始化的时候手动滚动到中间section，每个section内容相同，这样在滑动的时候就不会出现上面跳一下的问题。这里要注意的就是处理好每个section之间的间距问题，具体参考我的demo。<br>新demo的效果如下：<br><img src="http://ofy1hyquv.bkt.clouddn.com/%E8%BD%AE%E6%92%AD.gif" alt="轮播"></p>
+<p><a href="https://github.com/lilingyu0620/PageCardDemo" target="_blank" rel="external">这里是我的demo，请下载</a>。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/08/30/个人博客的搭建/" itemprop="url">
                   个人博客的搭建
                 </a>
@@ -358,7 +492,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">21</span>
+              <span class="site-state-item-count">22</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

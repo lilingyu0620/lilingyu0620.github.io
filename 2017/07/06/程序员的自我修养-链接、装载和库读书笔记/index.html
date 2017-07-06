@@ -1,0 +1,671 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="第一章 温故而知新从 Hello World说起1234567#include&amp;lt;stdio.h&amp;gt;int mian()&amp;#123;	printf(&amp;quot;Hello World\n&amp;quot;);	return 0;&amp;#125;
+
+Hello World 被输出的整个流程的思考…
+
+万变不离其宗
+计算机的关键部件：中央处理器CPU,内存和I/O控制芯片
+北桥和南桥的概念
+SMP（对称">
+<meta property="og:type" content="article">
+<meta property="og:title" content="程序员的自我修养--链接、装载和库读书笔记">
+<meta property="og:url" content="http://yoursite.com/2017/07/06/程序员的自我修养-链接、装载和库读书笔记/index.html">
+<meta property="og:site_name" content="lly's Blog">
+<meta property="og:description" content="第一章 温故而知新从 Hello World说起1234567#include&amp;lt;stdio.h&amp;gt;int mian()&amp;#123;	printf(&amp;quot;Hello World\n&amp;quot;);	return 0;&amp;#125;
+
+Hello World 被输出的整个流程的思考…
+
+万变不离其宗
+计算机的关键部件：中央处理器CPU,内存和I/O控制芯片
+北桥和南桥的概念
+SMP（对称">
+<meta property="og:updated_time" content="2017-07-06T12:15:58.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="程序员的自我修养--链接、装载和库读书笔记">
+<meta name="twitter:description" content="第一章 温故而知新从 Hello World说起1234567#include&amp;lt;stdio.h&amp;gt;int mian()&amp;#123;	printf(&amp;quot;Hello World\n&amp;quot;);	return 0;&amp;#125;
+
+Hello World 被输出的整个流程的思考…
+
+万变不离其宗
+计算机的关键部件：中央处理器CPU,内存和I/O控制芯片
+北桥和南桥的概念
+SMP（对称">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/07/06/程序员的自我修养-链接、装载和库读书笔记/"/>
+
+  <title> 程序员的自我修养--链接、装载和库读书笔记 | lly's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">lly's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">用心记录点滴</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                程序员的自我修养--链接、装载和库读书笔记
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-07-06T18:14:55+08:00" content="2017-07-06">
+              2017-07-06
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/07/06/程序员的自我修养-链接、装载和库读书笔记/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/07/06/程序员的自我修养-链接、装载和库读书笔记/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="第一章-温故而知新"><a href="#第一章-温故而知新" class="headerlink" title="第一章 温故而知新"></a>第一章 温故而知新</h3><h4 id="从-Hello-World说起"><a href="#从-Hello-World说起" class="headerlink" title="从 Hello World说起"></a>从 Hello World说起</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">#include&lt;stdio.h&gt;</div><div class="line"></div><div class="line">int mian()</div><div class="line">&#123;</div><div class="line">	printf(&quot;Hello World\n&quot;);</div><div class="line">	return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ul>
+<li>Hello World 被输出的整个流程的思考…</li>
+</ul>
+<h4 id="万变不离其宗"><a href="#万变不离其宗" class="headerlink" title="万变不离其宗"></a>万变不离其宗</h4><ul>
+<li>计算机的关键部件：中央处理器CPU,内存和I/O控制芯片</li>
+<li>北桥和南桥的概念</li>
+<li>SMP（对称多处理器）和多核</li>
+</ul>
+<h4 id="站得高，忘得远"><a href="#站得高，忘得远" class="headerlink" title="站得高，忘得远"></a>站得高，忘得远</h4><ul>
+<li>系统软件分类：平台性的（系统工具类）和开发类的（IDE,汇编器，链接器等）</li>
+<li><p>计算机软件体系结构</p>
+<pre><code>从上到下
+应用--&gt;运行时库--&gt;操作系统内核--&gt;硬件
+</code></pre></li>
+<li><p>运行时库使用系统接口一般使用软件中断实现        </p>
+</li>
+<li>硬件相关接口（驱动程序）即硬件规格</li>
+</ul>
+<h4 id="操作系统做什么"><a href="#操作系统做什么" class="headerlink" title="操作系统做什么"></a>操作系统做什么</h4><h5 id="不让CPU打盹"><a href="#不让CPU打盹" class="headerlink" title="不让CPU打盹"></a>不让CPU打盹</h5><ul>
+<li>分时系统，多任务系统</li>
+<li>进程的概念，进程有自己的地址空间，互相隔离。根据优先级由操作系统统一分配CPU运行时间</li>
+<li>抢占式的分配方式</li>
+<li>CPU在多个进程间快速切换，从而造成很多进程在同时运行的假象。</li>
+</ul>
+<h5 id="设备驱动"><a href="#设备驱动" class="headerlink" title="设备驱动"></a>设备驱动</h5><ul>
+<li>硬件驱动程序的开发由硬件生产商完成。</li>
+<li><p>硬盘的结构，每个扇区512k</p>
+<pre><code>扇片-磁道（65536）-扇区（1024）
+</code></pre></li>
+</ul>
+<h4 id="内存不够怎么办"><a href="#内存不够怎么办" class="headerlink" title="内存不够怎么办"></a>内存不够怎么办</h4><p>直接顺序问题的问题：</p>
+<ol>
+<li>地址空间不隔离</li>
+<li>内存使用率低</li>
+<li>程序运行的地址不确定</li>
+</ol>
+<p>解决方法：添加中间层（虚拟地址）</p>
+<h5 id="关于隔离"><a href="#关于隔离" class="headerlink" title="关于隔离"></a>关于隔离</h5><ul>
+<li>虚拟地址空间和物理地址空间</li>
+<li>虚拟地址空间是指虚拟的、人们想象出来的地址空间，其实他并不存在，每个进程都有自己独立的虚拟空间，而且每个进程只能访问自己的地址空间，这样就有效的做到了进程隔离。</li>
+</ul>
+<h5 id="分段"><a href="#分段" class="headerlink" title="分段"></a>分段</h5><ul>
+<li>将内存分为多段，每段对应一个进程。</li>
+<li>物理地址空间和虚拟地址空间相对应。</li>
+<li>分段使用效率低</li>
+</ul>
+<h5 id="分页"><a href="#分页" class="headerlink" title="分页"></a>分页</h5><ul>
+<li>每页大小为4K</li>
+<li>MMU页面映射</li>
+</ul>
+<h4 id="众人拾柴火焰高"><a href="#众人拾柴火焰高" class="headerlink" title="众人拾柴火焰高"></a>众人拾柴火焰高</h4><h5 id="线程基础"><a href="#线程基础" class="headerlink" title="线程基础"></a>线程基础</h5><ul>
+<li>线程有时被称为轻量级进程。</li>
+<li>由线程ID,当前指令指针（PC），寄存器集合和堆栈组成。</li>
+<li>一个进程由一个到多个线程组成，个线程共享程序的内存空间（代码段，数据段，堆等）。</li>
+<li>线程的私有存储空间包括栈，线程局部存储（TLS）和寄存器。</li>
+<li>线程的访问权限有私有权限和线程共享权限两种。</li>
+<li>私有权限包括局部变量，函数的参数和TLS数据</li>
+<li>线程的状态包括运行，就绪和等待。</li>
+<li>处理运行中的线程拥有一段可以执行的时间称为时间片。</li>
+<li>线程调度方案包括优先级调度和轮转法调度。</li>
+<li>I/O密集型线程（频繁等待的线程）优先级更容易改变</li>
+<li>CPU密集型线程（很少等待的线程）容易饿死其他低优先级的线程</li>
+<li><p>改变优先级的方式有三种：</p>
+<pre><code>1.用户指定优先级
+2.根据进入等待状态的频繁程度提升或降低优先级
+3.长时间得不到执行而被提升优先级
+</code></pre></li>
+<li>可抢占线程（一般为可抢占）和不可抢占线程（线程利用率低）</li>
+</ul>
+<h5 id="线程安全"><a href="#线程安全" class="headerlink" title="线程安全"></a>线程安全</h5><ul>
+<li>多线程访问一个共享资源时</li>
+<li>原子操作（单指令操作）</li>
+<li>同步锁（Synchronization）</li>
+<li>二元信号量是一种简单的锁，只有两种状态（占有和非占有）适合只能被一个线程独占的资源。</li>
+<li>Semaphore(信号量)N个信号量允许N个线程并发访问</li>
+<li>互斥量（Mutex）和二元信号量很类似，不同处是互斥量需要在哪个线程获取必须在哪个线程释放。而信号量可以被任意线程获取并释放。</li>
+<li>临界区是比互斥量更加严格的同步手段。临界区的作用范围只在本进程。其他进程无法获取该锁。而互斥量可以被其他线程获取（但不能被其他线程释放）。</li>
+<li>读写锁。其他线程可读但是不可写。</li>
+<li>条件变量，使用条件变量可以让许多线程等待同一个条件的发生。</li>
+</ul>
+<h5 id="多线程内部情况"><a href="#多线程内部情况" class="headerlink" title="多线程内部情况"></a>多线程内部情况</h5><p>用户线程和内核线程（CPU）的对应关系</p>
+<ul>
+<li>一对一，线程并发是真正的并发，线程数受内核限制，上线文切换开销大。</li>
+<li>多对一，如果一个用户线程堵塞，其他用户线程也会阻塞。</li>
+<li>多对多，结合和上面两种的优点。（常用）</li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/05/27/SceneKit的那些坑/" rel="next" title="SceneKit的那些坑">
+                <i class="fa fa-chevron-left"></i> SceneKit的那些坑
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/07/06/程序员的自我修养-链接、装载和库读书笔记/"
+           data-title="程序员的自我修养--链接、装载和库读书笔记" data-url="http://yoursite.com/2017/07/06/程序员的自我修养-链接、装载和库读书笔记/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/head.png"
+               alt="lly" />
+          <p class="site-author-name" itemprop="name">lly</p>
+          <p class="site-description motion-element" itemprop="description">耿直的一Boy</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">22</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#第一章-温故而知新"><span class="nav-number">1.</span> <span class="nav-text">第一章 温故而知新</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#从-Hello-World说起"><span class="nav-number">1.1.</span> <span class="nav-text">从 Hello World说起</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#万变不离其宗"><span class="nav-number">1.2.</span> <span class="nav-text">万变不离其宗</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#站得高，忘得远"><span class="nav-number">1.3.</span> <span class="nav-text">站得高，忘得远</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#操作系统做什么"><span class="nav-number">1.4.</span> <span class="nav-text">操作系统做什么</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#不让CPU打盹"><span class="nav-number">1.4.1.</span> <span class="nav-text">不让CPU打盹</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#设备驱动"><span class="nav-number">1.4.2.</span> <span class="nav-text">设备驱动</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#内存不够怎么办"><span class="nav-number">1.5.</span> <span class="nav-text">内存不够怎么办</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#关于隔离"><span class="nav-number">1.5.1.</span> <span class="nav-text">关于隔离</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#分段"><span class="nav-number">1.5.2.</span> <span class="nav-text">分段</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#分页"><span class="nav-number">1.5.3.</span> <span class="nav-text">分页</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#众人拾柴火焰高"><span class="nav-number">1.6.</span> <span class="nav-text">众人拾柴火焰高</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#线程基础"><span class="nav-number">1.6.1.</span> <span class="nav-text">线程基础</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#线程安全"><span class="nav-number">1.6.2.</span> <span class="nav-text">线程安全</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#多线程内部情况"><span class="nav-number">1.6.3.</span> <span class="nav-text">多线程内部情况</span></a></li></ol></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lly</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"llyblog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
