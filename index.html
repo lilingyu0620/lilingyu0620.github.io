@@ -609,6 +609,39 @@
 <li>.rel.data和.rel.text 重定向的段。</li>
 <li>.strtabl和.shstrtab 字符串表和段表字符串表。</li>
 </ul>
+<h4 id="链接的接口–符号"><a href="#链接的接口–符号" class="headerlink" title="链接的接口–符号"></a>链接的接口–符号</h4><ul>
+<li>在链接中，目标文件之间的相互拼合实际上是目标文件之间对地址的引用，我们将函数和变量统称为符号，函数名和变量名就是符号名。</li>
+<li>每一个目标文件都有一个相应的符号表，这个表里面记录了目标文件中所用到的所有的符号</li>
+<li>每个对应的符号有一个对应值叫做符号值，对于变量和函数来说，符号值就是他们的地址。</li>
+</ul>
+<h5 id="符号类型"><a href="#符号类型" class="headerlink" title="符号类型"></a>符号类型</h5><ul>
+<li>全局符号</li>
+<li>外部符号</li>
+<li>段名</li>
+<li>局部符号</li>
+<li>行号信息</li>
+</ul>
+<h5 id="符号表结构"><a href="#符号表结构" class="headerlink" title="符号表结构"></a>符号表结构</h5><ul>
+<li>symtab</li>
+<li>每个符号对应一个结构体（Elf32_Sym）</li>
+</ul>
+<h5 id="特殊符号"><a href="#特殊符号" class="headerlink" title="特殊符号"></a>特殊符号</h5><ul>
+<li>程序起始地址</li>
+<li>text段结束地址</li>
+<li>data段结束地址</li>
+<li>程序结束地址</li>
+<li>以上地址都是程序被装载时的虚拟地址</li>
+</ul>
+<h5 id="符号修饰和函数签名"><a href="#符号修饰和函数签名" class="headerlink" title="符号修饰和函数签名"></a>符号修饰和函数签名</h5><ul>
+<li>加前缀下划线和后缀下划线</li>
+<li>通过命名空间</li>
+<li>函数签名信息包括：函数名、参数类型、所在类、命名空间等。</li>
+</ul>
+<h5 id="extren-“C”"><a href="#extren-“C”" class="headerlink" title="extren “C”"></a>extren “C”</h5><p>extern修饰的代码段编译器会按C语言的编译规则来处理</p>
+<h5 id="强符号和弱符号"><a href="#强符号和弱符号" class="headerlink" title="强符号和弱符号"></a>强符号和弱符号</h5><ul>
+<li>函数和初始化了的全局变量为强符号</li>
+<li>未初始化的变量为弱符号</li>
+</ul>
 
           
         
