@@ -228,6 +228,151 @@
             
               
                 
+                <a class="post-title-link" href="/2017/03/24/RTMP推流流程详解/" itemprop="url">
+                  RTMP推流流程详解
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-03-24T11:14:49+08:00" content="2017-03-24">
+              2017-03-24
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/03/24/RTMP推流流程详解/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/03/24/RTMP推流流程详解/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><img src="http://ofy1hyquv.bkt.clouddn.com/rtmppush.png" alt=""></p>
+<p>通过抓取主播端的rtmp数据包，我们能清晰的看到整个从握手到推流的过程，然后我们来分析一下每一个包的内容吧。</p>
+<h3 id="三次握手"><a href="#三次握手" class="headerlink" title="三次握手"></a>三次握手</h3><h4 id="handshake-c0-c1"><a href="#handshake-c0-c1" class="headerlink" title="handshake c0+c1"></a>handshake c0+c1</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/handshakec0c1.png" alt=""></p>
+<p>具体数据格式可以参考我的<a href="http://llyblog.com/2017/03/20/RTMP协议学习笔记/" target="_blank" rel="external">这一片博客</a></p>
+<p>具体代码实现如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">//c0</div><div class="line">  char c0Byte = 0x03;//rtmp版本号</div><div class="line">  NSData *c0 = [NSData dataWithBytes:&amp;c0Byte length:1];</div><div class="line">  [self writeData:c0];</div><div class="line">  </div><div class="line">  //c1</div><div class="line">  uint8_t *c1Bytes = (uint8_t *)malloc(kRtmpSignatureSize);</div><div class="line">  memset(c1Bytes, 0, 4 + 4);</div><div class="line">  NSData *c1 = [NSData dataWithBytes:c1Bytes length:kRtmpSignatureSize];</div><div class="line">  free(c1Bytes);</div><div class="line">  [self writeData:c1];</div></pre></td></tr></table></figure>
+<h4 id="handshake-c2"><a href="#handshake-c2" class="headerlink" title="handshake c2"></a>handshake c2</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/handshakec2.png" alt=""></p>
+<p>代码实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">NSData *s1 = [self.handShake subdataWithRange:NSMakeRange(0, kRtmpSignatureSize)];</div><div class="line">   //c2</div><div class="line">   uint8_t *s1Bytes = (uint8_t *)s1.bytes;</div><div class="line">   memset(s1Bytes + 4, 0, 4);</div><div class="line">   NSData *c2 = [NSData dataWithBytes:s1Bytes length:s1.length];</div><div class="line">   [self writeData:c2];</div></pre></td></tr></table></figure>
+<h4 id="handshake-s0s1s2"><a href="#handshake-s0s1s2" class="headerlink" title="handshake s0s1s2"></a>handshake s0s1s2</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/handshakes0s1s2.png" alt=""></p>
+<p>这个数据是服务器那边发送过来的 需要我们本地保存一份。</p>
+<h3 id="协议消息"><a href="#协议消息" class="headerlink" title="协议消息"></a>协议消息</h3><p>流程如下</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/controlmessageflow.png" alt=""></p>
+<h4 id="connect"><a href="#connect" class="headerlink" title="connect"></a>connect</h4><p>当客户端检测到收到s2的消息后，就可以发送‘connect’了。</p>
+<p>看看connect里面的具体数据</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/controlmessageconnect.png" alt=""></p>
+<p>代码实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line">- (void)sendConnectPacket&#123;</div><div class="line">    NSLog(@&quot;sendConnectPacket&quot;);</div><div class="line">    //    AMF格式</div><div class="line">    RTMPChunk_0 metadata = &#123;0&#125;;</div><div class="line">    metadata.msg_stream_id = LLYStreamIDInvoke;</div><div class="line">    metadata.msg_type_id = LLYMSGTypeID_INVOKE;</div><div class="line">    </div><div class="line">    NSString *url;</div><div class="line">    NSMutableData *buff = [NSMutableData data];</div><div class="line">    if (_url.port &gt; 0) &#123;</div><div class="line">        url = [NSString stringWithFormat:@&quot;%@://%@:%zd/%@&quot;,_url.scheme,_url.host,_url.port,_url.app];</div><div class="line">    &#125;else&#123;</div><div class="line">        url = [NSString stringWithFormat:@&quot;%@://%@/%@&quot;,_url.scheme,_url.host,_url.app];</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    [buff appendString:@&quot;connect&quot;];</div><div class="line">    [buff appendDouble:++_numOfInvokes];</div><div class="line">    self.trackedCommands[@(_numOfInvokes)] = @&quot;connect&quot;;</div><div class="line">    [buff appendByte:kAMFObject];</div><div class="line">    [buff putKey:@&quot;app&quot; stringValue:_url.app];</div><div class="line">    [buff putKey:@&quot;type&quot; stringValue:@&quot;nonprivate&quot;];</div><div class="line">    [buff putKey:@&quot;tcUrl&quot; stringValue:url];</div><div class="line">    [buff putKey:@&quot;fpad&quot; boolValue:NO];//是否使用代理</div><div class="line">    [buff putKey:@&quot;capabilities&quot; doubleValue:15.];</div><div class="line">    [buff putKey:@&quot;audioCodecs&quot; doubleValue:10.];</div><div class="line">    [buff putKey:@&quot;videoCodecs&quot; doubleValue:7.];</div><div class="line">    [buff putKey:@&quot;videoFunction&quot; doubleValue:1.];</div><div class="line">    [buff appendByte16:0];</div><div class="line">    [buff appendByte:kAMFObjectEnd];</div><div class="line">    </div><div class="line">    metadata.msg_length.data = (int)buff.length;</div><div class="line">    [self sendPacket:buff :metadata];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="Window-Acknowledgment-size"><a href="#Window-Acknowledgment-size" class="headerlink" title="Window Acknowledgment size"></a>Window Acknowledgment size</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/controlmwssageAcknowledgement.png" alt=""></p>
+<p>发送端在接收到接受端返回的两个ACK间最多可以发送的字节数</p>
+<h4 id="Set-Peer-Bandwidth-amp-amp-Set-Chunk-Size-amp-amp-AFM0-Command-result"><a href="#Set-Peer-Bandwidth-amp-amp-Set-Chunk-Size-amp-amp-AFM0-Command-result" class="headerlink" title="Set Peer Bandwidth &amp;&amp; Set Chunk Size &amp;&amp; AFM0 Command _result"></a>Set Peer Bandwidth &amp;&amp; Set Chunk Size &amp;&amp; AFM0 Command _result</h4><h5 id="Set-Peer-Bandwidth"><a href="#Set-Peer-Bandwidth" class="headerlink" title="Set Peer Bandwidth"></a>Set Peer Bandwidth</h5><p><img src="http://ofy1hyquv.bkt.clouddn.com/controlmessagepeerandchunksize.png" alt=""></p>
+<p>限制对端的输出带宽。接受端接收到该消息后会通过设置消息中的Window ACK Size来限制已发送但未接受到反馈的消息的大小来限制发送端的发送带宽。如果消息中的Window ACK Size与上一次发送给发送端的size不同的话要回馈一个Window Acknowledgement Size的控制消息。</p>
+<h5 id="Set-Chunk-Size"><a href="#Set-Chunk-Size" class="headerlink" title="Set Chunk Size"></a>Set Chunk Size</h5><p>这里为默认值128个字节。</p>
+<h5 id="AFM0-Command-result-‘NetConnection-Connect-Success’"><a href="#AFM0-Command-result-‘NetConnection-Connect-Success’" class="headerlink" title="AFM0 Command _result(‘NetConnection.Connect.Success’)"></a>AFM0 Command _result(‘NetConnection.Connect.Success’)</h5><p><img src="http://ofy1hyquv.bkt.clouddn.com/controlmessageconnectresult.png" alt=""></p>
+<p>这个是上面发送的connect消息的回应消息，消息类型为AFM0 0x14，从返回的code和describtion可以看出，connect已经成功。</p>
+<p>接下来客户端需要发送 releaseStream , FCPublish 和 CreateStream 消息</p>
+<h4 id="releaseStream-消息"><a href="#releaseStream-消息" class="headerlink" title="releaseStream 消息"></a>releaseStream 消息</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/releaseStream.png" alt=""></p>
+<p>代码实现</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">	- (void)sendReleaseStream&#123;</div><div class="line">    </div><div class="line">    RTMPChunk_0 metadata = &#123;0&#125;;</div><div class="line">    metadata.msg_stream_id = LLYStreamIDInvoke;</div><div class="line">    metadata.msg_type_id = LLYMSGTypeID_NOTIFY;</div><div class="line">    </div><div class="line">    NSMutableData *buff = [NSMutableData data];</div><div class="line">    [buff appendString:@&quot;releaseStream&quot;];</div><div class="line">    [buff appendDouble:++_numOfInvokes];</div><div class="line">    </div><div class="line">    self.trackedCommands[@(_numOfInvokes)] = @&quot;releaseStream&quot;;</div><div class="line">    [buff appendByte:kAMFNull];</div><div class="line">    [buff appendString:_url.playPath];</div><div class="line">    </div><div class="line">    metadata.msg_length.data = (int)buff.length;</div><div class="line">    [self sendPacket:buff :metadata];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="CFPublish消息"><a href="#CFPublish消息" class="headerlink" title="CFPublish消息"></a>CFPublish消息</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/cfstream.png" alt=""></p>
+<p>代码实现</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">- (void)sendFCPublish&#123;</div><div class="line">    RTMPChunk_0 metadata = &#123;0&#125;;</div><div class="line">    metadata.msg_stream_id = LLYStreamIDInvoke;</div><div class="line">    metadata.msg_type_id = LLYMSGTypeID_NOTIFY;</div><div class="line">    </div><div class="line">    NSMutableData *buff = [NSMutableData data];</div><div class="line">    [buff appendString:@&quot;FCPublish&quot;];</div><div class="line">    [buff appendDouble:(++_numOfInvokes)];</div><div class="line">    self.trackedCommands[@(_numOfInvokes)] = @&quot;FCPublish&quot;;</div><div class="line">    [buff appendByte:kAMFNull];</div><div class="line">    [buff appendString:_url.playPath];</div><div class="line">    metadata.msg_length.data = (int)buff.length;</div><div class="line">    </div><div class="line">    [self sendPacket:buff :metadata];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="createStream消息"><a href="#createStream消息" class="headerlink" title="createStream消息"></a>createStream消息</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/createStream.png" alt=""></p>
+<p>代码实现</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">- (void)sendCreateStream&#123;</div><div class="line">    RTMPChunk_0 metadata = &#123;0&#125;;</div><div class="line">    metadata.msg_stream_id = LLYStreamIDInvoke;</div><div class="line">    metadata.msg_type_id = LLYMSGTypeID_INVOKE;</div><div class="line">    </div><div class="line">    NSMutableData *buff = [NSMutableData data];</div><div class="line">    [buff appendString:@&quot;createStream&quot;];</div><div class="line">    self.trackedCommands[@(++_numOfInvokes)] = @&quot;createStream&quot;;</div><div class="line">    [buff appendDouble:_numOfInvokes];</div><div class="line">    [buff appendByte:kAMFNull];</div><div class="line">    </div><div class="line">    metadata.msg_length.data = (int)buff.length;</div><div class="line">    [self sendPacket:buff :metadata];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>之后客户端会收到startStream的回应消息。</p>
+<h4 id="startStream-result"><a href="#startStream-result" class="headerlink" title="startStream result"></a>startStream result</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/startStreamResult.png" alt=""></p>
+<p>在收到这个消息后，就可以准备推流了。此时 客户端需要发送一个publish消息。</p>
+<h4 id="publish"><a href="#publish" class="headerlink" title="publish"></a>publish</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/publish.png" alt=""></p>
+<p>这个消息告诉服务器，我要准备开始推流了，之后等待服务器给一个可以开始推流的回应。</p>
+<p>代码实现</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">- (void)sendPublish&#123;</div><div class="line">    RTMPChunk_0 metadata = &#123;0&#125;;</div><div class="line">    metadata.msg_stream_id = LLYStreamIDAudio;</div><div class="line">    metadata.msg_type_id = LLYMSGTypeID_INVOKE;</div><div class="line">    </div><div class="line">    NSMutableData *buff = [NSMutableData data];</div><div class="line">    [buff appendString:@&quot;publish&quot;];</div><div class="line">    [buff appendDouble:++_numOfInvokes];</div><div class="line">    self.trackedCommands[@(_numOfInvokes)] = @&quot;publish&quot;;</div><div class="line">    [buff appendByte:kAMFNull];</div><div class="line">    [buff appendString:_url.playPath];</div><div class="line">    [buff appendString:@&quot;live&quot;];</div><div class="line">    </div><div class="line">    metadata.msg_length.data = (int)buff.length;</div><div class="line">    [self sendPacket:buff :metadata];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="onStatus-‘NetStream-Publish-Start’"><a href="#onStatus-‘NetStream-Publish-Start’" class="headerlink" title="onStatus(‘NetStream.Publish.Start’)"></a>onStatus(‘NetStream.Publish.Start’)</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/publistOnStatus.png" alt=""></p>
+<p>客户端收到这个消息，表示服务器已经准备好接收流数据，客户端可以正式开始推流。</p>
+<p><a href="http://llyblog.com/2017/03/14/iOS视频硬编码/" target="_blank" rel="external">参考文章和demo</a></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2017/03/21/使用WireShark抓取RTMP协议包/" itemprop="url">
                   使用WireShark抓取RTMP协议包
                 </a>
@@ -1623,116 +1768,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/09/14/仿映客直播app/" itemprop="url">
-                  仿映客直播app
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-09-14T16:35:59+08:00" content="2016-09-14">
-              2016-09-14
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2016/09/14/仿映客直播app/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/09/14/仿映客直播app/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>先看看demo效果，我用的Gif brewery3制作的gif,导出格式好大，只好压缩尺寸和帧率了。。。</p>
-<p><img src="http://ww1.sinaimg.cn/large/763206fdjw1f7t8sb8v4rg209r0hsnph.gif" alt=""></p>
-<p><img src="http://ww1.sinaimg.cn/large/763206fdjw1f7t8ssc0sag209r0hskjv.gif" alt=""></p>
-<p>直播相关的资料我就不在这里详细介绍了，网上资料特别多，搭建本地服务器，获取视频流和音频流，推流和拉流，播放器等等…</p>
-<p>先说说下面这个tabbar吧 这个是我自定义的一个，继承了UITabbarController 然后手动调整高度为60 设置背景图的时候需要把图片模式设置为拉伸模式（UIImageResizingModeStretch），中间圆形按钮也需要手动添加一个uibutton,注意设置中心点在tabbar中心位置。</p>
-<p>接口是通过Charles抓取的，图片资源在mac上下载映客ipa然后导出既可。</p>
-<p>项目中的直播流播放器是用的开源项目KxMovie做的，把它的界面稍微改了一下，网上有很多类似demo都用的ijkplayer，我也下载这些demo跑过，延迟不是一般的高，至少10s以上，完全无法忍受。。。</p>
-<p>点赞效果是我以前没事自己写的一个<a href="https://github.com/lilingyu0620/dianzanDemo.git" target="_blank" rel="external">小demo</a> 集成进来的</p>
-<p>弹幕效果也是用的第三方开源项目BarrageRenderer</p>
-<p><a href="https://github.com/lilingyu0620/InKeDemo.git" target="_blank" rel="external">demo在这里</a>，欢迎下载。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1778,7 +1813,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">22</span>
+              <span class="site-state-item-count">23</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
