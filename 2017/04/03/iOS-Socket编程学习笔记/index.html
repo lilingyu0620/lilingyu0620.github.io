@@ -84,28 +84,13 @@
 
 
 
-<meta name="description" content="Socket是基于传输层TCP、UDP协议封装的一套API接口，它本身并不是一种协议。
-网络通信模型
-传输层中的协议传输控制协议 (TCP)TCP全称是Transmission Control Protocol，中文名为传输控制协议，它可以提供可靠的、面向连接的网络数据传递服务。
-传输控制协议主要包含下列任务和功能：
-确保IP数据报的成功传递
-
-对程序发送的大块数据进行分段和重组
-
-确保正确排序及">
+<meta name="description" content="Socket是基于传输层TCP、UDP协议封装的一套API接口，它本身并不是一种协议。 网络通信模型 传输层中的协议传输控制协议 (TCP)TCP全称是Transmission Control Protocol，中文名为传输控制协议，它可以提供可靠的、面向连接的网络数据传递服务。 传输控制协议主要包含下列任务和功能： 确保IP数据报的成功传递  对程序发送的大块数据进行分段和重组  确保正确排序及">
 <meta property="og:type" content="article">
 <meta property="og:title" content="iOS Socket编程学习笔记">
 <meta property="og:url" content="http://yoursite.com/2017/04/03/iOS-Socket编程学习笔记/index.html">
-<meta property="og:site_name" content="lly's Blog">
-<meta property="og:description" content="Socket是基于传输层TCP、UDP协议封装的一套API接口，它本身并不是一种协议。
-网络通信模型
-传输层中的协议传输控制协议 (TCP)TCP全称是Transmission Control Protocol，中文名为传输控制协议，它可以提供可靠的、面向连接的网络数据传递服务。
-传输控制协议主要包含下列任务和功能：
-确保IP数据报的成功传递
-
-对程序发送的大块数据进行分段和重组
-
-确保正确排序及">
+<meta property="og:site_name" content="lly&#39;s Blog">
+<meta property="og:description" content="Socket是基于传输层TCP、UDP协议封装的一套API接口，它本身并不是一种协议。 网络通信模型 传输层中的协议传输控制协议 (TCP)TCP全称是Transmission Control Protocol，中文名为传输控制协议，它可以提供可靠的、面向连接的网络数据传递服务。 传输控制协议主要包含下列任务和功能： 确保IP数据报的成功传递  对程序发送的大块数据进行分段和重组  确保正确排序及">
+<meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/networkmodel.png">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/socketflow.png">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/tcpconnect.png">
@@ -116,15 +101,7 @@
 <meta property="og:updated_time" content="2017-04-17T02:11:40.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="iOS Socket编程学习笔记">
-<meta name="twitter:description" content="Socket是基于传输层TCP、UDP协议封装的一套API接口，它本身并不是一种协议。
-网络通信模型
-传输层中的协议传输控制协议 (TCP)TCP全称是Transmission Control Protocol，中文名为传输控制协议，它可以提供可靠的、面向连接的网络数据传递服务。
-传输控制协议主要包含下列任务和功能：
-确保IP数据报的成功传递
-
-对程序发送的大块数据进行分段和重组
-
-确保正确排序及">
+<meta name="twitter:description" content="Socket是基于传输层TCP、UDP协议封装的一套API接口，它本身并不是一种协议。 网络通信模型 传输层中的协议传输控制协议 (TCP)TCP全称是Transmission Control Protocol，中文名为传输控制协议，它可以提供可靠的、面向连接的网络数据传递服务。 传输控制协议主要包含下列任务和功能： 确保IP数据报的成功传递  对程序发送的大块数据进行分段和重组  确保正确排序及">
 <meta name="twitter:image" content="http://ofy1hyquv.bkt.clouddn.com/networkmodel.png">
 
 
@@ -397,7 +374,7 @@
 </ul>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">//相关api位于下面这个文件中</div><div class="line">#import &lt;CoreFoundation/CFSocket.h&gt;</div></pre></td></tr></table></figure>
 <ul>
-<li>CocoaAsyncSocket 使用OC封装的一个socket框架（支持TCP和UDP）<br><a href="https://github.com/robbiehanson/CocoaAsyncSocket" target="_blank" rel="external">github</a></li>
+<li>CocoaAsyncSocket 使用OC封装的一个socket框架（支持TCP和UDP）<br><a href="https://github.com/robbiehanson/CocoaAsyncSocket" target="_blank" rel="noopener">github</a></li>
 </ul>
 <p>这里使用的是CFSocket结合BSDSocket</p>
 <h4 id="创建socket对象并连接服务器"><a href="#创建socket对象并连接服务器" class="headerlink" title="创建socket对象并连接服务器"></a>创建socket对象并连接服务器</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div></pre></td><td class="code"><pre><div class="line">- (void)connectServerWithServerIP:(NSString *)serverIP&#123;</div><div class="line"></div><div class="line">    CFSocketContext socketContext = &#123;</div><div class="line">        0,//结构体的版本，必须为0</div><div class="line">        (__bridge void *)(self),</div><div class="line">        NULL,</div><div class="line">        NULL,</div><div class="line">        NULL,</div><div class="line">    &#125;;</div><div class="line">    </div><div class="line">    _mSocket = CFSocketCreate(kCFAllocatorDefault,//为新对象分配内存，可以为nil</div><div class="line">                              PF_INET,//协议族，如果为0或者负数，则默认为PF_INET</div><div class="line">                              SOCK_STREAM,//套接字类型，如果协议族为PF_INET,则它会默认为SOCK_STREAM</div><div class="line">                              IPPROTO_TCP,//套接字协议，如果协议族是PF_INET且协议是0或者负数，它会默认为IPPROTO_TCP</div><div class="line">                              kCFSocketConnectCallBack,//触发回调函数的socket消息类型，具体见Callback Types</div><div class="line">                              socketMessageCallBack,//上面情况下触发的回调函数</div><div class="line">                              &amp;socketContext);//一个持有CFSocket结构信息的对象，可以为nil</div><div class="line">    if (_mSocket != NULL) &#123;</div><div class="line">        struct sockaddr_in addr4;//IPV4</div><div class="line">        memset(&amp;addr4, 0, sizeof(addr4));</div><div class="line">        addr4.sin_len = sizeof(addr4);</div><div class="line">        addr4.sin_family = AF_INET;</div><div class="line">        addr4.sin_port = htons(8888);</div><div class="line">        addr4.sin_addr.s_addr = inet_addr([serverIP UTF8String]);//把字符串的地址转换为机器可识别的网络地址</div><div class="line"></div><div class="line">        //把sockaddr_in结构体中的地址转换为Data</div><div class="line">        CFDataRef address = CFDataCreate(kCFAllocatorDefault,</div><div class="line">                                         (UInt8 *)&amp;addr4, sizeof(addr4));</div><div class="line">        CFSocketConnectToAddress(_mSocket,//当前连接的socket</div><div class="line">                                 address,//CFDataRef类型的包含上面socket的远程地址的对象</div><div class="line">                                 -1);//连接超时时间，如果为负，则不尝试连接，而是把连接放在后台进行，如果_socket消息类型为kCFSocketConnectCallBack，将会在连接成功或失败的时候在后台触发回调函数</div><div class="line">        </div><div class="line">        CFRunLoopRef cRunRef = CFRunLoopGetCurrent();//获取当前线程的循环</div><div class="line">        //创建一个循环，但并没有真正加如到循环中，需要调用CFRunLoopAddSource</div><div class="line">        CFRunLoopSourceRef sourceRef = CFSocketCreateRunLoopSource(kCFAllocatorDefault, _mSocket, 0);</div><div class="line">        CFRunLoopAddSource(cRunRef, sourceRef, kCFRunLoopCommonModes);</div><div class="line">        CFRelease(cRunRef);</div><div class="line">        CFRelease(sourceRef);</div><div class="line">        </div><div class="line">        NSLog(@&quot;start connect&quot;);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
@@ -419,7 +396,7 @@
 <p>保存当前写数据的实例。</p>
 <h4 id="发送数据-1"><a href="#发送数据-1" class="headerlink" title="发送数据"></a>发送数据</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">- (IBAction)sendMessage:(id)sender &#123;</div><div class="line">    </div><div class="line">    const char *str = [self.sendTextField.stringValue UTF8String];</div><div class="line">    uint8_t *sendS = (uint8_t *)str;</div><div class="line">    if (outputStream != NULL) &#123;</div><div class="line">        CFWriteStreamWrite(outputStream, sendS, strlen(str) + 1);</div><div class="line">    &#125;</div><div class="line">    else&#123;</div><div class="line">        NSLog(@&quot;send failed&quot;);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>通信过程如下图：<br><img src="http://ofy1hyquv.bkt.clouddn.com/socketclient&amp;server.png" alt=""></p>
-<p><a href="https://github.com/lilingyu0620/LLYSocketDemo.git" target="_blank" rel="external">iOS Socket Demo</a></p>
+<p><a href="https://github.com/lilingyu0620/LLYSocketDemo.git" target="_blank" rel="noopener">iOS Socket Demo</a></p>
 
       
     </div>

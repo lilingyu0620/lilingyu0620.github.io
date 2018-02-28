@@ -84,16 +84,13 @@
 
 
 
-<meta name="description" content="什么是HTTP协议协议是指计算机通信网络中两台计算机之间进行通信所必须共同遵守的规定或规则，超文本传输协议(HTTP)是一种通信协议，它允许将超文本标记语言(HTML)文档从Web服务器传送到客户端的浏览器
-客户端和服务器如何通信呢当我们打开浏览器，在地址栏中输入URL，然后我们就看到了网页。 原理是怎样的呢？
-实际上我们输入URL后，我们的浏览器给Web服务器发送了一个Request, Web服">
+<meta name="description" content="什么是HTTP协议协议是指计算机通信网络中两台计算机之间进行通信所必须共同遵守的规定或规则，超文本传输协议(HTTP)是一种通信协议，它允许将超文本标记语言(HTML)文档从Web服务器传送到客户端的浏览器 客户端和服务器如何通信呢当我们打开浏览器，在地址栏中输入URL，然后我们就看到了网页。 原理是怎样的呢？ 实际上我们输入URL后，我们的浏览器给Web服务器发送了一个Request, Web服">
 <meta property="og:type" content="article">
 <meta property="og:title" content="HTTP协议学习笔记">
 <meta property="og:url" content="http://yoursite.com/2017/03/31/HTTP协议学习笔记/index.html">
-<meta property="og:site_name" content="lly's Blog">
-<meta property="og:description" content="什么是HTTP协议协议是指计算机通信网络中两台计算机之间进行通信所必须共同遵守的规定或规则，超文本传输协议(HTTP)是一种通信协议，它允许将超文本标记语言(HTML)文档从Web服务器传送到客户端的浏览器
-客户端和服务器如何通信呢当我们打开浏览器，在地址栏中输入URL，然后我们就看到了网页。 原理是怎样的呢？
-实际上我们输入URL后，我们的浏览器给Web服务器发送了一个Request, Web服">
+<meta property="og:site_name" content="lly&#39;s Blog">
+<meta property="og:description" content="什么是HTTP协议协议是指计算机通信网络中两台计算机之间进行通信所必须共同遵守的规定或规则，超文本传输协议(HTTP)是一种通信协议，它允许将超文本标记语言(HTML)文档从Web服务器传送到客户端的浏览器 客户端和服务器如何通信呢当我们打开浏览器，在地址栏中输入URL，然后我们就看到了网页。 原理是怎样的呢？ 实际上我们输入URL后，我们的浏览器给Web服务器发送了一个Request, Web服">
+<meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/httprequest.png">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/httpresponse.png">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/getheader.png">
@@ -101,9 +98,7 @@
 <meta property="og:updated_time" content="2017-03-31T08:11:07.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="HTTP协议学习笔记">
-<meta name="twitter:description" content="什么是HTTP协议协议是指计算机通信网络中两台计算机之间进行通信所必须共同遵守的规定或规则，超文本传输协议(HTTP)是一种通信协议，它允许将超文本标记语言(HTML)文档从Web服务器传送到客户端的浏览器
-客户端和服务器如何通信呢当我们打开浏览器，在地址栏中输入URL，然后我们就看到了网页。 原理是怎样的呢？
-实际上我们输入URL后，我们的浏览器给Web服务器发送了一个Request, Web服">
+<meta name="twitter:description" content="什么是HTTP协议协议是指计算机通信网络中两台计算机之间进行通信所必须共同遵守的规定或规则，超文本传输协议(HTTP)是一种通信协议，它允许将超文本标记语言(HTML)文档从Web服务器传送到客户端的浏览器 客户端和服务器如何通信呢当我们打开浏览器，在地址栏中输入URL，然后我们就看到了网页。 原理是怎样的呢？ 实际上我们输入URL后，我们的浏览器给Web服务器发送了一个Request, Web服">
 <meta name="twitter:image" content="http://ofy1hyquv.bkt.clouddn.com/httprequest.png">
 
 
@@ -301,14 +296,14 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">scheme://host[:port#]/path/.../[?query-string][#anchor]</div></pre></td></tr></table></figure>
 <p>scheme               指定低层使用的协议(例如：http, https, ftp)</p>
 <p>host                   HTTP服务器的IP地址或者域名</p>
-<p>port#                 HTTP服务器的默认端口是80，这种情况下端口号可以省略。如果使用了别的端口，必须指明，例如 <a href="http://www.cnblogs.com:8080/" target="_blank" rel="external">http://www.cnblogs.com:8080/</a></p>
+<p>port#                 HTTP服务器的默认端口是80，这种情况下端口号可以省略。如果使用了别的端口，必须指明，例如 <a href="http://www.cnblogs.com:8080/" target="_blank" rel="noopener">http://www.cnblogs.com:8080/</a></p>
 <p>path                   访问资源的路径</p>
 <p>query-string       发送给http服务器的数据</p>
 <p>anchor-             锚</p>
 <h4 id="URL-的一个例子"><a href="#URL-的一个例子" class="headerlink" title="URL 的一个例子"></a>URL 的一个例子</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">http://www.mywebsite.com/sj/test/test.aspx?name=sviergn&amp;x=true#stuff</div><div class="line"></div><div class="line">Schema:                 http</div><div class="line">host:                   www.mywebsite.com</div><div class="line">path:                   /sj/test/test.aspx</div><div class="line">Query String:           name=sviergn&amp;x=true</div><div class="line">Anchor:                 stuff</div></pre></td></tr></table></figure>
 <h3 id="HTTP协议是无状态的"><a href="#HTTP协议是无状态的" class="headerlink" title="HTTP协议是无状态的"></a>HTTP协议是无状态的</h3><p>http协议是无状态的，同一个客户端的这次请求和上次请求是没有对应关系，对http服务器来说，它并不知道这两个请求来自同一个客户端。 为了解决这个问题， Web程序引入了Cookie机制来维护状态.</p>
 <h3 id="打开一个网页需要浏览器发送很多次Request"><a href="#打开一个网页需要浏览器发送很多次Request" class="headerlink" title="打开一个网页需要浏览器发送很多次Request"></a>打开一个网页需要浏览器发送很多次Request</h3><ol>
-<li><p>当你在浏览器输入URL <a href="http://www.cnblogs.com" target="_blank" rel="external">http://www.cnblogs.com</a> 的时候，浏览器发送一个Request去获取 <a href="http://www.cnblogs.com" target="_blank" rel="external">http://www.cnblogs.com</a> 的html.  服务器把Response发送回给浏览器.</p>
+<li><p>当你在浏览器输入URL <a href="http://www.cnblogs.com" target="_blank" rel="noopener">http://www.cnblogs.com</a> 的时候，浏览器发送一个Request去获取 <a href="http://www.cnblogs.com" target="_blank" rel="noopener">http://www.cnblogs.com</a> 的html.  服务器把Response发送回给浏览器.</p>
 </li>
 <li><p>浏览器分析Response中的 HTML，发现其中引用了很多其他文件，比如图片，CSS文件，JS文件。</p>
 </li>

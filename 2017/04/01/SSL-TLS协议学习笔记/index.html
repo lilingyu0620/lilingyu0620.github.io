@@ -84,28 +84,20 @@
 
 
 
-<meta name="description" content="HTTPS的安全机制，建立在SSL/TLS协议的基础上。每一次会话前，会通过SSL/TLS协议为客户端和服务器生成一个会话密钥，来进行数据的对称加密。下面来看看SSL/TLS协议的具体流程。
-SSL协议的握手过程开始加密通信之前，客户端和服务器首先必须建立连接和交换参数，这个过程叫做握手（handshake）。假定客户端叫做爱丽丝，服务器叫做鲍勃，整个握手过程可以用下图说明：
-
-握手阶段分成五步:">
+<meta name="description" content="HTTPS的安全机制，建立在SSL/TLS协议的基础上。每一次会话前，会通过SSL/TLS协议为客户端和服务器生成一个会话密钥，来进行数据的对称加密。下面来看看SSL/TLS协议的具体流程。 SSL协议的握手过程开始加密通信之前，客户端和服务器首先必须建立连接和交换参数，这个过程叫做握手（handshake）。假定客户端叫做爱丽丝，服务器叫做鲍勃，整个握手过程可以用下图说明：  握手阶段分成五步:">
 <meta property="og:type" content="article">
-<meta property="og:title" content="SSL/TLS协议学习笔记">
+<meta property="og:title" content="SSL&#x2F;TLS协议学习笔记">
 <meta property="og:url" content="http://yoursite.com/2017/04/01/SSL-TLS协议学习笔记/index.html">
-<meta property="og:site_name" content="lly's Blog">
-<meta property="og:description" content="HTTPS的安全机制，建立在SSL/TLS协议的基础上。每一次会话前，会通过SSL/TLS协议为客户端和服务器生成一个会话密钥，来进行数据的对称加密。下面来看看SSL/TLS协议的具体流程。
-SSL协议的握手过程开始加密通信之前，客户端和服务器首先必须建立连接和交换参数，这个过程叫做握手（handshake）。假定客户端叫做爱丽丝，服务器叫做鲍勃，整个握手过程可以用下图说明：
-
-握手阶段分成五步:">
+<meta property="og:site_name" content="lly&#39;s Blog">
+<meta property="og:description" content="HTTPS的安全机制，建立在SSL/TLS协议的基础上。每一次会话前，会通过SSL/TLS协议为客户端和服务器生成一个会话密钥，来进行数据的对称加密。下面来看看SSL/TLS协议的具体流程。 SSL协议的握手过程开始加密通信之前，客户端和服务器首先必须建立连接和交换参数，这个过程叫做握手（handshake）。假定客户端叫做爱丽丝，服务器叫做鲍勃，整个握手过程可以用下图说明：  握手阶段分成五步:">
+<meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/sslshake.png">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/sslflow.png">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/digitalca.png">
 <meta property="og:updated_time" content="2017-04-01T09:48:59.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="SSL/TLS协议学习笔记">
-<meta name="twitter:description" content="HTTPS的安全机制，建立在SSL/TLS协议的基础上。每一次会话前，会通过SSL/TLS协议为客户端和服务器生成一个会话密钥，来进行数据的对称加密。下面来看看SSL/TLS协议的具体流程。
-SSL协议的握手过程开始加密通信之前，客户端和服务器首先必须建立连接和交换参数，这个过程叫做握手（handshake）。假定客户端叫做爱丽丝，服务器叫做鲍勃，整个握手过程可以用下图说明：
-
-握手阶段分成五步:">
+<meta name="twitter:title" content="SSL&#x2F;TLS协议学习笔记">
+<meta name="twitter:description" content="HTTPS的安全机制，建立在SSL/TLS协议的基础上。每一次会话前，会通过SSL/TLS协议为客户端和服务器生成一个会话密钥，来进行数据的对称加密。下面来看看SSL/TLS协议的具体流程。 SSL协议的握手过程开始加密通信之前，客户端和服务器首先必须建立连接和交换参数，这个过程叫做握手（handshake）。假定客户端叫做爱丽丝，服务器叫做鲍勃，整个握手过程可以用下图说明：  握手阶段分成五步:">
 <meta name="twitter:image" content="http://ofy1hyquv.bkt.clouddn.com/sslshake.png">
 
 
@@ -316,7 +308,7 @@ SSL协议的握手过程开始加密通信之前，客户端和服务器首先�
 <p>Susan将证书发送给Bob后，Bob通过CA证书的公钥验证证书签名。</p>
 <p>事实上，Bob客户端内置的是CA的根证书(Root Certificate)，HTTPS协议中服务器会发送证书链（Certificate Chain）给客户端。</p>
 <p><img src="http://ofy1hyquv.bkt.clouddn.com/digitalca.png" alt=""></p>
-<p><a href="https://cattail.me/tech/2015/11/30/how-https-works.html" target="_blank" rel="external">扩展链接-HTTPS工作原理</a></p>
+<p><a href="https://cattail.me/tech/2015/11/30/how-https-works.html" target="_blank" rel="noopener">扩展链接-HTTPS工作原理</a></p>
 
       
     </div>

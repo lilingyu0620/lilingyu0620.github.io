@@ -84,18 +84,13 @@
 
 
 
-<meta name="description" content="###需求
-最近公司给了个需求，实现上面卡片效果，这种控件网上也有现成的demo，但有些地方还是要自己研究下才能满足使用，下面记录一下我的研究成果。
-1.使用UICollectionView控件。
-如果这是单纯的轮播图片，使用UIScrollView就可以满足需要，但是上面的效果有缩放还有渐变，用UIScrollView的话代码量大，实现比较复杂，而且数据处理起来也没有用UICollectionV">
+<meta name="description" content="###需求 最近公司给了个需求，实现上面卡片效果，这种控件网上也有现成的demo，但有些地方还是要自己研究下才能满足使用，下面记录一下我的研究成果。 1.使用UICollectionView控件。 如果这是单纯的轮播图片，使用UIScrollView就可以满足需要，但是上面的效果有缩放还有渐变，用UIScrollView的话代码量大，实现比较复杂，而且数据处理起来也没有用UICollectionV">
 <meta property="og:type" content="article">
 <meta property="og:title" content="iOS卡片控件的实现">
 <meta property="og:url" content="http://yoursite.com/2016/09/01/iOS卡片控件的实现/index.html">
-<meta property="og:site_name" content="lly's Blog">
-<meta property="og:description" content="###需求
-最近公司给了个需求，实现上面卡片效果，这种控件网上也有现成的demo，但有些地方还是要自己研究下才能满足使用，下面记录一下我的研究成果。
-1.使用UICollectionView控件。
-如果这是单纯的轮播图片，使用UIScrollView就可以满足需要，但是上面的效果有缩放还有渐变，用UIScrollView的话代码量大，实现比较复杂，而且数据处理起来也没有用UICollectionV">
+<meta property="og:site_name" content="lly&#39;s Blog">
+<meta property="og:description" content="###需求 最近公司给了个需求，实现上面卡片效果，这种控件网上也有现成的demo，但有些地方还是要自己研究下才能满足使用，下面记录一下我的研究成果。 1.使用UICollectionView控件。 如果这是单纯的轮播图片，使用UIScrollView就可以满足需要，但是上面的效果有缩放还有渐变，用UIScrollView的话代码量大，实现比较复杂，而且数据处理起来也没有用UICollectionV">
+<meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://ww3.sinaimg.cn/large/763206fdjw1f7e20ldzxeg20pw0f87jh.gif">
 <meta property="og:image" content="http://ww1.sinaimg.cn/large/763206fdjw1f7e3nzupk6j20pp0gwt9k.jpg">
 <meta property="og:image" content="http://ww2.sinaimg.cn/large/763206fdjw1f7nbwdjtqyj20pw0glwfe.jpg">
@@ -104,10 +99,7 @@
 <meta property="og:updated_time" content="2016-11-01T03:19:10.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="iOS卡片控件的实现">
-<meta name="twitter:description" content="###需求
-最近公司给了个需求，实现上面卡片效果，这种控件网上也有现成的demo，但有些地方还是要自己研究下才能满足使用，下面记录一下我的研究成果。
-1.使用UICollectionView控件。
-如果这是单纯的轮播图片，使用UIScrollView就可以满足需要，但是上面的效果有缩放还有渐变，用UIScrollView的话代码量大，实现比较复杂，而且数据处理起来也没有用UICollectionV">
+<meta name="twitter:description" content="###需求 最近公司给了个需求，实现上面卡片效果，这种控件网上也有现成的demo，但有些地方还是要自己研究下才能满足使用，下面记录一下我的研究成果。 1.使用UICollectionView控件。 如果这是单纯的轮播图片，使用UIScrollView就可以满足需要，但是上面的效果有缩放还有渐变，用UIScrollView的话代码量大，实现比较复杂，而且数据处理起来也没有用UICollectionV">
 <meta name="twitter:image" content="http://ww3.sinaimg.cn/large/763206fdjw1f7e20ldzxeg20pw0f87jh.gif">
 
 
@@ -289,9 +281,9 @@
 
       
         <p>###需求<br><img src="http://ww3.sinaimg.cn/large/763206fdjw1f7e20ldzxeg20pw0f87jh.gif" alt="CardPageDemo"></p>
-<p>最近公司给了个需求，实现上面卡片效果，这种控件网上也有现成的<a href="http://www.jianshu.com/p/6af5fb818b5d" target="_blank" rel="external">demo</a>，但有些地方还是要自己研究下才能满足使用，下面记录一下我的研究成果。</p>
+<p>最近公司给了个需求，实现上面卡片效果，这种控件网上也有现成的<a href="http://www.jianshu.com/p/6af5fb818b5d" target="_blank" rel="noopener">demo</a>，但有些地方还是要自己研究下才能满足使用，下面记录一下我的研究成果。</p>
 <p>1.使用UICollectionView控件。</p>
-<p>如果这是单纯的轮播图片，使用UIScrollView就可以满足需要，但是上面的效果有缩放还有渐变，用UIScrollView的话代码量大，实现比较复杂，而且数据处理起来也没有用UICollectionView方便，这里再放一个用UIScrollView实现的<a href="https://github.com/kejinlu/KKPagedFlowView" target="_blank" rel="external">demo</a>,有需要的可以对比一下。</p>
+<p>如果这是单纯的轮播图片，使用UIScrollView就可以满足需要，但是上面的效果有缩放还有渐变，用UIScrollView的话代码量大，实现比较复杂，而且数据处理起来也没有用UICollectionView方便，这里再放一个用UIScrollView实现的<a href="https://github.com/kejinlu/KKPagedFlowView" target="_blank" rel="noopener">demo</a>,有需要的可以对比一下。</p>
 <p>2.自定义UICollecionViewFlowLayout类。</p>
 <p>使用过UICollectionView的同学们对这个类应该都不陌生吧，瀑布流布局类，可以通过自定义这个类实现各种瀑布流的效果，我要实现的这个效果当然也是需要自定义这个类了。</p>
 <p>先来看看prepareLayout这个函数的实现吧，这个是布局初始化的时候调用的，可以在这个函数里面自定义每一个cell的大小，cell之间的间距等属性</p>
@@ -321,7 +313,7 @@
 <p>2.cell的背景色和UICollectionView的背景色色差不宜过大。</p>
 <hr>
 <p>###轮播补充<br>上面这种实现方式在处理最后一张到第一张的衔接的时候效果不太好，最近研究了下，比较好的实现方式是放多个section，初始化的时候手动滚动到中间section，每个section内容相同，这样在滑动的时候就不会出现上面跳一下的问题。这里要注意的就是处理好每个section之间的间距问题，具体参考我的demo。<br>新demo的效果如下：<br><img src="http://ofy1hyquv.bkt.clouddn.com/%E8%BD%AE%E6%92%AD.gif" alt="轮播"></p>
-<p><a href="https://github.com/lilingyu0620/PageCardDemo" target="_blank" rel="external">这里是我的demo，请下载</a>。</p>
+<p><a href="https://github.com/lilingyu0620/PageCardDemo" target="_blank" rel="noopener">这里是我的demo，请下载</a>。</p>
 
       
     </div>

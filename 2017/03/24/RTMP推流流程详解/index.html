@@ -84,20 +84,13 @@
 
 
 
-<meta name="description" content="通过抓取主播端的rtmp数据包，我们能清晰的看到整个从握手到推流的过程，然后我们来分析一下每一个包的内容吧。
-三次握手handshake c0+c1
-具体数据格式可以参考我的这一片博客
-具体代码实现如下：
-1234567891011//c0  char c0Byte = 0x03;//rtmp版本号  NSData *c0 = [NSData dataWithBytes:&amp;amp;c0Byte">
+<meta name="description" content="通过抓取主播端的rtmp数据包，我们能清晰的看到整个从握手到推流的过程，然后我们来分析一下每一个包的内容吧。 三次握手handshake c0+c1 具体数据格式可以参考我的这一片博客 具体代码实现如下： 1234567891011//c0  char c0Byte = 0x03;//rtmp版本号  NSData *c0 = [NSData dataWithBytes:&amp;amp;c0Byte">
 <meta property="og:type" content="article">
 <meta property="og:title" content="RTMP推流流程详解">
 <meta property="og:url" content="http://yoursite.com/2017/03/24/RTMP推流流程详解/index.html">
-<meta property="og:site_name" content="lly's Blog">
-<meta property="og:description" content="通过抓取主播端的rtmp数据包，我们能清晰的看到整个从握手到推流的过程，然后我们来分析一下每一个包的内容吧。
-三次握手handshake c0+c1
-具体数据格式可以参考我的这一片博客
-具体代码实现如下：
-1234567891011//c0  char c0Byte = 0x03;//rtmp版本号  NSData *c0 = [NSData dataWithBytes:&amp;amp;c0Byte">
+<meta property="og:site_name" content="lly&#39;s Blog">
+<meta property="og:description" content="通过抓取主播端的rtmp数据包，我们能清晰的看到整个从握手到推流的过程，然后我们来分析一下每一个包的内容吧。 三次握手handshake c0+c1 具体数据格式可以参考我的这一片博客 具体代码实现如下： 1234567891011//c0  char c0Byte = 0x03;//rtmp版本号  NSData *c0 = [NSData dataWithBytes:&amp;amp;c0Byte">
+<meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/rtmppush.png">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/handshakec0c1.png">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/handshakec2.png">
@@ -116,11 +109,7 @@
 <meta property="og:updated_time" content="2017-03-24T08:18:54.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="RTMP推流流程详解">
-<meta name="twitter:description" content="通过抓取主播端的rtmp数据包，我们能清晰的看到整个从握手到推流的过程，然后我们来分析一下每一个包的内容吧。
-三次握手handshake c0+c1
-具体数据格式可以参考我的这一片博客
-具体代码实现如下：
-1234567891011//c0  char c0Byte = 0x03;//rtmp版本号  NSData *c0 = [NSData dataWithBytes:&amp;amp;c0Byte">
+<meta name="twitter:description" content="通过抓取主播端的rtmp数据包，我们能清晰的看到整个从握手到推流的过程，然后我们来分析一下每一个包的内容吧。 三次握手handshake c0+c1 具体数据格式可以参考我的这一片博客 具体代码实现如下： 1234567891011//c0  char c0Byte = 0x03;//rtmp版本号  NSData *c0 = [NSData dataWithBytes:&amp;amp;c0Byte">
 <meta name="twitter:image" content="http://ofy1hyquv.bkt.clouddn.com/rtmppush.png">
 
 
@@ -304,7 +293,7 @@
         <p><img src="http://ofy1hyquv.bkt.clouddn.com/rtmppush.png" alt=""></p>
 <p>通过抓取主播端的rtmp数据包，我们能清晰的看到整个从握手到推流的过程，然后我们来分析一下每一个包的内容吧。</p>
 <h3 id="三次握手"><a href="#三次握手" class="headerlink" title="三次握手"></a>三次握手</h3><h4 id="handshake-c0-c1"><a href="#handshake-c0-c1" class="headerlink" title="handshake c0+c1"></a>handshake c0+c1</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/handshakec0c1.png" alt=""></p>
-<p>具体数据格式可以参考我的<a href="http://llyblog.com/2017/03/20/RTMP协议学习笔记/" target="_blank" rel="external">这一片博客</a></p>
+<p>具体数据格式可以参考我的<a href="http://llyblog.com/2017/03/20/RTMP协议学习笔记/" target="_blank" rel="noopener">这一片博客</a></p>
 <p>具体代码实现如下：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">//c0</div><div class="line">  char c0Byte = 0x03;//rtmp版本号</div><div class="line">  NSData *c0 = [NSData dataWithBytes:&amp;c0Byte length:1];</div><div class="line">  [self writeData:c0];</div><div class="line">  </div><div class="line">  //c1</div><div class="line">  uint8_t *c1Bytes = (uint8_t *)malloc(kRtmpSignatureSize);</div><div class="line">  memset(c1Bytes, 0, 4 + 4);</div><div class="line">  NSData *c1 = [NSData dataWithBytes:c1Bytes length:kRtmpSignatureSize];</div><div class="line">  free(c1Bytes);</div><div class="line">  [self writeData:c1];</div></pre></td></tr></table></figure>
 <h4 id="handshake-c2"><a href="#handshake-c2" class="headerlink" title="handshake c2"></a>handshake c2</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/handshakec2.png" alt=""></p>
@@ -345,7 +334,7 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">- (void)sendPublish&#123;</div><div class="line">    RTMPChunk_0 metadata = &#123;0&#125;;</div><div class="line">    metadata.msg_stream_id = LLYStreamIDAudio;</div><div class="line">    metadata.msg_type_id = LLYMSGTypeID_INVOKE;</div><div class="line">    </div><div class="line">    NSMutableData *buff = [NSMutableData data];</div><div class="line">    [buff appendString:@&quot;publish&quot;];</div><div class="line">    [buff appendDouble:++_numOfInvokes];</div><div class="line">    self.trackedCommands[@(_numOfInvokes)] = @&quot;publish&quot;;</div><div class="line">    [buff appendByte:kAMFNull];</div><div class="line">    [buff appendString:_url.playPath];</div><div class="line">    [buff appendString:@&quot;live&quot;];</div><div class="line">    </div><div class="line">    metadata.msg_length.data = (int)buff.length;</div><div class="line">    [self sendPacket:buff :metadata];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <h4 id="onStatus-‘NetStream-Publish-Start’"><a href="#onStatus-‘NetStream-Publish-Start’" class="headerlink" title="onStatus(‘NetStream.Publish.Start’)"></a>onStatus(‘NetStream.Publish.Start’)</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/publistOnStatus.png" alt=""></p>
 <p>客户端收到这个消息，表示服务器已经准备好接收流数据，客户端可以正式开始推流。</p>
-<p><a href="http://llyblog.com/2017/03/14/iOS视频硬编码/" target="_blank" rel="external">参考文章和demo</a></p>
+<p><a href="http://llyblog.com/2017/03/14/iOS视频硬编码/" target="_blank" rel="noopener">参考文章和demo</a></p>
 
       
     </div>
@@ -485,7 +474,7 @@
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#三次握手"><span class="nav-number">1.</span> <span class="nav-text">三次握手</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#handshake-c0-c1"><span class="nav-number">1.1.</span> <span class="nav-text">handshake c0+c1</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#handshake-c2"><span class="nav-number">1.2.</span> <span class="nav-text">handshake c2</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#handshake-s0s1s2"><span class="nav-number">1.3.</span> <span class="nav-text">handshake s0s1s2</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#协议消息"><span class="nav-number">2.</span> <span class="nav-text">协议消息</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#connect"><span class="nav-number">2.1.</span> <span class="nav-text">connect</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Window-Acknowledgment-size"><span class="nav-number">2.2.</span> <span class="nav-text">Window Acknowledgment size</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Set-Peer-Bandwidth-amp-amp-Set-Chunk-Size-amp-amp-AFM0-Command-result"><span class="nav-number">2.3.</span> <span class="nav-text">Set Peer Bandwidth && Set Chunk Size && AFM0 Command _result</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Set-Peer-Bandwidth"><span class="nav-number">2.3.1.</span> <span class="nav-text">Set Peer Bandwidth</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Set-Chunk-Size"><span class="nav-number">2.3.2.</span> <span class="nav-text">Set Chunk Size</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#AFM0-Command-result-‘NetConnection-Connect-Success’"><span class="nav-number">2.3.3.</span> <span class="nav-text">AFM0 Command _result(‘NetConnection.Connect.Success’)</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#releaseStream-消息"><span class="nav-number">2.4.</span> <span class="nav-text">releaseStream 消息</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CFPublish消息"><span class="nav-number">2.5.</span> <span class="nav-text">CFPublish消息</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#createStream消息"><span class="nav-number">2.6.</span> <span class="nav-text">createStream消息</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#startStream-result"><span class="nav-number">2.7.</span> <span class="nav-text">startStream result</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#publish"><span class="nav-number">2.8.</span> <span class="nav-text">publish</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#onStatus-‘NetStream-Publish-Start’"><span class="nav-number">2.9.</span> <span class="nav-text">onStatus(‘NetStream.Publish.Start’)</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#三次握手"><span class="nav-number">1.</span> <span class="nav-text">三次握手</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#handshake-c0-c1"><span class="nav-number">1.1.</span> <span class="nav-text">handshake c0+c1</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#handshake-c2"><span class="nav-number">1.2.</span> <span class="nav-text">handshake c2</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#handshake-s0s1s2"><span class="nav-number">1.3.</span> <span class="nav-text">handshake s0s1s2</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#协议消息"><span class="nav-number">2.</span> <span class="nav-text">协议消息</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#connect"><span class="nav-number">2.1.</span> <span class="nav-text">connect</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Window-Acknowledgment-size"><span class="nav-number">2.2.</span> <span class="nav-text">Window Acknowledgment size</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Set-Peer-Bandwidth-amp-amp-Set-Chunk-Size-amp-amp-AFM0-Command-result"><span class="nav-number">2.3.</span> <span class="nav-text">Set Peer Bandwidth &amp;&amp; Set Chunk Size &amp;&amp; AFM0 Command _result</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Set-Peer-Bandwidth"><span class="nav-number">2.3.1.</span> <span class="nav-text">Set Peer Bandwidth</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Set-Chunk-Size"><span class="nav-number">2.3.2.</span> <span class="nav-text">Set Chunk Size</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#AFM0-Command-result-‘NetConnection-Connect-Success’"><span class="nav-number">2.3.3.</span> <span class="nav-text">AFM0 Command _result(‘NetConnection.Connect.Success’)</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#releaseStream-消息"><span class="nav-number">2.4.</span> <span class="nav-text">releaseStream 消息</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CFPublish消息"><span class="nav-number">2.5.</span> <span class="nav-text">CFPublish消息</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#createStream消息"><span class="nav-number">2.6.</span> <span class="nav-text">createStream消息</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#startStream-result"><span class="nav-number">2.7.</span> <span class="nav-text">startStream result</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#publish"><span class="nav-number">2.8.</span> <span class="nav-text">publish</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#onStatus-‘NetStream-Publish-Start’"><span class="nav-number">2.9.</span> <span class="nav-text">onStatus(‘NetStream.Publish.Start’)</span></a></li></ol></li></ol></div>
             
           </div>
         </section>
