@@ -1,0 +1,587 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="cookie是啥？简单地说，cookie 就是浏览器储存在用户电脑上的一小段文本文件。cookie 是纯文本格式，不包含任何可执行的代码。一个 Web 页面或服务器告知浏览器按照一定规范来储存这些信息，并在随后的请求中将这些信息发送至服务器，Web 服务器就可以使用这些信息来识别不同的用户。大多数需要登录的网站在用户验证成功之后都会设置一个 cookie，只要这个 cookie 存在并可以，用户就">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iOS中cookie的使用">
+<meta property="og:url" content="http://yoursite.com/2018/03/01/iOS中cookie的使用/index.html">
+<meta property="og:site_name" content="lly&#39;s Blog">
+<meta property="og:description" content="cookie是啥？简单地说，cookie 就是浏览器储存在用户电脑上的一小段文本文件。cookie 是纯文本格式，不包含任何可执行的代码。一个 Web 页面或服务器告知浏览器按照一定规范来储存这些信息，并在随后的请求中将这些信息发送至服务器，Web 服务器就可以使用这些信息来识别不同的用户。大多数需要登录的网站在用户验证成功之后都会设置一个 cookie，只要这个 cookie 存在并可以，用户就">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-03-01T10:16:11.489Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="iOS中cookie的使用">
+<meta name="twitter:description" content="cookie是啥？简单地说，cookie 就是浏览器储存在用户电脑上的一小段文本文件。cookie 是纯文本格式，不包含任何可执行的代码。一个 Web 页面或服务器告知浏览器按照一定规范来储存这些信息，并在随后的请求中将这些信息发送至服务器，Web 服务器就可以使用这些信息来识别不同的用户。大多数需要登录的网站在用户验证成功之后都会设置一个 cookie，只要这个 cookie 存在并可以，用户就">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/03/01/iOS中cookie的使用/"/>
+
+  <title> iOS中cookie的使用 | lly's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">lly's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">用心记录点滴</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                iOS中cookie的使用
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-03-01T17:57:47+08:00" content="2018-03-01">
+              2018-03-01
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/03/01/iOS中cookie的使用/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/03/01/iOS中cookie的使用/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="cookie是啥？"><a href="#cookie是啥？" class="headerlink" title="cookie是啥？"></a>cookie是啥？</h3><p>简单地说，cookie 就是浏览器储存在用户电脑上的一小段文本文件。cookie 是纯文本格式，不包含任何可执行的代码。一个 Web 页面或服务器告知浏览器按照一定规范来储存这些信息，并在随后的请求中将这些信息发送至服务器，Web 服务器就可以使用这些信息来识别不同的用户。大多数需要登录的网站在用户验证成功之后都会设置一个 cookie，只要这个 cookie 存在并可以，用户就可以自由浏览这个网站的任意页面。再次说明，cookie 只包含数据，就其本身而言并不有害。</p>
+<p>在浏览器访问WEB服务器的某个资源时，由WEB服务器在HTTP响应消息头中附带传送给浏览器的一个小文本文件。一旦WEB浏览器保存了某个Cookie，那么它在以后每次访问该WEB服务器时，都会在HTTP请求头中将这个Cookie回传给WEB服务器。</p>
+<h3 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h3><p>WEB服务器通过在HTTP响应消息中增加Set-Cookie响应头字段将Cookie信息发送给浏览器，浏览器则通过在HTTP请求消息中增加Cookie请求头字段将Cookie回传给WEB服务器。<br>一个Cookie只能标识一种信息，它至少含有一个标识该信息的名称（NAME）和设置值（VALUE）。<br>一个WEB站点可以给一个WEB浏览器发送多个Cookie，一个WEB浏览器也可以存储多个WEB站点提供的Cookie。<br>浏览器一般只允许存放300个Cookie，每个站点最多存放20个Cookie，每个Cookie的大小限制为4KB。</p>
+<h3 id="分类"><a href="#分类" class="headerlink" title="分类"></a>分类</h3><p>Cookie可以分为两类，会话Cookie和持久Cookie,会话Cookie是临时Cookie,当前会话结束(浏览器退出)时Cookie会被删除。持久Cookie会存储在用户的硬盘上,浏览器退出，然后重新启动后Cookie仍然存在。会话Cookie和持久Cookie的区别在于过期时间，如果设置了Discard参数(Cookie 版本1)或者没有设置Expires(Cookie版本0)或Max-Age(Cookie版本1)<br>没有设置过期时间，则此Cookie为会话Cookie</p>
+<p>Cookie有两个版本,一个是版本0(Netscape Cookies)和版本1(RFC 2965),目前大多数服务器使用的Cookie 0。</p>
+<h3 id="iOS中如何使用cookie"><a href="#iOS中如何使用cookie" class="headerlink" title="iOS中如何使用cookie"></a>iOS中如何使用cookie</h3><h4 id="NSHTTPCookie"><a href="#NSHTTPCookie" class="headerlink" title="NSHTTPCookie"></a>NSHTTPCookie</h4><p>在iOS中使用NSHTTPCookie类封装一条cookie,通过NSHTTPCookie的方法读取到cookie的通用属性。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">- (NSUInteger)version;</div><div class="line">- (NSString *)name;</div><div class="line">- (NSString *)value;</div><div class="line">- (NSString *)domain;</div><div class="line">- (NSString *)path;</div><div class="line">- (BOOL)isSessionOnly;</div><div class="line">...</div></pre></td></tr></table></figure>
+<p>可以通过手工赋值的方式创建Cookie</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">+ (id)cookieWithProperties:(NSDictionary *)properties;</div><div class="line">- (id)initWithProperties:(NSDictionary *)properties;</div></pre></td></tr></table></figure>
+<p>也可以从Cookie中读取到所有属性。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">- (NSDictionary *)properties;</div></pre></td></tr></table></figure>
+<p>使用NSHTTPCookie的类方法可以将NSHTTPCookie实例与HTTP cookie header相互转换</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">根据NSHTTPCookie实例数组生成对应的HTTP cookie header</div><div class="line">+ (NSDictionary *)requestHeaderFieldsWithCookies:(NSArray *)cookies;</div><div class="line"></div><div class="line">从headerFileds中读取到Cookie相关内容,生成NSHTTPCookie实例对象数组。</div><div class="line">+ (NSArray *)cookiesWithResponseHeaderFields:(NSDictionary *)headerFields forURL:(NSURL *)theURL;</div><div class="line"></div><div class="line">该方法会忽略headerFileds中与cookie无关的字段，如果headerFileds中的cookie没有指定domain,则使用theURL的domain,如果没有指定path,则使用”/”.</div><div class="line"></div><div class="line">除非NSURLRequest明确指定不使用cookie(HTTPShouldHandleCookies设为NO),否则URL loading system会自动为NSURLRequest发送合适的存储cookie。从NSURLResponse返回的cookie也会根据当前的cookie访问策略(cookie acceptance policy)接收到系统中。</div></pre></td></tr></table></figure>
+<h4 id="NSHTTPCookieStorage"><a href="#NSHTTPCookieStorage" class="headerlink" title="NSHTTPCookieStorage"></a>NSHTTPCookieStorage</h4><p>NSHTTPCookieStorage单件类提供了管理所有NSHTTPCookie对象的接口，在OS X里,cookie是在所有程序中共享的，而在iOS中,cookie只当当前应用中有效。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line">通过sharedHTTPCookieStorage方法可获取到共享的NSHTTPCookieStorage单件对象。</div><div class="line">+ (NSHTTPCookieStorage *)sharedHTTPCookieStorage；</div><div class="line"></div><div class="line">使用NSHTTPCookieStorage单件对象可获取到当前存储的所有cookie</div><div class="line">- (NSArray *)cookies</div><div class="line"></div><div class="line">或针对特定URL的cookie</div><div class="line">- (NSArray *)cookiesForURL:(NSURL *)theURL;</div><div class="line"></div><div class="line">还可以添加/删除Cookie</div><div class="line">– deleteCookie:</div><div class="line">– setCookie:</div><div class="line">– setCookies:forURL:mainDocumentURL:</div><div class="line"></div><div class="line">通过NSHTTPCookieStorage可读取/修改cookie接收策略,默认为NSHTTPCookieAcceptPolicyAlways.</div><div class="line">- (NSHTTPCookieAcceptPolicy)cookieAcceptPolicy；</div><div class="line">- (void)setCookieAcceptPolicy:(NSHTTPCookieAcceptPolicy)aPolicy.</div><div class="line"></div><div class="line">一共有三种cookie accept policy,</div><div class="line">typedef enum &#123;</div><div class="line">   NSHTTPCookieAcceptPolicyAlways,</div><div class="line">   NSHTTPCookieAcceptPolicyNever,</div><div class="line">   NSHTTPCookieAcceptPolicyOnlyFromMainDocumentDomain</div><div class="line">&#125; NSHTTPCookieAcceptPolicy;</div><div class="line"></div><div class="line">NSHTTPCookieAcceptPolicyAlways:接收所有cookie,默认策略.</div><div class="line">NSHTTPCookieAcceptPolicyNever: 拒绝所有cookie</div><div class="line">NSHTTPCookieAcceptPolicyOnlyFromMainDocumentDomain:只接收main document domain中的cookie.</div></pre></td></tr></table></figure>
+<p>相关通知Notification</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">NSHTTPCookieManagerCookiesChangedNotification</div><div class="line">当NSHTTPCookieStorage实例中的cookies变化时发出此通知。</div><div class="line">NSHTTPCookieManagerAcceptPolicyChangedNotification</div><div class="line">当NSHTTPCookieStorage实例的cookie acceptance policy变化时发出此通知。</div></pre></td></tr></table></figure>
+<h4 id="cookie的使用"><a href="#cookie的使用" class="headerlink" title="cookie的使用"></a>cookie的使用</h4><p>当你利用一个URL请求时，NSURLRequest都会帮你主动记录下来你访问的站点设置的cookie（因为NSHTTPCookieStorage可读取/修改cookie接收策略,默认为NSHTTPCookieAcceptPolicyAlways.当然你也可以给它设置为NSHTTPCookieAcceptPolicyNever: 拒绝所有cookie），而且很负责任的，当你下次再访问这个站点时，NSURLRequest会拿着上次保存下来了的cookie继续去请求。这规律同样适用于 ASIHTTPRequest。所以当你做一些基于认证的网络请求时，cookie不失为一个完美的解决方案。</p>
+<h5 id="查看cookie"><a href="#查看cookie" class="headerlink" title="查看cookie"></a>查看cookie</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">NSHTTPCookieStorage *cookieJar = [NSHTTPCookieStorage sharedHTTPCookieStorage];</div><div class="line">for (NSHTTPCookie *cookie in [cookieJar cookies]) &#123;</div><div class="line">       NSLog(@&quot;%@&quot;, cookie);</div><div class="line">&#125;</div><div class="line">这样就列出了所有已保存的cookie,如果当前为空怎么办呢？随便请求一个url喽。</div><div class="line">NSURLRequest *request = [NSURLRequest requestWithURL:</div><div class="line">[NSURL URLWithString:@&quot;http://blog.cnrainbird.com&quot;] cachePolicy:NSURLRequestReloadIgnoringLocalAndRemoteCacheData    timeoutInterval:3];</div><div class="line">[NSURLConnection sendSynchronousRequest:request </div><div class="line">                      returningResponse:nil </div><div class="line">                                     error:nil]; </div><div class="line"></div><div class="line">NSHTTPCookieStorage *cookieJar = [NSHTTPCookieStorage sharedHTTPCookieStorage];</div><div class="line">for (NSHTTPCookie *cookie in [cookieJar cookies]) &#123;</div><div class="line">    NSLog(@&quot;%@&quot;, cookie);</div><div class="line">&#125;</div><div class="line"></div><div class="line">是不是得到了类似:</div><div class="line">&lt;NSHTTPCookie version:0 name:&quot;PHPSESSID&quot; value:&quot;evf5rcboo8th1dnl53fs4ukmt2&quot; expiresDate:(null) created:2012-03-13 14:28:13 +0000 (3.53342e+08) sessionOnly:TRUE domain:&quot;blog.cnrainbird.com&quot; path:&quot;/&quot; isSecure:FALSE&gt;</div><div class="line">的东东？这就是cookie啦</div></pre></td></tr></table></figure>
+<h5 id="清空cookie"><a href="#清空cookie" class="headerlink" title="清空cookie"></a>清空cookie</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">NSHTTPCookieStorage *cookieJar = [NSHTTPCookieStorage sharedHTTPCookieStorage];</div><div class="line">NSArray *_tmpArray = [NSArray arrayWithArray:[cookieJar cookies]];</div><div class="line">for (id obj in _tmpArray) &#123;</div><div class="line">    [cookieJar deleteCookie:obj];</div><div class="line">&#125;</div><div class="line">这样cookie就消失的一干二净了。</div></pre></td></tr></table></figure>
+<h5 id="设置指定的cookie"><a href="#设置指定的cookie" class="headerlink" title="设置指定的cookie"></a>设置指定的cookie</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">NSMutableDictionary *cookieProperties = [NSMutableDictionary dictionary];</div><div class="line">[cookieProperties setObject:@&quot;username&quot; forKey:NSHTTPCookieName];</div><div class="line">[cookieProperties setObject:@&quot;rainbird&quot; forKey:NSHTTPCookieValue];</div><div class="line">[cookieProperties setObject:@&quot;cnrainbird.com&quot; forKey:NSHTTPCookieDomain];</div><div class="line">[cookieProperties setObject:@&quot;cnrainbird.com&quot; forKey:NSHTTPCookieOriginURL];</div><div class="line">[cookieProperties setObject:@&quot;/&quot; forKey:NSHTTPCookiePath];</div><div class="line">[cookieProperties setObject:@&quot;0&quot; forKey:NSHTTPCookieVersion];</div><div class="line"></div><div class="line">NSHTTPCookie *cookie = [NSHTTPCookie cookieWithProperties:cookieProperties];</div><div class="line">[[NSHTTPCookieStorage sharedHTTPCookieStorage] setCookie:cookie];</div></pre></td></tr></table></figure>
+<p><a href="http://jinqianchina.github.io/2016/01/07/Cookie机制以及cookie在iOS中使用介绍/" target="_blank" rel="noopener">参加资料一</a></p>
+<p><a href="http://bubkoo.com/2014/04/21/http-cookies-explained/" target="_blank" rel="noopener">参考资料二</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/02/28/MAC地址和IP地址的区别和联系/" rel="next" title="MAC地址、IP地址和端口号">
+                <i class="fa fa-chevron-left"></i> MAC地址、IP地址和端口号
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2018/03/01/iOS中cookie的使用/"
+           data-title="iOS中cookie的使用" data-url="http://yoursite.com/2018/03/01/iOS中cookie的使用/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/head.png"
+               alt="lly" />
+          <p class="site-author-name" itemprop="name">lly</p>
+          <p class="site-description motion-element" itemprop="description">耿直的一Boy</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">26</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#cookie是啥？"><span class="nav-number">1.</span> <span class="nav-text">cookie是啥？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#实现原理"><span class="nav-number">2.</span> <span class="nav-text">实现原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分类"><span class="nav-number">3.</span> <span class="nav-text">分类</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#iOS中如何使用cookie"><span class="nav-number">4.</span> <span class="nav-text">iOS中如何使用cookie</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#NSHTTPCookie"><span class="nav-number">4.1.</span> <span class="nav-text">NSHTTPCookie</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#NSHTTPCookieStorage"><span class="nav-number">4.2.</span> <span class="nav-text">NSHTTPCookieStorage</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#cookie的使用"><span class="nav-number">4.3.</span> <span class="nav-text">cookie的使用</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#查看cookie"><span class="nav-number">4.3.1.</span> <span class="nav-text">查看cookie</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#清空cookie"><span class="nav-number">4.3.2.</span> <span class="nav-text">清空cookie</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#设置指定的cookie"><span class="nav-number">4.3.3.</span> <span class="nav-text">设置指定的cookie</span></a></li></ol></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lly</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"llyblog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
