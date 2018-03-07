@@ -291,7 +291,8 @@
 <h4 id="数据偏移（头部长度）"><a href="#数据偏移（头部长度）" class="headerlink" title="数据偏移（头部长度）"></a>数据偏移（头部长度）</h4><p>给出了头部的长度，以32位字节为单位，这个字段是必须的，因为选项字段的长度是可变的。作为一个4位的字段，TCP被限制为只能带60个字节的头部。而不带选项。大小是20字节。</p>
 <h4 id="窗口大小"><a href="#窗口大小" class="headerlink" title="窗口大小"></a>窗口大小</h4><p>TCP的流量控制由每一个端点使用窗口大小字段来通告一个窗口大小来完成。这个窗口大小是字节数，从ACK号指定的，也是接收方想要接收的那个字节开始。这是一个16位的字段，限制窗口大小65535字节，从而限制了TCP的吞吐量性能。</p>
 <h4 id="TCP校验和"><a href="#TCP校验和" class="headerlink" title="TCP校验和"></a>TCP校验和</h4><p>覆盖了TCP的头部和数据以及头部中的一些字段。这个字段是强制的，由发送发进行计算和保存，然后由接收发验证。</p>
-<h4 id="CWR拥塞窗口减（发送方降低它的发送速度）"><a href="#CWR拥塞窗口减（发送方降低它的发送速度）" class="headerlink" title="CWR拥塞窗口减（发送方降低它的发送速度）"></a>CWR拥塞窗口减（发送方降低它的发送速度）</h4><h4 id="ECE（发送发接收了一个更早的拥塞通告）"><a href="#ECE（发送发接收了一个更早的拥塞通告）" class="headerlink" title="ECE（发送发接收了一个更早的拥塞通告）"></a>ECE（发送发接收了一个更早的拥塞通告）</h4><h4 id="URG-紧急（紧急字段有效很少被用到）"><a href="#URG-紧急（紧急字段有效很少被用到）" class="headerlink" title="URG 紧急（紧急字段有效很少被用到）"></a>URG 紧急（紧急字段有效很少被用到）</h4><h4 id="ACK-确认（确认号字段有效，连接建立以后一般都是开启状态）"><a href="#ACK-确认（确认号字段有效，连接建立以后一般都是开启状态）" class="headerlink" title="ACK 确认（确认号字段有效，连接建立以后一般都是开启状态）"></a>ACK 确认（确认号字段有效，连接建立以后一般都是开启状态）</h4><h4 id="PSH-推送"><a href="#PSH-推送" class="headerlink" title="PSH 推送"></a>PSH 推送</h4><h4 id="RST重置连接（连接取消，一般是因为错误）"><a href="#RST重置连接（连接取消，一般是因为错误）" class="headerlink" title="RST重置连接（连接取消，一般是因为错误）"></a>RST重置连接（连接取消，一般是因为错误）</h4><h4 id="SYN（用于初始化一个连接的同步序列号）"><a href="#SYN（用于初始化一个连接的同步序列号）" class="headerlink" title="SYN（用于初始化一个连接的同步序列号）"></a>SYN（用于初始化一个连接的同步序列号）</h4><h4 id="FIN-该报文段的发送发已经结束向对方发送数据"><a href="#FIN-该报文段的发送发已经结束向对方发送数据" class="headerlink" title="FIN 该报文段的发送发已经结束向对方发送数据"></a>FIN 该报文段的发送发已经结束向对方发送数据</h4><h3 id="三次握手与四次挥手"><a href="#三次握手与四次挥手" class="headerlink" title="三次握手与四次挥手"></a>三次握手与四次挥手</h3><p><img src="http://ofy1hyquv.bkt.clouddn.com/tcpshark.png" alt=""></p>
+<h4 id="CWR拥塞窗口减（发送方降低它的发送速度）"><a href="#CWR拥塞窗口减（发送方降低它的发送速度）" class="headerlink" title="CWR拥塞窗口减（发送方降低它的发送速度）"></a>CWR拥塞窗口减（发送方降低它的发送速度）</h4><h4 id="ECE（发送发接收了一个更早的拥塞通告）"><a href="#ECE（发送发接收了一个更早的拥塞通告）" class="headerlink" title="ECE（发送发接收了一个更早的拥塞通告）"></a>ECE（发送发接收了一个更早的拥塞通告）</h4><h4 id="URG-紧急（紧急字段有效很少被用到）"><a href="#URG-紧急（紧急字段有效很少被用到）" class="headerlink" title="URG 紧急（紧急字段有效很少被用到）"></a>URG 紧急（紧急字段有效很少被用到）</h4><h4 id="ACK-确认（确认号字段有效，连接建立以后一般都是开启状态）"><a href="#ACK-确认（确认号字段有效，连接建立以后一般都是开启状态）" class="headerlink" title="ACK 确认（确认号字段有效，连接建立以后一般都是开启状态）"></a>ACK 确认（确认号字段有效，连接建立以后一般都是开启状态）</h4><h4 id="PSH-推送"><a href="#PSH-推送" class="headerlink" title="PSH 推送"></a>PSH 推送</h4><h4 id="RST重置连接（连接取消，一般是因为错误）"><a href="#RST重置连接（连接取消，一般是因为错误）" class="headerlink" title="RST重置连接（连接取消，一般是因为错误）"></a>RST重置连接（连接取消，一般是因为错误）</h4><h4 id="SYN（用于初始化一个连接的同步序列号）"><a href="#SYN（用于初始化一个连接的同步序列号）" class="headerlink" title="SYN（用于初始化一个连接的同步序列号）"></a>SYN（用于初始化一个连接的同步序列号）</h4><h4 id="FIN-该报文段的发送发已经结束向对方发送数据"><a href="#FIN-该报文段的发送发已经结束向对方发送数据" class="headerlink" title="FIN 该报文段的发送发已经结束向对方发送数据"></a>FIN 该报文段的发送发已经结束向对方发送数据</h4><h4 id="tcp选项"><a href="#tcp选项" class="headerlink" title="tcp选项"></a>tcp选项</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/tcpchoice.png" alt=""></p>
+<h3 id="三次握手与四次挥手"><a href="#三次握手与四次挥手" class="headerlink" title="三次握手与四次挥手"></a>三次握手与四次挥手</h3><p><img src="http://ofy1hyquv.bkt.clouddn.com/tcpshark.png" alt=""></p>
 <p>一个TCP连接由4个元组组成，它们分别是2个IP地址和2个端口号。即一对端点或者套接字。</p>
 <p>为了建立一个TCP连接，需要完成以下步骤：</p>
 <ul>
@@ -315,6 +316,9 @@
 </li>
 </ul>
 <p>通过上诉的4个报文就能够完成一个TCP连接的关闭。他们也常称为<em>四次挥手</em></p>
+<h3 id="TCP的状态转换图"><a href="#TCP的状态转换图" class="headerlink" title="TCP的状态转换图"></a>TCP的状态转换图</h3><p><img src="http://ofy1hyquv.bkt.clouddn.com/tcpstatus.png" alt=""></p>
+<p>tcp连接和断开过程中的状态变化</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/tcpsharkstatus.png" alt=""></p>
 <h3 id="流量控制和拥塞控制"><a href="#流量控制和拥塞控制" class="headerlink" title="流量控制和拥塞控制"></a>流量控制和拥塞控制</h3><ul>
 <li><p>####1.基于速率的流量控制(适用于广播和组播)<br>  给发送方指定某个速率，同时确保数据永远不能超过这个速率发送方。</p>
 </li>
