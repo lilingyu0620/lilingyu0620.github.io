@@ -229,6 +229,221 @@
             
               
                 
+                <a class="post-title-link" href="/2018/03/20/IP地址与协议详解/" itemprop="url">
+                  IP地址与协议详解
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-03-20T18:29:57+08:00" content="2018-03-20">
+              2018-03-20
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/03/20/IP地址与协议详解/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/03/20/IP地址与协议详解/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="基本的ip地址结构"><a href="#基本的ip地址结构" class="headerlink" title="基本的ip地址结构"></a>基本的ip地址结构</h3><p>ipv4:点分十进制，共32位</p>
+<p>ipv6:冒号隔开8个16位数，共128位</p>
+<h4 id="分类寻址"><a href="#分类寻址" class="headerlink" title="分类寻址"></a>分类寻址</h4><p>ip地址中一些连续的位称为网络号，其余位称为主机号。</p>
+<p>ip地址空间的划分涉及五大类：</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/ipcategory.png" alt=""></p>
+<p>A,B,C为单播，D为组播。</p>
+<h4 id="子网寻址"><a href="#子网寻址" class="headerlink" title="子网寻址"></a>子网寻址</h4><p>在一个站点接入Internet后为其分配一个网络号，然后由站点管理员进一步划分本地的子网数。</p>
+<p>通过子网寻址，一个站点被分配一个A，B或C类的网络号，保留一些剩余主机号进一步用于站点内分配。该站点可能将基础地质中的主机部分进一步划分为一个<strong>子网号</strong>和一个<strong>主机号</strong>.</p>
+<p>该站点将每一个地址的前16位固定为网络号，后16位8位为子网号，8位为主机号。这个特殊配置允许站点支持256个子网，每个子网最多可包含254台主机。</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/subnet.png" alt=""></p>
+<p><strong>同一个子网中每台主机的IPV4地址拥有相同的子网号</strong></p>
+<h4 id="子网掩码"><a href="#子网掩码" class="headerlink" title="子网掩码"></a>子网掩码</h4><p>子网掩码是由一台主机或路由器使用的分配位，以确定如何从一台主机对应的IP地址中获取网络和子网信息。</p>
+<p>掩码由路由器和主机使用，以确认一个IP地址的网络/子网部分的结束和主机部分的开始。子网掩码中的一位设为1表示一个IP地址的对应位与一个地址的网络/子网部分的对应位相结合（位与）.并将结果作为转发数据报的基础。</p>
+<p>IP地址与子网掩码做（位与）运算，以形成用于路由的地址的网络/子网标识符。</p>
+<p>子网掩码纯粹是站点内部的局部问题。。。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/19/DNS详解/" itemprop="url">
+                  DNS详解
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-03-19T16:00:54+08:00" content="2018-03-19">
+              2018-03-19
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/03/19/DNS详解/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/03/19/DNS详解/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/03/05/TCP协议学习笔记/" itemprop="url">
                   TCP协议学习笔记
                 </a>
@@ -1612,385 +1827,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/04/03/iOS-Socket编程学习笔记/" itemprop="url">
-                  iOS Socket编程学习笔记
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-04-03T23:06:10+08:00" content="2017-04-03">
-              2017-04-03
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2017/04/03/iOS-Socket编程学习笔记/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/04/03/iOS-Socket编程学习笔记/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>Socket是基于传输层TCP、UDP协议封装的一套API接口，它本身并不是一种协议。</p>
-<h3 id="网络通信模型"><a href="#网络通信模型" class="headerlink" title="网络通信模型"></a>网络通信模型</h3><p><img src="http://ofy1hyquv.bkt.clouddn.com/networkmodel.png" alt=""></p>
-<h3 id="传输层中的协议"><a href="#传输层中的协议" class="headerlink" title="传输层中的协议"></a>传输层中的协议</h3><h4 id="传输控制协议-TCP"><a href="#传输控制协议-TCP" class="headerlink" title="传输控制协议 (TCP)"></a>传输控制协议 (TCP)</h4><p>TCP全称是Transmission Control Protocol，中文名为传输控制协议，它可以提供可靠的、面向连接的网络数据传递服务。</p>
-<h5 id="传输控制协议主要包含下列任务和功能："><a href="#传输控制协议主要包含下列任务和功能：" class="headerlink" title="传输控制协议主要包含下列任务和功能："></a>传输控制协议主要包含下列任务和功能：</h5><ul>
-<li><p>确保IP数据报的成功传递</p>
-</li>
-<li><p>对程序发送的大块数据进行分段和重组</p>
-</li>
-<li><p>确保正确排序及按顺序传递分段的数据</p>
-</li>
-<li><p>通过计算校验和，进行传输数据的完整性检查</p>
-</li>
-<li><p>根据数据是否接收成功发送肯定消息。通过使用选择性确认，也对没有收到的数据发送否定确认</p>
-</li>
-</ul>
-<h5 id="TCP工作流程"><a href="#TCP工作流程" class="headerlink" title="TCP工作流程"></a>TCP工作流程</h5><p><img src="http://ofy1hyquv.bkt.clouddn.com/socketflow.png" alt=""></p>
-<p>TCP的连接建立过程又称为TCP三次握手</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/tcpconnect.png" alt=""></p>
-<p>一旦初始的三次握手完成，client和server就可以相互发送信息。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/tcpdisconnect.png" alt=""></p>
-<p>而断开连接时，就不分client和server了，先请求断开的即为主动方，主动方会先发送断开请求，被动发在收到断开请求后会先给主动方一个确认，然后待被动方处理完所有的传输事务后，再给主动方一个断开连接的请求，<br>主动方收到被动方的断开请求，给被动方一个断开确认。至此断开成功。</p>
-<p>TCP工作过程比较复杂，包括的内容如下:</p>
-<ul>
-<li><p>TCP连接关闭：发送方主机和目的主机建立TCP连接并完成数据传输后，会发送一个将结束标记置1的数据包，以关闭这个TCP连接，并同时释放该连接占用的缓冲区空间。</p>
-</li>
-<li><p>TCP重置：TCP允许在传输的过程中突然中断连接。</p>
-</li>
-<li><p>TCP数据排序和确认*：在传输的过程中使用序列号和确认号来跟踪数据的接收情况。</p>
-</li>
-<li><p>TCP重传：在TCP的传输过程中，如果在重传超时时间内没有收到接收方主机对某数据包的确认回复，发送方主机就认为此数据包丢失，并再次发送这个数据包给接收方。</p>
-</li>
-<li><p>TCP延迟确认：TCP并不总是在接收到数据后立即对其进行确认，它允许主机在接收数据的同时发送自己的确认信息给对方。</p>
-</li>
-<li><p>TCP数据保护（校验）：TCP是可靠传输的协议，它提供校验和计算来实现数据在传输过程中的完整性。</p>
-</li>
-</ul>
-<h4 id="tcp报文格式"><a href="#tcp报文格式" class="headerlink" title="tcp报文格式"></a>tcp报文格式</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/tcpformat.jpeg" alt=""></p>
-<ul>
-<li><p>源端口、目标端口：计算机上的进程要和其他进程通信是要通过计算机端口的，而一个计算机端口某个时刻只能被一个进程占用，所以通过指定源端口和目标端口，就可以知道是哪两个进程需要通信。源端口、目标端口是用16位表示的，可推算计算机的端口个数为2^16个。</p>
-</li>
-<li><p>序列号：表示本报文段所发送数据的第一个字节的编号。在TCP连接中所传送的字节流的每一个字节都会按顺序编号。由于序列号由32位表示，所以每2^32个字节，就会出现序列号回绕，再次从 0 开始。那如何区分两个相同序列号的不同TCP报文段就是一个问题了，后面会有答案，暂时可以不管。</p>
-</li>
-<li><p>确认号：表示接收方期望收到发送方下一个报文段的第一个字节数据的编号。也就是告诉发送发：我希望你（指发送方）下次发送的数据的第一个字节数据的编号是这个确认号。也就是告诉发送方：我希望你（指发送方）下次发送给我的TCP报文段的序列号字段的值是这个确认号。</p>
-</li>
-<li><p>TCP首部长度：由于TCP首部包含一个长度可变的选项部分，所以需要这么一个值来指定这个TCP报文段到底有多长。或者可以这么理解：就是表示TCP报文段中数据部分在整个TCP报文段中的位置。该字段的单位是32位字，即：4个字节。</p>
-</li>
-<li><p>URG：表示本报文段中发送的数据是否包含紧急数据。URG=1，表示有紧急数据。后面的紧急指针字段只有当URG=1时才有效。</p>
-</li>
-<li><p>ACK：表示是否前面的确认号字段是否有效。ACK=1，表示有效。只有当ACK=1时，前面的确认号字段才有效。TCP规定，连接建立后，ACK必须为1。</p>
-</li>
-<li><p>PSH：告诉对方收到该报文段后是否应该立即把数据推送给上层。如果为1，则表示对方应当立即把数据提交给上层，而不是缓存起来。</p>
-</li>
-<li><p>RST：只有当RST=1时才有用。如果你收到一个RST=1的报文，说明你与主机的连接出现了严重错误（如主机崩溃），必须释放连接，然后再重新建立连接。或者说明你上次发送给主机的数据有问题，主机拒绝响应。</p>
-</li>
-<li><p>SYN：在建立连接时使用，用来同步序号。当SYN=1，ACK=0时，表示这是一个请求建立连接的报文段；当SYN=1，ACK=1时，表示对方同意建立连接。SYN=1，说明这是一个请求建立连接或同意建立连接的报文。只有在前两次握手中SYN才置为1。</p>
-</li>
-<li><p>FIN：标记数据是否发送完毕。如果FIN=1，就相当于告诉对方：“我的数据已经发送完毕，你可以释放连接了”</p>
-</li>
-<li><p>窗口大小：表示现在运行对方发送的数据量。也就是告诉对方，从本报文段的确认号开始允许对方发送的数据量。</p>
-</li>
-<li><p>校验和：提供额外的可靠性。具体如何校验，参考其他资料。</p>
-</li>
-<li><p>紧急指针：标记紧急数据在数据字段中的位置。</p>
-</li>
-<li><p>选项部分：其最大长度可根据TCP首部长度进行推算。TCP首部长度用4位表示，那么选项部分最长为：(2^4-1)*4-20=40字节。</p>
-</li>
-</ul>
-<h5 id="选项部分的应用："><a href="#选项部分的应用：" class="headerlink" title="选项部分的应用："></a>选项部分的应用：</h5><ul>
-<li><p>MSS最大报文段长度(Maxium Segment Size)：指明数据字段的最大长度，数据字段的长度加上TCP首部的长度才等于整个TCP报文段的长度。MSS值指示自己期望对方发送TCP报文段时那个数据字段的长度。通信双方可以有不同的MSS值。如果未填写，默认采用536字节。MSS只出现在SYN报文中。即：MSS出现在SYN=1的报文段中。</p>
-</li>
-<li><p>窗口扩大选项(Windows Scaling)：由于TCP首部的窗口大小字段长度是16位，所以其表示的最大数是65535。但是随着时延和带宽比较大的通信产生（如卫星通信），需要更大的窗口来满足性能和吞吐率，所以产生了这个窗口扩大选项。</p>
-</li>
-<li><p>SACK选择确认项(Selective Acknowledgements)：用来确保只重传缺少的报文段，而不是重传所有报文段。比如主机A发送报文段1、2、3，而主机B仅收到报文段1、3。那么此时就需要使用SACK选项来告诉发送方只发送丢失的数据。那么又如何指明丢失了哪些报文段呢？使用SACK需要两个功能字节。一个表示要使用SACK选项，另一个指明这个选项占用多少字节。描述丢失的报文段2，是通过描述它的左右边界报文段1、3来完成的。而这个1、3实际上是表示序列号，所以描述一个丢失的报文段需要64位即8个字节的空间。那么可以推算整个选项字段最多描述(40-2)/8=4个丢失的报文段。</p>
-</li>
-<li><p>时间戳选项（Timestamps）：可以用来计算RTT(往返时间)，发送方发送TCP报文时，把当前的时间值放入时间戳字段，接收方收到后发送确认报文时，把这个时间戳字段的值复制到确认报文中，当发送方收到确认报文后即可计算出RTT。也可以用来防止回绕序号PAWS，也可以说可以用来区分相同序列号的不同报文。因为序列号用32为表示，每2^32个序列号就会产生回绕，那么使用时间戳字段就很容易区分相同序列号的不同报文。</p>
-</li>
-<li><p>NOP(NO-Operation)：它要求选项部分中的每种选项长度必须是4字节的倍数，不足的则用NOP填充。同时也可以用来分割不同的选项字段。如窗口扩大选项和SACK之间用NOP隔开。</p>
-</li>
-</ul>
-<h4 id="用户数据报协议（UDP）"><a href="#用户数据报协议（UDP）" class="headerlink" title="用户数据报协议（UDP）"></a>用户数据报协议（UDP）</h4><p>UDP全称是User Datagram Protocol，中文名为用户数据报协议。UDP 提供无连接的网络服务，该服务对消息中传输的数据提供不可靠的、最大努力传送。这意味着它不保证数据报的到达，也不保证所传送数据包的顺序是否正确。</p>
-<p>虽然TCP中植入了各种安全保障功能，但是在实际执行的过程中会占用大量的系统开销，无疑使速度受到严重的影响。反观UDP由于排除了信息可靠传递机制，将安全和排序等功能移交给上层应用来完成，极大地降低了执行时间，使速度得到了保证。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/udpflow.png" alt=""></p>
-<h3 id="Socket编程-Client"><a href="#Socket编程-Client" class="headerlink" title="Socket编程-Client"></a>Socket编程-Client</h3><p>iOS中实现Socekt编程有下面几种方式：</p>
-<ul>
-<li>BSDSocket iOS系统基于unix，所以支持底层的BSD Socket。</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">//相关api位于下面这个文件中</div><div class="line">#import &lt;sys/socket.h&gt;</div></pre></td></tr></table></figure>
-<ul>
-<li>CFSocket 对底层BSD Socket进行轻量级的封装</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">//相关api位于下面这个文件中</div><div class="line">#import &lt;CoreFoundation/CFSocket.h&gt;</div></pre></td></tr></table></figure>
-<ul>
-<li>CocoaAsyncSocket 使用OC封装的一个socket框架（支持TCP和UDP）<br><a href="https://github.com/robbiehanson/CocoaAsyncSocket" target="_blank" rel="noopener">github</a></li>
-</ul>
-<p>这里使用的是CFSocket结合BSDSocket</p>
-<h4 id="创建socket对象并连接服务器"><a href="#创建socket对象并连接服务器" class="headerlink" title="创建socket对象并连接服务器"></a>创建socket对象并连接服务器</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div></pre></td><td class="code"><pre><div class="line">- (void)connectServerWithServerIP:(NSString *)serverIP&#123;</div><div class="line"></div><div class="line">    CFSocketContext socketContext = &#123;</div><div class="line">        0,//结构体的版本，必须为0</div><div class="line">        (__bridge void *)(self),</div><div class="line">        NULL,</div><div class="line">        NULL,</div><div class="line">        NULL,</div><div class="line">    &#125;;</div><div class="line">    </div><div class="line">    _mSocket = CFSocketCreate(kCFAllocatorDefault,//为新对象分配内存，可以为nil</div><div class="line">                              PF_INET,//协议族，如果为0或者负数，则默认为PF_INET</div><div class="line">                              SOCK_STREAM,//套接字类型，如果协议族为PF_INET,则它会默认为SOCK_STREAM</div><div class="line">                              IPPROTO_TCP,//套接字协议，如果协议族是PF_INET且协议是0或者负数，它会默认为IPPROTO_TCP</div><div class="line">                              kCFSocketConnectCallBack,//触发回调函数的socket消息类型，具体见Callback Types</div><div class="line">                              socketMessageCallBack,//上面情况下触发的回调函数</div><div class="line">                              &amp;socketContext);//一个持有CFSocket结构信息的对象，可以为nil</div><div class="line">    if (_mSocket != NULL) &#123;</div><div class="line">        struct sockaddr_in addr4;//IPV4</div><div class="line">        memset(&amp;addr4, 0, sizeof(addr4));</div><div class="line">        addr4.sin_len = sizeof(addr4);</div><div class="line">        addr4.sin_family = AF_INET;</div><div class="line">        addr4.sin_port = htons(8888);</div><div class="line">        addr4.sin_addr.s_addr = inet_addr([serverIP UTF8String]);//把字符串的地址转换为机器可识别的网络地址</div><div class="line"></div><div class="line">        //把sockaddr_in结构体中的地址转换为Data</div><div class="line">        CFDataRef address = CFDataCreate(kCFAllocatorDefault,</div><div class="line">                                         (UInt8 *)&amp;addr4, sizeof(addr4));</div><div class="line">        CFSocketConnectToAddress(_mSocket,//当前连接的socket</div><div class="line">                                 address,//CFDataRef类型的包含上面socket的远程地址的对象</div><div class="line">                                 -1);//连接超时时间，如果为负，则不尝试连接，而是把连接放在后台进行，如果_socket消息类型为kCFSocketConnectCallBack，将会在连接成功或失败的时候在后台触发回调函数</div><div class="line">        </div><div class="line">        CFRunLoopRef cRunRef = CFRunLoopGetCurrent();//获取当前线程的循环</div><div class="line">        //创建一个循环，但并没有真正加如到循环中，需要调用CFRunLoopAddSource</div><div class="line">        CFRunLoopSourceRef sourceRef = CFSocketCreateRunLoopSource(kCFAllocatorDefault, _mSocket, 0);</div><div class="line">        CFRunLoopAddSource(cRunRef, sourceRef, kCFRunLoopCommonModes);</div><div class="line">        CFRelease(cRunRef);</div><div class="line">        CFRelease(sourceRef);</div><div class="line">        </div><div class="line">        NSLog(@&quot;start connect&quot;);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h4 id="接收数据"><a href="#接收数据" class="headerlink" title="接收数据"></a>接收数据</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">case kCFSocketConnectCallBack:</div><div class="line">        &#123;</div><div class="line">            NSLog(@&quot;connect callback&quot;);</div><div class="line">            //data为回调的错误码,为NULL则为成功</div><div class="line">            if (data != NULL)</div><div class="line">            &#123;</div><div class="line">                NSLog(@&quot;连接失败&quot;);</div><div class="line">                return;</div><div class="line">            &#125;</div><div class="line">            else&#123;</div><div class="line">                //更新界面需要在主线程</div><div class="line">                dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">                    [mSelf ShowMsg:@&quot;服务器连接成功,现在可以开始通信了!!!&quot;];</div><div class="line">                &#125;);</div><div class="line">                //持续的接收数据，不能在主线程做，会阻塞当前线程，放到一个子线程去做。</div><div class="line">                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^&#123;</div><div class="line">                    [mSelf readMessageLoop];</div><div class="line">                &#125;);</div><div class="line">            &#125;</div><div class="line"></div><div class="line">        &#125;</div><div class="line">            break;</div></pre></td></tr></table></figure>
-<p>判断当前连接成功后，可以开一个线程监听是否接收到数据。</p>
-<p>注意这里的监听需要在子线程中进行。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">- (void)readMessageLoop&#123;</div><div class="line"></div><div class="line">    while (1) &#123;</div><div class="line">        char buffer[1024];</div><div class="line">        ssize_t recvLen = recv(CFSocketGetNative(_mSocket), buffer, sizeof(buffer), 0);</div><div class="line">        if (recvLen &gt; 0) &#123;</div><div class="line">            @autoreleasepool &#123;</div><div class="line">                NSString *str = @&quot;服务器发来数据：&quot;;</div><div class="line">                NSData *data = [NSData dataWithBytes:buffer length:recvLen];</div><div class="line">                str = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];</div><div class="line">                //回界面显示信息</div><div class="line">                dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">                    [self ShowMsg:str];</div><div class="line">                &#125;);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h4 id="发送数据"><a href="#发送数据" class="headerlink" title="发送数据"></a>发送数据</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">// 发送数据</div><div class="line">- (void)sendMessage &#123;</div><div class="line">    const char *sData = [self.sendContentTextField.text UTF8String];</div><div class="line">    send(CFSocketGetNative(_mSocket), sData, strlen(sData) + 1, 0);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h4 id="断开连接"><a href="#断开连接" class="headerlink" title="断开连接"></a>断开连接</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">- (IBAction)closeServerConnectBtnClicked:(id)sender &#123;</div><div class="line">	if(CFSocketIsValid(_mSocket))</div><div class="line">    &#123;</div><div class="line">        close(CFSocketGetNative(_mSocket));//关闭socket</div><div class="line">        CFSocketInvalidate(_mSocket);</div><div class="line">        CFRelease(_mSocket);</div><div class="line">    &#125;&#125;</div></pre></td></tr></table></figure>
-<h3 id="Socket编程-Server"><a href="#Socket编程-Server" class="headerlink" title="Socket编程-Server"></a>Socket编程-Server</h3><p>在本机搭建一个MAC APP模拟Server，实现和Client的通信。</p>
-<h4 id="创建Socket对象绑定端口"><a href="#创建Socket对象绑定端口" class="headerlink" title="创建Socket对象绑定端口"></a>创建Socket对象绑定端口</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div></pre></td><td class="code"><pre><div class="line">- (int)setupSocket&#123;</div><div class="line">    </div><div class="line">    int bRet = 0;</div><div class="line">    </div><div class="line">    CFSocketContext sockContext = &#123;0, // 结构体的版本，必须为0</div><div class="line">        (__bridge void *)(self),</div><div class="line">        NULL, // 一个定义在上面指针中的retain的回调， 可以为NULL</div><div class="line">        NULL,</div><div class="line">        NULL&#125;;</div><div class="line">    </div><div class="line">    _mSocket = CFSocketCreate(kCFAllocatorDefault, PF_INET, SOCK_STREAM, IPPROTO_TCP, kCFSocketAcceptCallBack, serverAcceptCallBack, &amp;sockContext);</div><div class="line">    if (NULL == _mSocket) &#123;</div><div class="line">        NSLog(@&quot;Cannot create socket!&quot;);</div><div class="line">        return 0;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    int optval = 1;</div><div class="line">    setsockopt(CFSocketGetNative(_mSocket), SOL_SOCKET, SO_REUSEADDR, // 允许重用本地地址和端口</div><div class="line">               (void *)&amp;optval, sizeof(optval));</div><div class="line">    struct sockaddr_in addr4;</div><div class="line">    memset(&amp;addr4, 0, sizeof(addr4));</div><div class="line">    addr4.sin_len = sizeof(addr4);</div><div class="line">    addr4.sin_family = AF_INET;</div><div class="line">    addr4.sin_port = htons(6666);</div><div class="line">    addr4.sin_addr.s_addr = htonl(INADDR_ANY);</div><div class="line">    CFDataRef address = CFDataCreate(kCFAllocatorDefault, (UInt8 *)&amp;addr4, sizeof(addr4));</div><div class="line">    </div><div class="line">    if (kCFSocketSuccess != CFSocketSetAddress(_mSocket, address))</div><div class="line">    &#123;</div><div class="line">        NSLog(@&quot;Bind to address failed!&quot;);</div><div class="line">        if (_mSocket)</div><div class="line">            CFRelease(_mSocket);</div><div class="line">        _mSocket = NULL;</div><div class="line">        bRet = 0;</div><div class="line">        return bRet;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    CFRunLoopRef cfRunLoop = CFRunLoopGetCurrent();</div><div class="line">    CFRunLoopSourceRef source = CFSocketCreateRunLoopSource(kCFAllocatorDefault, _mSocket, 0);</div><div class="line">    CFRunLoopAddSource(cfRunLoop, source, kCFRunLoopCommonModes);</div><div class="line">    CFRelease(source);</div><div class="line"></div><div class="line">    bRet = 1;</div><div class="line">    </div><div class="line">    return bRet;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>和Client相比多了一个setsockopt的过程。</p>
-<h4 id="Accept回调处理"><a href="#Accept回调处理" class="headerlink" title="Accept回调处理"></a>Accept回调处理</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div></pre></td><td class="code"><pre><div class="line">if (type == kCFSocketAcceptCallBack) &#123;</div><div class="line">     </div><div class="line">        // 本地套接字句柄</div><div class="line">        CFSocketNativeHandle nativeSocketHandle = *(CFSocketNativeHandle *)data;</div><div class="line">        uint8_t name[SOCK_MAXADDRLEN];</div><div class="line">        socklen_t nameLen = sizeof(name);</div><div class="line">        if (0 != getpeername(nativeSocketHandle, (struct sockaddr *)name, &amp;nameLen)) &#123;</div><div class="line">            NSLog(@&quot;error&quot;);</div><div class="line">            exit(1);</div><div class="line">        &#125;</div><div class="line">        CFReadStreamRef iStream;</div><div class="line">        CFWriteStreamRef oStream;</div><div class="line">        // 创建一个可读写的socket连接</div><div class="line">        CFStreamCreatePairWithSocket(kCFAllocatorDefault, nativeSocketHandle, &amp;iStream, &amp;oStream);</div><div class="line">        if (iStream &amp;&amp; oStream)</div><div class="line">        &#123;</div><div class="line">            CFStreamClientContext streamContext = &#123;0, info, NULL, NULL&#125;;</div><div class="line">            if (!CFReadStreamSetClient(iStream, kCFStreamEventHasBytesAvailable,readStream, &amp;streamContext))</div><div class="line">            &#123;</div><div class="line">                exit(1);</div><div class="line">            &#125;</div><div class="line">            </div><div class="line">            if (!CFWriteStreamSetClient(oStream, kCFStreamEventCanAcceptBytes, writeStream, &amp;streamContext))</div><div class="line">            &#123;</div><div class="line">                exit(1);</div><div class="line">            &#125;</div><div class="line">            CFReadStreamScheduleWithRunLoop(iStream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);</div><div class="line">            CFWriteStreamScheduleWithRunLoop(oStream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);</div><div class="line">            CFReadStreamOpen(iStream);</div><div class="line">            CFWriteStreamOpen(oStream);</div><div class="line">        &#125; else</div><div class="line">        &#123;</div><div class="line">            close(nativeSocketHandle);</div><div class="line">        &#125;</div><div class="line"></div><div class="line">    &#125;</div></pre></td></tr></table></figure>
-<p>创建一个可读写的Socket连接，当接收或者发送数据时，都会走到回调接口中。</p>
-<p>读数据回调</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">// 读取数据</div><div class="line">void readStream(CFReadStreamRef stream, CFStreamEventType eventType, void *clientCallBackInfo)</div><div class="line">&#123;</div><div class="line">    UInt8 buff[255];</div><div class="line">    CFReadStreamRead(stream, buff, 255);</div><div class="line">    ///根据delegate显示到主界面去</div><div class="line">    NSString *strMsg = [[NSString alloc]initWithFormat:@&quot;客户端传来消息：%s&quot;,buff];</div><div class="line">    ViewController *mSelf = (__bridge ViewController*)clientCallBackInfo;</div><div class="line">    dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">        [mSelf ShowMsg:strMsg];</div><div class="line">    &#125;);</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>写数据回调</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">void writeStream (CFWriteStreamRef stream, CFStreamEventType eventType, void *clientCallBackInfo)</div><div class="line">&#123;</div><div class="line">    outputStream = stream;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>保存当前写数据的实例。</p>
-<h4 id="发送数据-1"><a href="#发送数据-1" class="headerlink" title="发送数据"></a>发送数据</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">- (IBAction)sendMessage:(id)sender &#123;</div><div class="line">    </div><div class="line">    const char *str = [self.sendTextField.stringValue UTF8String];</div><div class="line">    uint8_t *sendS = (uint8_t *)str;</div><div class="line">    if (outputStream != NULL) &#123;</div><div class="line">        CFWriteStreamWrite(outputStream, sendS, strlen(str) + 1);</div><div class="line">    &#125;</div><div class="line">    else&#123;</div><div class="line">        NSLog(@&quot;send failed&quot;);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>通信过程如下图：<br><img src="http://ofy1hyquv.bkt.clouddn.com/socketclient&amp;server.png" alt=""></p>
-<p><a href="https://github.com/lilingyu0620/LLYSocketDemo.git" target="_blank" rel="noopener">iOS Socket Demo</a></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/04/01/DNS解析学习笔记/" itemprop="url">
-                  DNS解析学习笔记
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-04-01T17:57:48+08:00" content="2017-04-01">
-              2017-04-01
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2017/04/01/DNS解析学习笔记/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/04/01/DNS解析学习笔记/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="什么是域名解析"><a href="#什么是域名解析" class="headerlink" title="什么是域名解析"></a>什么是域名解析</h3><p>Internet上的计算机是通过IP地址来定位的，给出一个IP地址，就可以找到Internet上的某台主机。而因为IP地址难于记忆，又发明了域名来代替IP地址。但通过域名并不能直接找到要访问的主机，中间要加一个从域名查找IP地址的过程，这个过程就是域名解析。</p>
-<p>负责将域名解析成为IP地址的服务器，叫做域名解析服务器，英文简称是DNS。Internet上所有的DNS通过域的层次关系连接在一起。</p>
-<p>当Internet用户打开浏览器，输入一个网址的时候，比如<a href="http://www.google.com" target="_blank" rel="noopener">http://www.google.com</a> 用户的计算机并不知道www.google.com是哪一台主机，因此计算机向Internet的DNS发出查询请求，DNS将查询到的IP地址返回给用户的计算机，用户计算机就可以根据IP地址连接www.google.com主机，把网页下载下来。</p>
-<h3 id="相关名词"><a href="#相关名词" class="headerlink" title="相关名词"></a>相关名词</h3><h4 id="根域"><a href="#根域" class="headerlink" title="根域"></a>根域</h4><p>就是所谓的“.”，其实我们的网址www.google.com在配置当中应该是www.google.com.（最后有一点），一般我们在浏览器里输入时会省略后面的点，而这也已经成为了习惯。</p>
-<p>根域服务器我们知道有13台，但是这是错误的观点。</p>
-<p>根域服务器只是具有13个IP地址，但机器数量却不是13台，因为这些IP地址借助了任播的技术，所以我们可以在全球设立这些IP的镜像站点，你访问到的这个IP并不是唯一的那台主机。</p>
-<h4 id="域的划分"><a href="#域的划分" class="headerlink" title="域的划分"></a>域的划分</h4><p>根域下面就是顶级域或者叫一级域.</p>
-<p>有两种划分方式，一种互联网刚兴起时的按照行业性质划分的com. net.等，一种是按国家划分的如cn. jp.等。</p>
-<p>每个域都会有域名服务器，也叫权威域名服务器。</p>
-<p>google.com就是一个顶级域名，而www.google.com却不是顶级域名，是在google.com这个域里的一叫做www的主机。</p>
-<p>一级域之后还有二级域，三级域，只要我买了一个顶级域，并且我搭建了自己BIND服务器（或者其他软件搭建的）注册到互联网中，那么我就可以随意在前面多加几个域了（当然长度是有限制的）。</p>
-<p>比如lly.www.google.com，在这个网址中，www.google.com变成了一个二级域而不是一台主机，主机名是lly。</p>
-<h4 id="域名服务器"><a href="#域名服务器" class="headerlink" title="域名服务器"></a>域名服务器</h4><p>能提供域名解析的服务器，上面的记录类型可以是A(address)记录，NS记录（name server），MX（mail），CNAME等。</p>
-<p>A记录是什么意思呢，就是记录一个IP地址和一个主机名字，比如我这个域名服务器所在的域test.google.com，我们知道这是一个二级的域名，然后我在里面有一条A记录,记录了主机为lly的IP，查到了就返回给你了。</p>
-<p>如果我现在要想google.com这个域名服务器查询lly.test.google.com，那么这个顶级域名服务器就会发现你请求的这个网址在test.google.com这个域中，我这里记录了这个二级域的域名服务器test.google.com的NS的IP。我返回给你这个地址你再去查主机名为lly的主机。</p>
-<h3 id="DNS解析原理"><a href="#DNS解析原理" class="headerlink" title="DNS解析原理"></a>DNS解析原理</h3><p>DNS解析主要有递归查询，就是在某个DNS服务器缓存中查找不到相应的域名与IP地址对应关系时，自动跳转到到下一步骤通过下一个DNS服务器进行查找。具体可见如下两图：</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/dnsflow.jpg" alt=""></p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/dnssearchflow.jpg" alt=""></p>
-<h3 id="DNS解析过程"><a href="#DNS解析过程" class="headerlink" title="DNS解析过程"></a>DNS解析过程</h3><p>以下步骤中，当DNS缓存中存在域名对应IP时则DNS解析成功，用户计算机将直接访问服务器，若DNS服务器缓存中不存在域名对应IP，则自动进入下一步。</p>
-<ul>
-<li>浏览器缓存</li>
-</ul>
-<p>当用户通过浏览器访问某域名时，浏览器首先会在自己的缓存中查找是否有该域名对应的IP地址（若曾经访问过该域名且没有清空缓存便存在）；</p>
-<ul>
-<li>系统缓存</li>
-</ul>
-<p>当浏览器缓存中无域名对应IP则会自动检查用户计算机系统Hosts文件DNS缓存是否有该域名对应IP；</p>
-<ul>
-<li>路由器缓存</li>
-</ul>
-<p>当浏览器及系统缓存中均无域名对应IP则进入路由器缓存中检查，以上三步均为客服端的DNS缓存；</p>
-<ul>
-<li>ISP（互联网服务提供商）DNS缓存</li>
-</ul>
-<p>当在用户客服端查找不到域名对应IP地址，则将进入ISP DNS缓存中进行查询。比如你用的是电信的网络，则会进入电信的DNS缓存服务器中进行查找；</p>
-<ul>
-<li>根域名服务器</li>
-</ul>
-<p>当以上均未完成，则进入根服务器进行查询。全球仅有13台根域名服务器，1个主根域名服务器，其余12为辅根域名服务器。根域名收到请求后会查看区域文件记录，若无则将其管辖范围内顶级域名（如.com）服务器IP告诉本地DNS服务器；</p>
-<ul>
-<li>顶级域名服务器</li>
-</ul>
-<p>顶级域名服务器收到请求后查看区域文件记录，若无则将其管辖范围内主域名（如google.com）服务器的IP地址告诉本地DNS服务器；</p>
-<ul>
-<li>主域名服务器</li>
-</ul>
-<p>主域名服务器接受到请求后查询自己的缓存，如果没有则进入下一级域名服务器（www.google.com）进行查找，并重复该步骤直至找到正确纪录；</p>
-<ul>
-<li>保存结果至缓存</li>
-</ul>
-<p>本地域名服务器把返回的结果保存到缓存，以备下一次使用，同时将该结果反馈给客户端，客户端通过这个IP地址与web服务器建立链接。</p>
-<h3 id="DNS优化如何实现"><a href="#DNS优化如何实现" class="headerlink" title="DNS优化如何实现"></a>DNS优化如何实现</h3><p>一般域名商或服务器商都会提供免费的DNS服务，然而，很多情况下这些免费的DNS服务器速度较慢，故可做一定优化，具体可从以下几方面：</p>
-<ul>
-<li>增加DNS服务器数量</li>
-</ul>
-<p>减小服务器压力，当单位服务器需要处理的DNS请求数量较少时速度会更快；</p>
-<ul>
-<li>全国多地分布DNS服务器</li>
-</ul>
-<p>用户网络访问速度跟用户计算机到服务器的距离有关，若可以让用户就近访问所在省份的服务器便可以加速DNS解析速度；</p>
-<ul>
-<li>识别用户线路反馈相应线路IP</li>
-</ul>
-<p>当用户网络线路跟服务器网络线路一致时速度较快，而不一致时则较慢，如：用户使用电信的线路但服务器是联通的线路，这样就会造成用户访问网站速度下降，如果可以识别用户访问线路并反馈相应IP则会加速网站访问。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2036,7 +1872,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">27</span>
+              <span class="site-state-item-count">29</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
