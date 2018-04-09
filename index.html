@@ -317,6 +317,53 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">struct AudioStreamBasicDescription &#123;</div><div class="line">    Float64 mSampleRate;//采样率</div><div class="line">    UInt32  mFormatID;//格式ID</div><div class="line">    UInt32  mFormatFlags;//存储标识</div><div class="line">    UInt32  mBytesPerPacket;//每个packet的字节数</div><div class="line">    UInt32  mFramesPerPacket;//每个packet包含几个frame</div><div class="line">    UInt32  mBytesPerFrame;//每个frame的字节数</div><div class="line">    UInt32  mChannelsPerFrame;//每个frame的声道数</div><div class="line">    UInt32  mBitsPerChannel;//每个声道的位数</div><div class="line">    UInt32  mReserved;</div><div class="line">&#125;;</div><div class="line">typedef struct AudioStreamBasicDescription  AudioStreamBasicDescription;</div></pre></td></tr></table></figure>
 <h3 id="Understanding-Where-and-How-to-Set-Stream-Formats"><a href="#Understanding-Where-and-How-to-Set-Stream-Formats" class="headerlink" title="Understanding Where and How to Set Stream Formats"></a>Understanding Where and How to Set Stream Formats</h3><p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit1-6.png" alt=""></p>
 <p>这个图展示了一个完整的录音+混音+播放的流程，在组件两边设置stream的格式，在代码里的概念是scope。</p>
+<h3 id="在使用AUGraph时选择不同的设计模式"><a href="#在使用AUGraph时选择不同的设计模式" class="headerlink" title="在使用AUGraph时选择不同的设计模式"></a>在使用AUGraph时选择不同的设计模式</h3><h4 id="I-O-Pass-Through"><a href="#I-O-Pass-Through" class="headerlink" title="I/O Pass Through"></a>I/O Pass Through</h4><p>简单的音频输入输出场景，直接使用AudioUnit链接两端，不需要设置渲染回调.</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit2-1.png" alt=""></p>
+<h4 id="I-O-Without-a-Render-Callback-Function"><a href="#I-O-Without-a-Render-Callback-Function" class="headerlink" title="I/O Without a Render Callback Function"></a>I/O Without a Render Callback Function</h4><p>需要多个AudioUnit来处理的场景，使用AudioUnit链接各部分，不需要设置回调。</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit2-2.png" alt=""></p>
+<h4 id="I-O-with-a-Render-Callback-Function"><a href="#I-O-with-a-Render-Callback-Function" class="headerlink" title="I/O with a Render Callback Function"></a>I/O with a Render Callback Function</h4><p>设置渲染回调的方式来处理输入输出的链接。</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit2-3.png" alt=""></p>
+<h4 id="Output-Only-with-a-Render-Callback-Function"><a href="#Output-Only-with-a-Render-Callback-Function" class="headerlink" title="Output-Only with a Render Callback Function"></a>Output-Only with a Render Callback Function</h4><p>只有输出没有输入的场景，设置渲染回调来链接输出端。</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit2-4.png" alt=""></p>
+<p>复杂的场景，需要设置多个渲染回调。同时需要多个AudioUnit来处理链接。</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit2-5.png" alt=""></p>
+<h3 id="构建AudioUnit-app的流程"><a href="#构建AudioUnit-app的流程" class="headerlink" title="构建AudioUnit app的流程"></a>构建AudioUnit app的流程</h3><p>无论选择上面的哪种设计，构建app的基本流程如下：</p>
+<ul>
+<li><p>Configure your audio session.</p>
+</li>
+<li><p>Specify audio units.</p>
+</li>
+<li><p>Create an audio processing graph, then obtain the<br>audio units.</p>
+</li>
+<li><p>Configure the audio units.</p>
+</li>
+<li><p>Connect the audio unit nodes.</p>
+</li>
+<li><p>Provide a user interface.</p>
+</li>
+<li><p>Initialize and then start the audio processing graph.</p>
+</li>
+</ul>
+<h3 id="使用指定的AudioUnit"><a href="#使用指定的AudioUnit" class="headerlink" title="使用指定的AudioUnit"></a>使用指定的AudioUnit</h3><h4 id="Using-I-O-Units"><a href="#Using-I-O-Units" class="headerlink" title="Using I/O Units"></a>Using I/O Units</h4><ul>
+<li>Remote I/O Unit</li>
+</ul>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit3-1.png" alt=""></p>
+<ul>
+<li><p>Voice-Processing I/O Unit</p>
+</li>
+<li><p>Generic Output Unit</p>
+</li>
+</ul>
+<h4 id="Using-Mixer-Units"><a href="#Using-Mixer-Units" class="headerlink" title="Using Mixer Units"></a>Using Mixer Units</h4><ul>
+<li>Multichannel Mixer Unit</li>
+</ul>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit3-2.png" alt=""></p>
+<ul>
+<li>3D Mixer Unit</li>
+</ul>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit3-3.png" alt=""></p>
+<h4 id="Using-Effect-Units"><a href="#Using-Effect-Units" class="headerlink" title="Using Effect Units"></a>Using Effect Units</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit3-4.png" alt=""></p>
+<h3 id="Identifier-Keys-for-Audio-Units"><a href="#Identifier-Keys-for-Audio-Units" class="headerlink" title="Identifier Keys for Audio Units"></a>Identifier Keys for Audio Units</h3><p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit3-5.png" alt=""></p>
 <p><a href="https://developer.apple.com/library/content/documentation/MusicAudio/Conceptual/AudioUnitHostingGuide_iOS/AudioUnitHostingFundamentals/AudioUnitHostingFundamentals.html" target="_blank" rel="noopener">参考文档</a></p>
 
           
