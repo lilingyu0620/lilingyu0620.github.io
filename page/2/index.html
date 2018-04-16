@@ -229,6 +229,136 @@
             
               
                 
+                <a class="post-title-link" href="/2017/05/27/SceneKit的那些坑/" itemprop="url">
+                  SceneKit的那些坑
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-05-27T16:27:35+08:00" content="2017-05-27">
+              2017-05-27
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/05/27/SceneKit的那些坑/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/05/27/SceneKit的那些坑/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>SceneKit是苹果爸爸自带的一个3D引擎，应该是高度封装了OpenGL ES相关的内容，使用起来比OpenGL方便了不止100倍，当然功能上肯定不能和手撸OpenGL相比较啦，但是一些简单的3D场景用它做起来还是比较方便的。比如加载显示个3D模型啥的。</p>
+<h3 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h3><p>产品想在咱的app里面加一套勋章体系，这个也不是啥新鲜功能啦，纵观各大直播app,勋章体系做的都是66的，但是呢，咱们产品大大看上了QQ的勋章展示方式，如下图：</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/qqmedel.gif" alt=""></p>
+<p>第一反应是OpenGL ES，后来同事推荐了SceneKit这个框架，于是有了这一篇踩坑之旅。</p>
+<h3 id="学习资料"><a href="#学习资料" class="headerlink" title="学习资料"></a>学习资料</h3><p><a href="http://www.jianshu.com/u/1c37e216663b" target="_blank" rel="noopener">这位同学</a> 的入门教程还不错，不过现在他把教程转为了收费项目，但是代码还是可以在<a href="https://github.com/XJALYN/SceneKit_Learn" target="_blank" rel="noopener">他的Github上</a>下载到的，而且看他的提交记录.md文件里面会有惊喜哦。</p>
+<p>so 我这里就直说我踩过的一些坑啦，想学习整个流程的童鞋可以参考上面的教程。在这里先谢谢这位同学啦~~~</p>
+<h3 id="坑s"><a href="#坑s" class="headerlink" title="坑s"></a>坑s</h3><p>SceneKit是支持两个格式的文件的.scn和.dae 但是 这两种格式好像并没有太大的区别，都可以通过下面2中方式加载到程序中：</p>
+<p>通过记事本打开文件，就会发现每个模型（node）都有一个id和name</p>
+<h4 id="通过id加载"><a href="#通过id加载" class="headerlink" title="通过id加载"></a>通过id加载</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">NSURL *bundlePathUrl = [[NSBundle mainBundle] bundleURL];</div><div class="line">bundlePathUrl = [bundlePathUrl URLByAppendingPathComponent:@&quot;art.scnassets/medle1.dae&quot;];</div><div class="line">            </div><div class="line">SCNSceneSource *sceneSource = [SCNSceneSource sceneSourceWithURL:bundlePathUrl options:nil];</div><div class="line">SCNNode *myNode = [sceneSource entryWithIdentifier:@&quot;ID4&quot; withClass:[SCNNode class]];</div></pre></td></tr></table></figure>
+<h4 id="通过name加载"><a href="#通过name加载" class="headerlink" title="通过name加载"></a>通过name加载</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">SCNScene *scene = [SCNScene sceneNamed:@&quot;art.scnassets/medle1.dae&quot;];</div><div class="line">SCNNode *myNode = [scene.rootNode childNodeWithName:@&quot;medle1&quot; recursively:YES];</div></pre></td></tr></table></figure>
+<h4 id="自定义材质-Material"><a href="#自定义材质-Material" class="headerlink" title="自定义材质(Material)"></a>自定义材质(Material)</h4><p>想要自定义模型的材质，就需要获取到模型的几何属性(geometry),but 自定义的模型加载进来的时候默认的geometry属性是nil的你敢信吗。。。google了一番之后，找到了一个解决方案 先遍历一下这个模型的childNodes 然后修改child的geometry的firstMaterial。。。这也算曲线救国了</p>
+<p>这里还有一个坑，美工导出的模型可能会有好几个child我擦嘞。。。这个时候咋办呢 ，取哪个都不对啊， 每个child可能都只是整个模型的一部分而已，让美工的同学先把这几个child合并为一个child，然后再导出试试吧。</p>
+<h4 id="材质叠加"><a href="#材质叠加" class="headerlink" title="材质叠加"></a>材质叠加</h4><p>美工同学可能建好了模型，并成功导出正确的模型格式，还把材质也一起导出来了，是不是很完美。拿来直接用就可以啦。but 我要再添加一个材质到模型上该如何实现呢（比如我要贴一张图片到模型上），如果我直接修改firstMaterial的话，那么不好意思哦，原来美工导出的材质就被remove掉了。</p>
+<p>这个时候就不能直接修改firstMaterial啦，需要修改firstMaterial的diffuse和multiply属性来实现，美工同学导出的材质图片= diffuse.contents  自定义贴图 = multiply.contents。 然后就是微调图片的位置啥的了，通过修改contentsTransform这个属性来实现。</p>
+<h4 id="添加射灯"><a href="#添加射灯" class="headerlink" title="添加射灯"></a>添加射灯</h4><p>可以看到，qq的勋章在滑动的时候，上面有高亮的金属光泽，这个应该是可以通过添加灯光来实现的。SceneKit有提供4中灯光，分别是环境光，点光源，方向光和聚光灯（我这里叫他射灯）。</p>
+<p>首先 环境光和点光源都是必须的 实现高光的话，还需要再添加一个射灯，然后调整照射的位置到你满意就可以啦。见如下代码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">- (SCNNode *)spotNode&#123;</div><div class="line"></div><div class="line">    if (!_spotNode) &#123;</div><div class="line">        </div><div class="line">        </div><div class="line">        SCNLight *spotLight = [SCNLight light];// 创建光对象</div><div class="line">        spotLight.type = SCNLightTypeSpot;// 设置类型</div><div class="line">        spotLight.color = [UIColor whiteColor]; // 设置光的颜色</div><div class="line">        spotLight.castsShadow = TRUE;// 捕捉阴影</div><div class="line">        spotLight.attenuationStartDistance = 0;</div><div class="line">        spotLight.attenuationEndDistance = 100;</div><div class="line">        spotLight.attenuationFalloffExponent = 2;</div><div class="line">        spotLight.spotInnerAngle = 0;</div><div class="line">        spotLight.spotOuterAngle = 30;</div><div class="line">        _spotNode = [SCNNode node];</div><div class="line">        _spotNode.position = SCNVector3Make(0, 2, 10); //设置光源节点的位置</div><div class="line">        _spotNode.light  = spotLight;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    return _spotNode;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="勋章的旋转"><a href="#勋章的旋转" class="headerlink" title="勋章的旋转"></a>勋章的旋转</h4><p>勋章需要支持手势，主要是通过滑动手势旋转勋章，而且需要在不同滑动力度时旋转不同的角度，当然，最后旋转的角度都是M_PI的整数倍，所以勋章才会始终保持正面或者背面面向屏幕而不是侧面面向屏幕了。</p>
+<h5 id="手势的选择"><a href="#手势的选择" class="headerlink" title="手势的选择"></a>手势的选择</h5><p>手势识别我尝试了2种方案，第一种是touchBegan系列响应事件，还有一种是添加UIPanGestureRecognizer手势，其实二者的处理方案是差不多的，但是使用touch系列方法不能检测到滑动的速度，而UIPanGestureRecognizer有提供检测速率的方法，so 当然是选择UIPanGestureRecognizer啦~</p>
+<h5 id="属性的选择"><a href="#属性的选择" class="headerlink" title="属性的选择"></a>属性的选择</h5><p>然后就是选择改变node的哪个属性来实现旋转了，SCNNode有好几个属性都是可以旋转node，比如transform,pivot,rotation等,不同点是前两个是矩阵运算，后一个是向量运算。这里我也做了2种尝试，最初我使用的是pivot，在处理旋转角度小于M_PI时还行，但是如果想让勋章旋转一圈或者几圈时，无论我的角度设置的是多大，最终效果都只能旋转M_PI。好吧，然后我就转向使用rotation旋转勋章，这里还有一点需要注意的，要保证勋章是平滑的转动而不会出现突出旋转到某个方向，必须要在勋章的初始角度上进行加减，并保存勋章旋转后的角度以便下一次旋转时计算角度值。</p>
+<h5 id="动画"><a href="#动画" class="headerlink" title="动画"></a>动画</h5><p>当手指离开屏幕后，勋章会根据手指滑动的速率和方向做一个旋转的弹簧动画，因为SCNNode本身是支持CA动画的，所以我首先想到的就是使用CA动画去做，ok,第一次旋转是木有问题的，但是动画结束之后，如果你再去旋转勋章你会发现，勋章完全不动了，不管你的旋转角度是多少。。。我想可能是因为CA动画本身并没有改变rotation的值，所以当我再次旋转时计算的角度值并不是从当前勋章的其实角度开始的。</p>
+<p>CA动画不行，还好Scenekit提供了另外一种动画的实现方式，SCNTransaction动画，类似于CATransaction的使用方式。好吧 动画这块的效果终于差不多搞定了。</p>
+<h4 id="自定义贴图"><a href="#自定义贴图" class="headerlink" title="自定义贴图"></a>自定义贴图</h4><p>勋章的背面需要显示用户的相关信息，这些信息都是动态的，不可能是美工同学在建模的时候加，只能是通过代码的方式动态的加上去。</p>
+<p>因为图片可以直接作为材质的contents，so 我将需要显示的信息放到一个label上，然后对这个label做截图操作就可以得到我想要的图片文件了。</p>
+<p>SCNNode有很多的材质相关的属性，而且还有一个材质列表，模型所有使用的材质都在这个列表中可以找到，所以我的做法就是取出你需要改变的材质，将自定义贴图和当前材质做一个合并，然后使用合并后的材质替换之前的。</p>
+<p>这里有点需要注意的就是调试贴图到正确的位置，因为图片的坐标系是01坐标系，所以在调试的时候参数需要尽量小，慢慢调，如果你合并材质和替换都成功了但是在模型上面看不到图片，可能就是图片的位置不对。</p>
+<h4 id="模型的动态加载"><a href="#模型的动态加载" class="headerlink" title="模型的动态加载"></a>模型的动态加载</h4><p>Xcode在build的时候，会把项目中引用了的.dae模型(这里指本地模型)通过一个脚本copy到.ipa中，copy的过程中可能对模型的格式进行了特殊处理，因为copy后的文件比原文件小了很多。</p>
+<p>如果我们要动态加载模型的话，Xcode是没有对模型进行copy操作的，我们直接使用设计给的模型文件，在模型被保存到沙盒中后，通过文件路径加载无法正常加载出模型，后来在网上找到<a href="https://the-nerd.be/2014/11/07/dynamically-load-collada-files-in-scenekit-at-runtime/#more-457" target="_blank" rel="noopener">这个解决方案</a>，<a href="http://www.jianshu.com/p/78be2688ef4c" target="_blank" rel="noopener">这里还有一篇中文的，内容差不多</a>，先将模型用Xcode在build时使用的脚步copy一份，然后把copy的模型文件给服务器，下载后就可以正常显示了。</p>
+<p>相当于我们帮Xcode做了copy的操作。</p>
+<p><a href="https://github.com/lilingyu0620/LLYSceneKitDemo" target="_blank" rel="noopener">这是我的demo</a></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2017/04/26/RTMP拉流播放详解/" itemprop="url">
                   RTMP拉流播放详解
                 </a>
@@ -1579,263 +1709,11 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/03/20/RTMP协议学习笔记/" itemprop="url">
-                  RTMP协议学习笔记
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-03-20T17:58:21+08:00" content="2017-03-20">
-              2017-03-20
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2017/03/20/RTMP协议学习笔记/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/03/20/RTMP协议学习笔记/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>RTMP协议是Real Time Message Protocol(实时信息传输协议)的缩写，它是由Adobe公司提出的一种应用层的协议，用来解决多媒体数据传输流的多路复用（Multiplexing）和分包（packetizing）的问题。随着VR技术的发展，视频直播等领域逐渐活跃起来，RTMP作为业内广泛使用的协议也重新被相关开发者重视起来。</p>
-<h3 id="rtmp协议简介"><a href="#rtmp协议简介" class="headerlink" title="rtmp协议简介"></a>rtmp协议简介</h3><p>RTMP协议是应用层协议，是要靠底层可靠的传输层协议（通常是TCP）来保证信息传输的可靠性的。在基于传输层协议的链接建立完成后，RTMP协议也要客户端和服务器通过“握手”来建立基于传输层链接之上的RTMP Connection链接，在Connection链接上会传输一些控制信息，如SetChunkSize,SetACKWindowSize。其中CreateStream命令会创建一个Stream链接，用于传输具体的音视频数据和控制这些信息传输的命令信息。RTMP协议传输时会对数据做自己的格式化，这种格式的消息我们称之为RTMP Message，而实际传输的时候为了更好地实现多路复用、分包和信息的公平性，发送端会把Message划分为带有Message ID的Chunk，每个Chunk可能是一个单独的Message，也可能是Message的一部分，在接受端会根据chunk中包含的data的长度，message id和message的长度把chunk还原成完整的Message，从而实现信息的收发。</p>
-<h3 id="建立rtmp连接-三次握手"><a href="#建立rtmp连接-三次握手" class="headerlink" title="建立rtmp连接(三次握手)"></a>建立rtmp连接(三次握手)</h3><p>一个RTMP连接以握手开始。这里的握手和其他协议的握手不一样。这里的握手由三个固定大小的块组成，而不是可变大小的块加上头。</p>
-<p>客户端（发起连接的一方）和服务端各自发送三个相同的块。这些块如果是客户端发送的话记为C0，C1和C2，如果是服务端发送的话记为S0，S1和S2。</p>
-<h4 id="握手队列"><a href="#握手队列" class="headerlink" title="握手队列"></a>握手队列</h4><p>握手开始于客户端发送C0，C1块。</p>
-<p>在发送C2之前客户端必须等待接收S1 。</p>
-<p>在发送任何数据之前客户端必须等待接收S2。</p>
-<p>服务端在发送S0和S1之前必须等待接收C0，也可以等待接收C1。</p>
-<p>服务端在发送S2之前必须等待接收C1。</p>
-<p>服务端在发送任何数据之前必须等待接收C2。</p>
-<h4 id="C0-S0-消息格式"><a href="#C0-S0-消息格式" class="headerlink" title="C0/S0 消息格式"></a>C0/S0 消息格式</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/c0s0.png" alt=""></p>
-<p>C0 和 S0是单独的一个字节，表示当前选择的RTMP版本</p>
-<p>我现在看的资料当前rtmp版本是3。0-2是早期产品所用的，已被丢弃；4-31保留在未来使用 ；32-255不允许使用 （为了区分其他以某一字符开始的文本协议）。如果服务无法识别客户端请求的版本，应该返回3 。客户端可以选择减到版本3或选择取消握手。</p>
-<h4 id="C1-S1-消息格式"><a href="#C1-S1-消息格式" class="headerlink" title="C1/S1 消息格式"></a>C1/S1 消息格式</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/c1s1.png" alt=""></p>
-<p>C1和S1消息有1536字节长，由上面字段组成</p>
-<p>时间：4字节,本字段包含时间戳。该时间戳应该是发送这个数据块的端点的后续块的时间起始点。可以是0，或其他的任何值。为了同步多个流，端点可能发送其块流的当前值。</p>
-<p>零：4字节,本字段必须是全零。</p>
-<p>随机数据：1528字节,本字段可以包含任何值。因为每个端点必须用自己初始化的握手和对端初始化的握手来区分身份，所以这个数据应有充分的随机性。但是并不需要加密安全的随机值，或者动态值。</p>
-<h4 id="C2-S2-消息格式"><a href="#C2-S2-消息格式" class="headerlink" title="C2/S2 消息格式"></a>C2/S2 消息格式</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/c2s2.png" alt=""></p>
-<p>C2和S2消息有1536字节长。是S1和C1的回复。本消息由以上字段组成。</p>
-<p>时间：4字节，本字段必须包含对等段发送的时间（对C2来说是S1，对S2来说是C1）。</p>
-<p>时间2：4字节，本字段必须包含先前发送的并被对端读取的包的时间戳。</p>
-<p>随机回复：1528字节，本字段必须包含对端发送的随机数据字段（对C2来说是S1，对S2来说是C1）。</p>
-<p>每个对等端可以用时间和时间2字段中的时间戳来快速地估计带宽和延迟。但这样做可能并不实用。</p>
-<h4 id="握手示意图"><a href="#握手示意图" class="headerlink" title="握手示意图"></a>握手示意图</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/woshouliucheng.png" alt=""></p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/liuchengbiao.png" alt=""></p>
-<p>流程和状态的对应表</p>
-<h3 id="Message分块（Chunking）"><a href="#Message分块（Chunking）" class="headerlink" title="Message分块（Chunking）"></a>Message分块（Chunking）</h3><p>RTMP在收发数据的时候并不是以Message为单位的，而是把Message拆分成Chunk发送，而且必须在一个Chunk发送完成之后才能开始发送下一个Chunk。每个Chunk中带有MessageID代表属于哪个Message，接受端也会按照这个id来将chunk组装成Message。</p>
-<p>为什么RTMP要将Message拆分成不同的Chunk呢？通过拆分，数据量较大的Message可以被拆分成较小的“Message”，这样就可以避免优先级低的消息持续发送阻塞优先级高的数据，比如在视频的传输过程中，会包括视频帧，音频帧和RTMP控制信息，如果持续发送音频数据或者控制数据的话可能就会造成视频帧的阻塞，然后就会造成看视频时最烦人的卡顿现象。同时对于数据量较小的Message，可以通过对Chunk Header的字段来压缩信息，从而减少信息的传输量。</p>
-<p>Chunk的默认大小是128字节，在传输过程中，通过一个叫做Set Chunk Size的控制信息可以设置Chunk数据量的最大值，在发送端和接受端会各自维护一个Chunk Size，可以分别设置这个值来改变自己这一方发送的Chunk的最大大小。大一点的Chunk减少了计算每个chunk的时间从而减少了CPU的占用率，但是它会占用更多的时间在发送上，尤其是在低带宽的网络情况下，很可能会阻塞后面更重要信息的传输。小一点的Chunk可以减少这种阻塞问题，但小的Chunk会引入过多额外的信息（Chunk中的Header），少量多次的传输也可能会造成发送的间断导致不能充分利用高带宽的优势，因此并不适合在高比特率的流中传输。在实际发送时应对要发送的数据用不同的Chunk Size去尝试，通过抓包分析等手段得出合适的Chunk大小，并且在传输过程中可以根据当前的带宽信息和实际信息的大小动态调整Chunk的大小，从而尽量提高CPU的利用率并减少信息的阻塞机率。</p>
-<p>具体Chunk格式如下：</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/ChunkHeader.png" alt=""></p>
-<h4 id="Basic-Header-基本的头信息"><a href="#Basic-Header-基本的头信息" class="headerlink" title="Basic Header (基本的头信息)"></a>Basic Header (基本的头信息)</h4><p>包含了chunk stream ID（流通道Id）和chunk type（chunk的类型），chunk stream id一般被简写为CSID，用来唯一标识一个特定的流通道，chunk type决定了后面Message Header的格式。Basic Header的长度可能是1，2，或3个字节，其中chunk type的长度是固定的（占2位，注意单位是位，bit），Basic Header的长度取决于CSID的大小,在足够存储这两个字段的前提下最好用尽量少的字节从而减少由于引入Header增加的数据量。</p>
-<p>RTMP协议支持用户自定义［3，65599］之间的CSID，0，1，2由协议保留表示特殊信息。0代表Basic Header总共要占用2个字节，CSID在［64，319］之间，1代表占用3个字节，CSID在［64，65599］之间，2代表该chunk是控制信息和一些命令信息，后面会有详细的介绍。<br>chunk type的长度固定为2位，因此CSID的长度是（6=8-2）、（14=16-2）、（22=24-2）中的一个。</p>
-<p>当Basic Header为1个字节时，CSID占6位，6位最多可以表示64个数，因此这种情况下CSID在［0，63］之间，其中用户可自定义的范围为［3，63］。格式如下图所示：</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/chunk-basicheader1.png" alt=""></p>
-<p>当Basic Header为2个字节时，CSID占14位，此时协议将chunk type所在字节的其他位都置为0，剩下的一个字节来表示CSID - 64，这样共有14位存储CSID，8位可以表示［0，255］共256个数，因此这种情况下CSID在［64，319］，其中319=255+64。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/chunkbasicheader2.png" alt=""></p>
-<p>当Basic Header为3个字节时，CSID占22位，此时协议将［2，8］位置为1，余下的16个位表示CSID－64，这样共有16个位来存储CSID，16位可以表示［0，65535］共65536个数，因此这种情况下CSID在［64，65599］，其中65599=65535+64，需要注意的是，Basic Header是采用小端存储的方式，越往后的字节数量级越高，因此通过这3个字节每一位的值来计算CSID时，应该是:[第三个字节的值] * 256 + [第二个字节的值] + 64</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/chunk-basicheader2.png" alt=""></p>
-<p>可以看到2个字节和3个字节的Basic Header所能表示的CSID是有交集的［64，319］，但实际实现时还是应该秉着最少字节的原则使用2个字节的表示方式来表示［64，319］的CSID。</p>
-<h4 id="Message-Header（消息的头信息）"><a href="#Message-Header（消息的头信息）" class="headerlink" title="Message Header（消息的头信息）"></a>Message Header（消息的头信息）</h4><p>包含了要发送的实际信息（可能是完整的，也可能是一部分）的描述信息。Message Header的格式和长度取决于Basic Header的chunk type，共有4种不同的格式，由上面所提到的Basic Header中的fmt字段控制。其中第一种格式可以表示其他三种表示的所有数据，但由于其他三种格式是基于对之前chunk的差量化的表示，因此可以更简洁地表示相同的数据，实际使用的时候还是应该采用尽量少的字节表示相同意义的数据。以下按照字节数从多到少的顺序分别介绍这4种格式的Message Header。</p>
-<h5 id="Type＝0"><a href="#Type＝0" class="headerlink" title="Type＝0:"></a>Type＝0:</h5><p><img src="http://ofy1hyquv.bkt.clouddn.com/chunk-messageheader0.png" alt=""></p>
-<p>type=0时Message Header占用11个字节，其他三种能表示的数据它都能表示，但在chunk stream的开始的第一个chunk和头信息中的时间戳后退（即值与上一个chunk相比减小，通常在回退播放的时候会出现这种情况）的时候必须采用这种格式。</p>
-<p>timestamp（时间戳）：占用3个字节，因此它最多能表示到16777215=0xFFFFFF=2^24-1, 当它的值超过这个最大值时，这三个字节都置为1，这样实际的timestamp会转存到Extended Timestamp字段中，接受端在判断timestamp字段24个位都为1时就会去Extended timestamp中解析实际的时间戳。</p>
-<p>message length（消息数据的长度）：占用3个字节，表示实际发送的消息的数据如音频帧、视频帧等数据的长度，单位是字节。注意这里是Message的长度，也就是chunk属于的Message的总数据长度，而不是chunk本身Data的数据的长度。</p>
-<p>message type id(消息的类型id)：占用1个字节，表示实际发送的数据的类型，如8代表音频数据、9代表视频数据。<br>msg stream id（消息的流id）：占用4个字节，表示该chunk所在的流的ID，和Basic Header的CSID一样，它采用小端存储的方式，</p>
-<h5 id="Type-1"><a href="#Type-1" class="headerlink" title="Type = 1:"></a>Type = 1:</h5><p><img src="http://ofy1hyquv.bkt.clouddn.com/chunk-messageheader1.png" alt=""></p>
-<p>type=1时Message Header占用7个字节，省去了表示msg stream id的4个字节，表示此chunk和上一次发的chunk所在的流相同，如果在发送端只和对端有一个流链接的时候可以尽量去采取这种格式。</p>
-<p>timestamp delta：占用3个字节，注意这里和type＝0时不同，存储的是和上一个chunk的时间差。类似上面提到的timestamp，当它的值超过3个字节所能表示的最大值时，三个字节都置为1，实际的时间戳差值就会转存到Extended Timestamp字段中，接受端在判断timestamp delta字段24个位都为1时就会去Extended timestamp中解析时机的与上次时间戳的差值。</p>
-<h5 id="Type-2"><a href="#Type-2" class="headerlink" title="Type = 2:"></a>Type = 2:</h5><p><img src="http://ofy1hyquv.bkt.clouddn.com/chunk-messageheader2.png" alt=""></p>
-<p>type=2时Message Header占用3个字节，相对于type＝1格式又省去了表示消息长度的3个字节和表示消息类型的1个字节，表示此chunk和上一次发送的chunk所在的流、消息的长度和消息的类型都相同。余下的这三个字节表示timestamp delta，使用同type＝1</p>
-<h5 id="Type-3"><a href="#Type-3" class="headerlink" title="Type = 3"></a>Type = 3</h5><p>0字节！！！好吧，它表示这个chunk的Message Header和上一个是完全相同的，自然就不用再传输一遍了。</p>
-<p>当它跟在Type＝0的chunk后面时，表示和前一个chunk的时间戳都是相同的。什么时候连时间戳都相同呢？就是一个Message拆分成了多个chunk，这个chunk和上一个chunk同属于一个Message。</p>
-<p>而当它跟在Type＝1或者Type＝2的chunk后面时，表示和前一个chunk的时间戳的差是相同的。比如第一个chunk的Type＝0，timestamp＝100，第二个chunk的Type＝2，timestamp delta＝20，表示时间戳为100+20=120，第三个chunk的Type＝3，表示timestamp delta＝20，时间戳为120+20=140</p>
-<h4 id="Extended-Timestamp（扩展时间戳）："><a href="#Extended-Timestamp（扩展时间戳）：" class="headerlink" title="Extended Timestamp（扩展时间戳）："></a>Extended Timestamp（扩展时间戳）：</h4><p>上面我们提到在chunk中会有时间戳timestamp和时间戳差timestamp delta，并且它们不会同时存在，只有这两者之一大于3个字节能表示的最大数值0xFFFFFF＝16777215时，才会用这个字段来表示真正的时间戳，否则这个字段为0。扩展时间戳占4个字节，能表示的最大数值就是0xFFFFFFFF＝4294967295。当扩展时间戳启用时，timestamp字段或者timestamp delta要全置为1，表示应该去扩展时间戳字段来提取真正的时间戳或者时间戳差。注意扩展时间戳存储的是完整值，而不是减去时间戳或者时间戳差的值。</p>
-<h4 id="Chunk-Data（块数据）"><a href="#Chunk-Data（块数据）" class="headerlink" title="Chunk Data（块数据）"></a>Chunk Data（块数据）</h4><p>用户层面上真正想要发送的与协议无关的数据，长度在(0,chunkSize]之间</p>
-<h4 id="chunk示例"><a href="#chunk示例" class="headerlink" title="chunk示例"></a>chunk示例</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/sample-chunk1.png" alt=""></p>
-<p>首先包含第一个Message的chunk的Chunk Type为0，因为它没有前面可参考的chunk，timestamp为1000，表示时间戳。type为0的header占用11个字节，假定chunkstreamId为3&lt;64，因此Basic Header占用1个字节，再加上Data的32个字节，因此第一个chunk共44＝11+1+32个字节。</p>
-<p>第二个chunk和第一个chunk的CSID，TypeId，Data的长度都相同，因此采用Chunk Type＝2，timestamp delta＝1020-1000＝20，因此第二个chunk占用36=3+1+32个字节。</p>
-<p>第三个chunk和第二个chunk的CSID，TypeId，Data的长度和时间戳差都相同，因此采用Chunk Type＝3省去全部Message Header的信息，占用33=1+32个字节。</p>
-<p>第四个chunk和第三个chunk情况相同，也占用33=1+32个字节。</p>
-<p>最后实际发送的chunk如下：</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/sample-chunk1-result.png" alt=""></p>
-<h4 id="chunk示例2"><a href="#chunk示例2" class="headerlink" title="chunk示例2"></a>chunk示例2</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/sample-chunk2.png" alt=""></p>
-<p>注意到Data的Length＝307&gt;128,因此这个Message要切分成几个chunk发送.</p>
-<p>第一个chunk的Type＝0，Timestamp＝1000，承担128个字节的Data，因此共占用140=11+1+128个字节。</p>
-<p>第二个chunk也要发送128个字节，其他字段也同第一个chunk，因此采用Chunk Type＝3，此时时间戳也为1000，共占用129=1+128个字节。</p>
-<p>第三个chunk要发送的Data的长度为307-128-128=51个字节，还是采用Type＝3，共占用1+51＝52个字节。</p>
-<p>最后实际发送的chunk如下：</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/sample-chunk2-result.png" alt=""></p>
-<h3 id="协议控制消息（Protocol-Control-Message）"><a href="#协议控制消息（Protocol-Control-Message）" class="headerlink" title="协议控制消息（Protocol Control Message）"></a>协议控制消息（Protocol Control Message）</h3><p>在RTMP的chunk流会用一些特殊的值来代表协议的控制消息，它们的Message Stream ID必须为0（代表控制流信息），CSID必须为2，Message Type ID可以为1，2，3，5，6，具体代表的消息会在下面依次说明。控制消息的接受端会忽略掉chunk中的时间戳，收到后立即生效。</p>
-<h4 id="Set-Chunk-Size-Message-Type-ID-1"><a href="#Set-Chunk-Size-Message-Type-ID-1" class="headerlink" title="Set Chunk Size(Message Type ID=1)"></a>Set Chunk Size(Message Type ID=1)</h4><p>设置chunk中Data字段所能承载的最大字节数，默认为128B，通信过程中可以通过发送该消息来设置chunk Size的大小（不得小于128B），而且通信双方会各自维护一个chunkSize，两端的chunkSize是独立的。比如当A想向B发送一个200B的Message，但默认的chunkSize是128B，因此就要将该消息拆分为Data分别为128B和72B的两个chunk发送，如果此时先发送一个设置chunkSize为256B的消息，再发送Data为200B的chunk，本地不再划分Message，B接受到Set Chunk Size的协议控制消息时会调整的接受的chunk的Data的大小，也不用再将两个chunk组成为一个Message。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/set-chunksize.png" alt=""></p>
-<h4 id="Abort-Message-Message-Type-ID-2"><a href="#Abort-Message-Message-Type-ID-2" class="headerlink" title="Abort Message(Message Type ID=2)"></a>Abort Message(Message Type ID=2)</h4><p>当一个Message被切分为多个chunk，接受端只接收到了部分chunk时，发送该控制消息表示发送端不再传输同Message的chunk，接受端接收到这个消息后要丢弃这些不完整的chunk。Data数据中只需要一个CSID，表示丢弃该CSID的所有已接收到的chunk。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/abort%EF%BC%8Dmessage.png" alt=""></p>
-<h4 id="Acknowledgement-Message-Type-ID-3"><a href="#Acknowledgement-Message-Type-ID-3" class="headerlink" title="Acknowledgement(Message Type ID=3)"></a>Acknowledgement(Message Type ID=3)</h4><p>当收到对端的消息大小等于窗口大小（Window Size）时接受端要回馈一个ACK给发送端告知对方可以继续发送数据。窗口大小就是指收到接受端返回的ACK前最多可以发送的字节数量，返回的ACK中会带有从发送上一个ACK后接收到的字节数。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/ACK-message.png" alt=""></p>
-<h4 id="Window-Acknowledgement-Size-Message-Type-ID-5"><a href="#Window-Acknowledgement-Size-Message-Type-ID-5" class="headerlink" title="Window Acknowledgement Size(Message Type ID=5)"></a>Window Acknowledgement Size(Message Type ID=5)</h4><p>发送端在接收到接受端返回的两个ACK间最多可以发送的字节数。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/ACK-windowsize.png" alt=""></p>
-<h4 id="Set-Peer-Bandwidth-Message-Type-ID-6"><a href="#Set-Peer-Bandwidth-Message-Type-ID-6" class="headerlink" title="Set Peer Bandwidth(Message Type ID=6)"></a>Set Peer Bandwidth(Message Type ID=6)</h4><p>限制对端的输出带宽。接受端接收到该消息后会通过设置消息中的Window ACK Size来限制已发送但未接受到反馈的消息的大小来限制发送端的发送带宽。如果消息中的Window ACK Size与上一次发送给发送端的size不同的话要回馈一个Window Acknowledgement Size的控制消息。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/Peer-Bandwidth.png" alt=""></p>
-<p>Hard(Limit Type＝0)接受端应该将Window Ack Size设置为消息中的值</p>
-<p>Soft(Limit Type=1)接受端可以将Window Ack Size设为消息中的值，也可以保存原来的值（前提是原来的Size小与该控制消息中的Window Ack Size）</p>
-<p>Dynamic(Limit Type=2)如果上次的Set Peer Bandwidth消息中的Limit Type为0，本次也按Hard处理，否则忽略本消息，不去设置Window Ack Size。</p>
-<h3 id="不同类型的RTMP-Message"><a href="#不同类型的RTMP-Message" class="headerlink" title="不同类型的RTMP Message"></a>不同类型的RTMP Message</h3><h4 id="Command-Message-命令消息，Message-Type-ID＝17或20"><a href="#Command-Message-命令消息，Message-Type-ID＝17或20" class="headerlink" title="Command Message(命令消息，Message Type ID＝17或20)"></a>Command Message(命令消息，Message Type ID＝17或20)</h4><p>表示在客户端和服务器间传递的在对端执行某些操作的命令消息。如<br>connect表示连接对端，对端如果同意连接的话会记录发送端信息并返回连接成功消息。publish表示开始向对方推流，接受端接到命令后准备好接受对端发送的流信息，下面会对比较常见的Command Message具体介绍。当信息使用AMF0编码时，Message Type ID＝20，AMF3编码时Message Type ID＝17.</p>
-<p>发送端发送时会带有命令的名字，如connect，TransactionID表示此次命令的标识，Command Object表示相关参数。接受端收到命令后，会返回以下三种消息中的一种：_result 消息表示接受该命令，对端可以继续往下执行流程，_error消息代表拒绝该命令要执行的操作，method name消息代表要在之前命令的发送端执行的函数名称。这三种回应的消息都要带有收到的命令消息中的Transaction Id来表示本次的回应作用于哪个命令。</p>
-<p>可以认为发送命令消息的对象有两种，一种是NetConnection，表示双端的上层连接，一种是NetStream，表示流信息的传输通道，控制流信息的状态，如Play播放流，Pause暂停。</p>
-<h5 id="NetConnection-Commands-连接层的命令"><a href="#NetConnection-Commands-连接层的命令" class="headerlink" title="NetConnection Commands(连接层的命令)"></a>NetConnection Commands(连接层的命令)</h5><p>用来管理双端之间的连接状态，同时也提供了异步远程方法调用（RPC）在对端执行某方法，以下是常见的连接层的命令：</p>
-<ul>
-<li><p>connect:用于客户端向服务器发送连接请求 </p>
-</li>
-<li><p>Call:用于在对端执行某函数，即常说的RPC：远程进程调用</p>
-</li>
-<li><p>Create Stream：创建传递具体信息的通道，从而可以在这个流中传递具体信息，传输信息单元为Chunk</p>
-</li>
-</ul>
-<h5 id="NetStream-Commands-流连接上的命令"><a href="#NetStream-Commands-流连接上的命令" class="headerlink" title="NetStream Commands(流连接上的命令)"></a>NetStream Commands(流连接上的命令)</h5><p>Netstream建立在NetConnection之上，通过NetConnection的createStream命令创建，用于传输具体的音频、视频等信息。在传输层协议之上只能连接一个NetConnection，但一个NetConnection可以建立多个NetStream来建立不同的流通道传输数据。</p>
-<p>以下会列出一些常用的NetStream Commands，服务端收到命令后会通过onStatus的命令来响应客户端，表示当前NetStream的状态。</p>
-<ul>
-<li><p>play(播放):由客户端向服务器发起请求从服务器端接受数据（如果传输的信息是视频的话就是请求开始播流），可以多次调用，这样本地就会形成一组数据流的接收者。注意其中有一个reset字段，表示是覆盖之前的播流（设为true）还是重新开始一路播放（设为false）。</p>
-</li>
-<li><p>play2（播放）：和上面的play命令不同的是，play2命令可以将当前正在播放的流切换到同样数据但不同比特率的流上，服务器端会维护多种比特率的文件来供客户端使用play2命令来切换。</p>
-</li>
-<li><p>deleteStream(删除流)：用于客户端告知服务器端本地的某个流对象已被删除，不需要再传输此路流。</p>
-</li>
-<li><p>receiveAudio(接收音频)：通知服务器端该客户端是否要发送音频</p>
-</li>
-<li><p>receiveVideo(接收视频)：通知服务器端该客户端是否要发送视频</p>
-</li>
-<li><p>publish(推送数据)：由客户端向服务器发起请求推流到服务器。</p>
-</li>
-<li><p>seek(定位流的位置)：定位到视频或音频的某个位置，以毫秒为单位。</p>
-</li>
-<li><p>pause（暂停）：客户端告知服务端停止或恢复播放。<br>如果Pause为true即表示客户端请求暂停的话，服务端暂停对应的流会返回NetStream.Pause.Notify的onStatus命令来告知客户端当前流处于暂停的状态，当Pause为false时，服务端会返回NetStream.Unpause.Notify的命令来告知客户端当前流恢复。如果服务端对该命令响应失败，返回_error信息。</p>
-</li>
-</ul>
-<h4 id="Data-Message（数据消息，Message-Type-ID＝15或18）"><a href="#Data-Message（数据消息，Message-Type-ID＝15或18）" class="headerlink" title="Data Message（数据消息，Message Type ID＝15或18）"></a>Data Message（数据消息，Message Type ID＝15或18）</h4><p>传递一些元数据（MetaData，比如视频名，分辨率等等）或者用户自定义的一些消息。当信息使用AMF0编码时，Message Type ID＝18，AMF3编码时Message Type ID＝15.</p>
-<h4 id="Shared-Object-Message-共享消息，Message-Type-ID＝16或19"><a href="#Shared-Object-Message-共享消息，Message-Type-ID＝16或19" class="headerlink" title="Shared Object Message(共享消息，Message Type ID＝16或19)"></a>Shared Object Message(共享消息，Message Type ID＝16或19)</h4><p>表示一个Flash类型的对象，由键值对的集合组成，用于多客户端，多实例时使用。当信息使用AMF0编码时，Message Type ID＝19，AMF3编码时Message Type ID＝16.</p>
-<h4 id="Audio-Message（音频信息，Message-Type-ID＝8）：音频数据。"><a href="#Audio-Message（音频信息，Message-Type-ID＝8）：音频数据。" class="headerlink" title="Audio Message（音频信息，Message Type ID＝8）：音频数据。"></a>Audio Message（音频信息，Message Type ID＝8）：音频数据。</h4><h4 id="Video-Message（视频信息，Message-Type-ID＝9）：视频数据。"><a href="#Video-Message（视频信息，Message-Type-ID＝9）：视频数据。" class="headerlink" title="Video Message（视频信息，Message Type ID＝9）：视频数据。"></a>Video Message（视频信息，Message Type ID＝9）：视频数据。</h4><h4 id="Aggregate-Message-聚集信息，Message-Type-ID＝22-：多个RTMP子消息的集合"><a href="#Aggregate-Message-聚集信息，Message-Type-ID＝22-：多个RTMP子消息的集合" class="headerlink" title="Aggregate Message (聚集信息，Message Type ID＝22)：多个RTMP子消息的集合"></a>Aggregate Message (聚集信息，Message Type ID＝22)：多个RTMP子消息的集合</h4><h4 id="User-Control-Message-Events-用户控制消息，Message-Type-ID-4"><a href="#User-Control-Message-Events-用户控制消息，Message-Type-ID-4" class="headerlink" title="User Control Message Events(用户控制消息，Message Type ID=4)"></a>User Control Message Events(用户控制消息，Message Type ID=4)</h4><p>告知对方执行该信息中包含的用户控制事件，比如Stream Begin事件告知对方流信息开始传输。和前面提到的协议控制信息（Protocol Control Message）不同，这是在RTMP协议层的，而不是在RTMP chunk流协议层的，这个很容易弄混。该信息在chunk流中发送时，Message Stream ID=0,Chunk Stream Id=2,Message Type Id=4。</p>
-<h3 id="RTMP-推流和播放流程图"><a href="#RTMP-推流和播放流程图" class="headerlink" title="RTMP 推流和播放流程图"></a>RTMP 推流和播放流程图</h3><h4 id="推流"><a href="#推流" class="headerlink" title="推流"></a>推流</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/publish-flow.png" alt=""></p>
-<p>命令执行过程中的消息流是：</p>
-<ul>
-<li><p>1.客户端发送连接命令到服务端，请求与一个服务应用实例建立连接。</p>
-</li>
-<li><p>2.接收到连接命令后，服务端发送”窗口确认（致谢）消息”到客户端。服务端同时连接到连接命令中提到的应用。</p>
-</li>
-<li><p>3.服务端发送”设置带宽”协议消息到客户端。</p>
-</li>
-<li><p>4.在处理完”设置带宽”消息后，客户端发送”窗口确认（致谢）大小”消息到服务端。</p>
-</li>
-<li><p>5.服务端发送用户控制消息中的流开始消息到客户端。</p>
-</li>
-<li><p>6.服务端发送结果命令消息通知客户端连接状态。该命令指定传输ID（对于连接命令总是1）。同时还指定一些属性，例如，Flash media server 版本（字符串），能力（数字），以及其他的连接信息，例如，层（字符串），代码（字符串），描述（字符串），对象编码（数字）等。</p>
-</li>
-</ul>
-<h4 id="播放"><a href="#播放" class="headerlink" title="播放"></a>播放</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/play-flow.png" alt=""></p>
-<p>命令执行过程中的消息流是：</p>
-<ul>
-<li><p>1.客户端发送连接命令到服务端，请求与一个服务应用实例建立连接。</p>
-</li>
-<li><p>2.接收到连接命令后，服务端发送”窗口确认（致谢）消息”到客户端。服务端同时连接到连接命令中提到的应用。</p>
-</li>
-<li><p>3.服务端发送”设置带宽”协议消息到客户端。</p>
-</li>
-<li><p>4.在处理完”设置带宽”消息后，客户端发送”窗口确认（致谢）大小”消息到服务端。</p>
-</li>
-<li><p>5.服务端发送用户控制消息中的流开始消息到客户端。</p>
-</li>
-<li><p>6.服务端发送结果命令消息通知客户端连接状态。该命令指定传输ID（对于连接命令总是1）。同时还指定一些属性，例如，Flash media server 版本（字符串），能力（数字），以及其他的连接信息，例如，层（字符串），代码（字符串），描述（字符串），对象编码（数字）等。</p>
-</li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -1876,7 +1754,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">30</span>
+              <span class="site-state-item-count">31</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

@@ -1,0 +1,580 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="前面学习了AudioUnit相关理论姿势，现在结合实际demo继续深入学习一下。。。 AudioUnit–播放本地音频因为AudioUnit只支持PCM文件，所以这里我们先使用一个本地的PCM文件进行播放，后续会有播放其他格式文件的demo,需要用到转码的相关API。 这里我们使用NSInputStream直接读取音频文件，因为不需要转码，所以读取到的数据就是可以直接拿来播放的数据。 123456">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AudioUnit实战">
+<meta property="og:url" content="http://yoursite.com/2018/04/16/AudioUnit实战/index.html">
+<meta property="og:site_name" content="lly&#39;s Blog">
+<meta property="og:description" content="前面学习了AudioUnit相关理论姿势，现在结合实际demo继续深入学习一下。。。 AudioUnit–播放本地音频因为AudioUnit只支持PCM文件，所以这里我们先使用一个本地的PCM文件进行播放，后续会有播放其他格式文件的demo,需要用到转码的相关API。 这里我们使用NSInputStream直接读取音频文件，因为不需要转码，所以读取到的数据就是可以直接拿来播放的数据。 123456">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-04-16T07:06:19.674Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="AudioUnit实战">
+<meta name="twitter:description" content="前面学习了AudioUnit相关理论姿势，现在结合实际demo继续深入学习一下。。。 AudioUnit–播放本地音频因为AudioUnit只支持PCM文件，所以这里我们先使用一个本地的PCM文件进行播放，后续会有播放其他格式文件的demo,需要用到转码的相关API。 这里我们使用NSInputStream直接读取音频文件，因为不需要转码，所以读取到的数据就是可以直接拿来播放的数据。 123456">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/04/16/AudioUnit实战/"/>
+
+  <title> AudioUnit实战 | lly's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">lly's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">用心记录点滴</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                AudioUnit实战
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-04-16T14:33:25+08:00" content="2018-04-16">
+              2018-04-16
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/04/16/AudioUnit实战/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/04/16/AudioUnit实战/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>前面学习了AudioUnit相关理论姿势，现在结合实际demo继续深入学习一下。。。</p>
+<h3 id="AudioUnit–播放本地音频"><a href="#AudioUnit–播放本地音频" class="headerlink" title="AudioUnit–播放本地音频"></a>AudioUnit–播放本地音频</h3><p>因为AudioUnit只支持PCM文件，所以这里我们先使用一个本地的PCM文件进行播放，后续会有播放其他格式文件的demo,需要用到转码的相关API。</p>
+<p>这里我们使用<strong>NSInputStream</strong>直接读取音频文件，因为不需要转码，所以读取到的数据就是可以直接拿来播放的数据。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">NSInputStream *inputStream;</div><div class="line"> 	</div><div class="line"> 	NSURL *url = [NSURL fileURLWithPath:self.pcmPath];</div><div class="line">   inputStream = [NSInputStream inputStreamWithURL:url];</div><div class="line">   if (!inputStream) &#123;</div><div class="line">       NSLog(@&quot;打开文件失败!!!!%@&quot;,url);</div><div class="line">   &#125;</div><div class="line">   else&#123;</div><div class="line">       [inputStream open];</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<p>初始化AudioUnit相关内容前，我们需要全局设置一下<strong>AVAudioSession</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">//设置audiosession</div><div class="line"></div><div class="line">   NSError *error = nil;   </div><div class="line">   AVAudioSession *audioSession = [AVAudioSession sharedInstance];</div><div class="line">   [audioSession setCategory:AVAudioSessionCategoryPlayback error:&amp;error];</div></pre></td></tr></table></figure>
+<p>然后可以开始初始化AudioUnit</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">   AudioUnit playerAudioUnit;</div><div class="line"></div><div class="line">//AU描述</div><div class="line">   AudioComponentDescription audioUnitDesc;</div><div class="line">   audioUnitDesc.componentType = kAudioUnitType_Output;</div><div class="line">   audioUnitDesc.componentSubType = kAudioUnitSubType_RemoteIO;</div><div class="line">   audioUnitDesc.componentManufacturer = kAudioUnitManufacturer_Apple;</div><div class="line">   audioUnitDesc.componentFlags = 0;</div><div class="line">   audioUnitDesc.componentFlagsMask = 0;</div><div class="line">   </div><div class="line">   //AudioUnit裸创建</div><div class="line">   AudioComponent audioComponent = AudioComponentFindNext(NULL, &amp;audioUnitDesc);</div><div class="line">   AudioComponentInstanceNew(audioComponent, &amp;playerAudioUnit);</div></pre></td></tr></table></figure>
+<p>接下来有一个<strong>kAudioOutputUnitProperty_EnableIO</strong>属性的设置，这里如果只是播放功能的话，实际上是不需要设置的，因为AudioUnit默认就是支持播放的，如果需要输入功能（比如录音）时，就必须设置这个属性，之后的demo会有使用，这里我们先不设置这个属性，设置的相关格式如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">//通用参数设置,这里是设置扬声器</div><div class="line">  OSStatus status = noErr;</div><div class="line">  UInt32 flag = 1;</div><div class="line">  UInt32 outputBus = 0;//Element 0</div><div class="line">  status = AudioUnitSetProperty(playerAudioUnit, kAudioOutputUnitProperty_EnableIO, kAudioUnitScope_Output, outputBus, &amp;flag, sizeof(flag));</div><div class="line">  if (status) &#123;</div><div class="line">      NSLog(@&quot;AudioUnitSetProperty error with status:%d&quot;, status);</div><div class="line">  &#125;</div></pre></td></tr></table></figure>
+<p>然后我们需要设置AudioUnit的播放音频的格式，这里一般都是PCM格式</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">//设置音频具体结构</div><div class="line">   AudioStreamBasicDescription audioStreamDesc;</div><div class="line">//    bzero(&amp;audioStreamDesc, sizeof(audioStreamDesc));</div><div class="line">   memset(&amp;audioStreamDesc, 0, sizeof(audioStreamDesc));</div><div class="line">   audioStreamDesc.mFormatID = kAudioFormatLinearPCM;</div><div class="line">   audioStreamDesc.mSampleRate = 44100;//采样率</div><div class="line">   audioStreamDesc.mChannelsPerFrame = 1;//声道数</div><div class="line">   audioStreamDesc.mFramesPerPacket = 1;//每帧只有一个packet</div><div class="line">   audioStreamDesc.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger;//kAudioFormatFlagsNativeFloatPacked | kAudioFormatFlagIsNonInterleaved;</div><div class="line">   audioStreamDesc.mBitsPerChannel = 16;//位深</div><div class="line">   audioStreamDesc.mBytesPerFrame = 2;</div><div class="line">   audioStreamDesc.mBytesPerPacket = 2;</div><div class="line"></div><div class="line">//这里是设置的输出音频的格式</div><div class="line">   status = AudioUnitSetProperty(playerAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, outputBus, &amp;audioStreamDesc,sizeof(audioStreamDesc));</div><div class="line">   if (status) &#123;</div><div class="line">       NSLog(@&quot;AudioUnitSetProperty error with status:%d&quot;, status);</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<p>最后设置一下输出的回调，这个回调是每次扬声器需要播放数据时都会调一次这个回调，然后我们在这个回调里面把要播放的数据塞给扬声器。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">	//callback</div><div class="line">    AURenderCallbackStruct callbackStruct;</div><div class="line">    callbackStruct.inputProc = PlayCallback;</div><div class="line">    callbackStruct.inputProcRefCon = (__bridge void *)self;</div><div class="line">    AudioUnitSetProperty(playerAudioUnit, kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, outputBus, &amp;callbackStruct, sizeof(callbackStruct));</div><div class="line"></div><div class="line">	//最后初始化AudioUnit</div><div class="line">    OSStatus result = AudioUnitInitialize(playerAudioUnit);</div><div class="line">    NSLog(@&quot;result = %d&quot;,result);</div><div class="line">    </div><div class="line">    //回调实现</div><div class="line">    static OSStatus PlayCallback(void *inRefCon,AudioUnitRenderActionFlags *ioActionFlag,const AudioTimeStamp *inTimeStamp,UInt32 inBusNumber,UInt32 inNumberFrames,AudioBufferList *ioData)&#123;</div><div class="line"></div><div class="line">    __unsafe_unretained LLYAudioUnitPlayer *play = (__bridge LLYAudioUnitPlayer *)inRefCon;</div><div class="line"></div><div class="line">    ioData-&gt;mBuffers[0].mDataByteSize = (UInt32)[play-&gt;inputStream read:ioData-&gt;mBuffers[0].mData maxLength:(NSInteger)ioData-&gt;mBuffers[0].mDataByteSize];</div><div class="line">    NSLog(@&quot;out size: %d&quot;, ioData-&gt;mBuffers[0].mDataByteSize);</div><div class="line"></div><div class="line">    if (ioData-&gt;mBuffers[0].mDataByteSize &lt;= 0) &#123;</div><div class="line">        dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">            [play stop];</div><div class="line">        &#125;);</div><div class="line">    &#125;</div><div class="line">    return noErr;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>然后就可以开始播放音频了</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">- (void)play&#123;</div><div class="line">    </div><div class="line">    [self initAudioUnit];</div><div class="line">    </div><div class="line">    AudioOutputUnitStart(playerAudioUnit);</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (void)stop&#123;</div><div class="line">    </div><div class="line">    AudioOutputUnitStop(playerAudioUnit);</div><div class="line">    [inputStream close];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/04/08/AudioUnit学习笔记/" rel="next" title="AudioUnit学习笔记">
+                <i class="fa fa-chevron-left"></i> AudioUnit学习笔记
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2018/04/16/AudioUnit实战/"
+           data-title="AudioUnit实战" data-url="http://yoursite.com/2018/04/16/AudioUnit实战/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/head.png"
+               alt="lly" />
+          <p class="site-author-name" itemprop="name">lly</p>
+          <p class="site-description motion-element" itemprop="description">耿直的一Boy</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">31</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#AudioUnit–播放本地音频"><span class="nav-number">1.</span> <span class="nav-text">AudioUnit–播放本地音频</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lly</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"llyblog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
