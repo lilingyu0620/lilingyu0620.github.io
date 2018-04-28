@@ -92,7 +92,7 @@
 <meta property="og:description" content="AudioQueue理论学习AudioQueue是iOS提供的又一套实现音频播放和录制的框架，怎么说呢，使用起来其实也不比AduioUnit方便很多，特别是在buffer的管理上，新手理解起来还是有点费劲的，在被她折磨了一周后，现在终于把她征服了，这里做一下总结。 首先看一下官方给的AudioQueue工作流程图  这里给出的是播放本地路径下的音频文件，流程总结如下：  读取音频文件，在音频文件的">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/audioqueue.png">
-<meta property="og:updated_time" content="2018-04-28T11:26:14.756Z">
+<meta property="og:updated_time" content="2018-04-28T11:45:46.485Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="AudioQueue学习笔记和实战">
 <meta name="twitter:description" content="AudioQueue理论学习AudioQueue是iOS提供的又一套实现音频播放和录制的框架，怎么说呢，使用起来其实也不比AduioUnit方便很多，特别是在buffer的管理上，新手理解起来还是有点费劲的，在被她折磨了一周后，现在终于把她征服了，这里做一下总结。 首先看一下官方给的AudioQueue工作流程图  这里给出的是播放本地路径下的音频文件，流程总结如下：  读取音频文件，在音频文件的">
@@ -340,11 +340,11 @@
 <p>在这个回调中，你能够拿到每一个packet的数据，然后数据的填充都在这里完成。</p>
 <h4 id="实战"><a href="#实战" class="headerlink" title="实战"></a>实战</h4><p>这里只讲几个比较重要的细节，其他的可以参考demo中的代码。</p>
 <ol>
-<li>AudioQueueNewOutput在创建的时候有2个runloop相关的参数，这里直接传NULL就行，不要去当前的runloop和model</li>
+<li>AudioQueueNewOutput在创建的时候有2个runloop相关的参数，这里直接传NULL就行，不要取当前的runloop和model</li>
 <li>AudioQueueOutput_Callback里面在标记可使用的buffer时要加锁，不然音频无法正常播放</li>
 <li>记得设置AVAudioSession的category</li>
 <li>读取音频数据时使用while循环，比使用计时器优雅</li>
-<li>kAudioFileStreamProperty_DataFormat这个属性是必须的，在创建AudioQueue的时候需要传入</li>
+<li>kAudioFileStreamProperty_DataFormat这个属性是必须要获取到的，在创建AudioQueue的时候需要传入</li>
 <li>填装数据的时候要判断对当前buffer的可用填装空间，如果装不下了就别再装啦。。。</li>
 <li>AudioQueueEnqueueBuffer给AudioQueue塞完数据后，需要判断下一个buffer是否可用，不可用的话得一直等着，知道可用为止。</li>
 </ol>
