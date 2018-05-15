@@ -1,0 +1,588 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="这几天一直在写使用ffmpeg完成一个视频播放器的demo,因为对音频这一块比较熟悉，所以先从音频解码开始下手，也熟悉一下ffmpeg的使用流程。音频解码这块已经完成了，所以这里先简单总结一下整个音频解码的流程。这里只说大概流程，具体实现细节参考下面的demo就可以。 1.注册ffmpeg1av_register_all() 2.初始化AVFormatContext1AVFormatContext">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用FFMPEG解码之--音频解码">
+<meta property="og:url" content="http://yoursite.com/2018/05/15/使用FFMPEG解码之-音频解码/index.html">
+<meta property="og:site_name" content="lly&#39;s Blog">
+<meta property="og:description" content="这几天一直在写使用ffmpeg完成一个视频播放器的demo,因为对音频这一块比较熟悉，所以先从音频解码开始下手，也熟悉一下ffmpeg的使用流程。音频解码这块已经完成了，所以这里先简单总结一下整个音频解码的流程。这里只说大概流程，具体实现细节参考下面的demo就可以。 1.注册ffmpeg1av_register_all() 2.初始化AVFormatContext1AVFormatContext">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-05-15T03:16:59.690Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用FFMPEG解码之--音频解码">
+<meta name="twitter:description" content="这几天一直在写使用ffmpeg完成一个视频播放器的demo,因为对音频这一块比较熟悉，所以先从音频解码开始下手，也熟悉一下ffmpeg的使用流程。音频解码这块已经完成了，所以这里先简单总结一下整个音频解码的流程。这里只说大概流程，具体实现细节参考下面的demo就可以。 1.注册ffmpeg1av_register_all() 2.初始化AVFormatContext1AVFormatContext">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/05/15/使用FFMPEG解码之-音频解码/"/>
+
+  <title> 使用FFMPEG解码之--音频解码 | lly's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">lly's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">用心记录点滴</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                使用FFMPEG解码之--音频解码
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-05-15T11:15:41+08:00" content="2018-05-15">
+              2018-05-15
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/05/15/使用FFMPEG解码之-音频解码/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/05/15/使用FFMPEG解码之-音频解码/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>这几天一直在写使用ffmpeg完成一个视频播放器的demo,因为对音频这一块比较熟悉，所以先从音频解码开始下手，也熟悉一下ffmpeg的使用流程。音频解码这块已经完成了，所以这里先简单总结一下整个音频解码的流程。这里只说大概流程，具体实现细节参考下面的demo就可以。</p>
+<h4 id="1-注册ffmpeg"><a href="#1-注册ffmpeg" class="headerlink" title="1.注册ffmpeg"></a>1.注册ffmpeg</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">av_register_all()</div></pre></td></tr></table></figure>
+<h4 id="2-初始化AVFormatContext"><a href="#2-初始化AVFormatContext" class="headerlink" title="2.初始化AVFormatContext"></a>2.初始化AVFormatContext</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">AVFormatContext *formatCtx = avformat_alloc_context();</div></pre></td></tr></table></figure>
+<h4 id="3-可以注册一个打断回调"><a href="#3-可以注册一个打断回调" class="headerlink" title="3.可以注册一个打断回调"></a>3.可以注册一个打断回调</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">AVIOInterruptCB int_cb = &#123;interrupt_callback,(__bridge void *)self&#125;;</div><div class="line">    formatCtx-&gt;interrupt_callback = int_cb;</div></pre></td></tr></table></figure>
+<p>其中 interrupt_callback 是一个函数指针 </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">static int interrupt_callback(void *ctx)&#123;</div><div class="line">    if (!ctx) &#123;</div><div class="line">        return 0;</div><div class="line">    &#125;</div><div class="line">    __unsafe_unretained LLYDecoder *decoder = (__bridge LLYDecoder *)ctx;</div><div class="line">    const BOOL bRet = [decoder detectInterrupted];</div><div class="line">    if (bRet) &#123;</div><div class="line">        NSLog(@&quot;DEBUG: INTERRUPT_CALLBACK!&quot;);</div><div class="line">    &#125;</div><div class="line">    return bRet;</div><div class="line">&#125;</div><div class="line"></div><div class="line">//打断状态</div><div class="line">- (BOOL)detectInterrupted&#123;</div><div class="line">    //打断超时</div><div class="line">    if ([[NSDate date] timeIntervalSince1970] - _readLastestFrameTime &gt; _subscribeTimeOutTimeInSecs) &#123;</div><div class="line">        return YES;</div><div class="line">    &#125;</div><div class="line">    return _interrupted;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>即使返回一个是否被打断的状态。</p>
+<h4 id="4-打开流地址"><a href="#4-打开流地址" class="headerlink" title="4.打开流地址"></a>4.打开流地址</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">- (int)openInputWithFormatCtx:(AVFormatContext **)formatCtx path:(NSString *)path parameter:(NSDictionary *)parameters&#123;</div><div class="line">    const char *inputURL = [path cStringUsingEncoding:NSUTF8StringEncoding];</div><div class="line">    AVDictionary *options = NULL;</div><div class="line">    //TCURL应该与流的CDN相关 如果原始的req中有tcUrl，就使用原始的</div><div class="line">    NSString *rtmpTCURLStr = parameters[RTMP_TCURL_KEY];</div><div class="line">    if (rtmpTCURLStr.length &gt; 0) &#123;</div><div class="line">        const char *rtmpTcURL = [rtmpTCURLStr cStringUsingEncoding:NSUTF8StringEncoding];</div><div class="line">        av_dict_set(&amp;options, &quot;rtmp_tcurl&quot;, rtmpTcURL, 0);</div><div class="line">    &#125;</div><div class="line">    return avformat_open_input(formatCtx, inputURL, NULL, &amp;options);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>返回一个是否打开成功的状态。0表示成功</p>
+<h4 id="5-设置解析参数probesize-amp-max-analyze-duration"><a href="#5-设置解析参数probesize-amp-max-analyze-duration" class="headerlink" title="5.设置解析参数probesize &amp; max_analyze_duration"></a>5.设置解析参数probesize &amp; max_analyze_duration</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">//个人理解是开始读取数据的延时和缓存空间（默认5M）</div><div class="line">- (void)initAnalyzeDurationAndProbeSize:(AVFormatContext *)formatCtx parameter:(NSDictionary *)parameters&#123;</div><div class="line">    float probeSize = [parameters[PROBE_SIZE] floatValue];</div><div class="line">    formatCtx-&gt;probesize = probeSize ?: 50 * 1024;</div><div class="line">    NSArray *durations = parameters[MAX_ANALYZE_DURATION_ARRAY];</div><div class="line">    if (durations &amp;&amp; durations.count &gt; _connectionRetry) &#123;</div><div class="line">        formatCtx-&gt;max_analyze_duration = [durations[_connectionRetry] floatValue];</div><div class="line">    &#125;</div><div class="line">    else&#123;</div><div class="line">        //pow(x,y) x的y次方</div><div class="line">        float multiplier = 0.5 + (double)pow(2.0, (double)_connectionRetry) * 0.25;</div><div class="line">        formatCtx-&gt;max_analyze_duration = multiplier;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    //帧率</div><div class="line">    BOOL fpsProbeSizeConfiged = [parameters[FPS_PROBE_SIZE_CONFIGURED] floatValue];</div><div class="line">    if (fpsProbeSizeConfiged) &#123;</div><div class="line">        formatCtx-&gt;fps_probe_size = 3;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="6-获取音视频信息"><a href="#6-获取音视频信息" class="headerlink" title="6.获取音视频信息"></a>6.获取音视频信息</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">int findStreamErrorCode = 0;</div><div class="line">double startFindStreamTimeMills = CFAbsoluteTimeGetCurrent() * 1000;</div><div class="line">if ((findStreamErrorCode = avformat_find_stream_info(formatCtx, NULL)) &lt; 0) &#123;</div><div class="line">    avformat_close_input(&amp;formatCtx);</div><div class="line">    avformat_free_context(formatCtx);</div><div class="line">    NSLog(@&quot;Video decoder find stream info failed... find stream ErrCode is %s&quot;, av_err2str(findStreamErrorCode));</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>获取的信息都在formatCtx这个参数里存着，后面很多地方要用。</p>
+<h4 id="7-获取流数据的索引数组"><a href="#7-获取流数据的索引数组" class="headerlink" title="7.获取流数据的索引数组"></a>7.获取流数据的索引数组</h4><p>通过流的类型获取流的索引，有时候可能音频或者视频都有好几路流数据</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">//获取流数据的索引</div><div class="line">static NSArray *collectionStreams(AVFormatContext *formatCtx,enum AVMediaType codecType)&#123;</div><div class="line">    NSMutableArray *ma = [NSMutableArray array];</div><div class="line">    for (int i = 0; i &lt; formatCtx-&gt;nb_streams; i++) &#123;</div><div class="line">        if (codecType == formatCtx-&gt;streams[i]-&gt;codec-&gt;codec_type) &#123;</div><div class="line">            [ma addObject:@(i)];</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    return ma;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="8-通过流的索引，获取每一路流的AVCodecContext-amp-AVCodec"><a href="#8-通过流的索引，获取每一路流的AVCodecContext-amp-AVCodec" class="headerlink" title="8.通过流的索引，获取每一路流的AVCodecContext &amp; AVCodec"></a>8.通过流的索引，获取每一路流的AVCodecContext &amp; AVCodec</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">AVCodecContext *codecCtx = _formatCtx-&gt;streams[streamIndex]-&gt;codec;</div><div class="line">//获取该stream对应的解码器</div><div class="line">AVCodec *codec = avcodec_find_decoder(codecCtx-&gt;codec_id);</div><div class="line">if(!codec)&#123;</div><div class="line">    NSLog(@&quot;Find Audio Decoder Failed codec_id %d CODEC_ID_AAC is %d&quot;, codecCtx-&gt;codec_id, AV_CODEC_ID_AAC);</div><div class="line">    return NO;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="9-打开解码器"><a href="#9-打开解码器" class="headerlink" title="9.打开解码器"></a>9.打开解码器</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">int openCodecErrorCode = 0;</div><div class="line">if ((openCodecErrorCode = avcodec_open2(codecCtx, codec, NULL)) &lt; 0) &#123;</div><div class="line">    NSLog(@&quot;open Audio Codec Failed openCodecErr is %s&quot;, av_err2str(openCodecErrorCode));</div><div class="line">    return NO;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="10-如果不支持当前流的采样格式，需要做一下重新采样"><a href="#10-如果不支持当前流的采样格式，需要做一下重新采样" class="headerlink" title="10.如果不支持当前流的采样格式，需要做一下重新采样"></a>10.如果不支持当前流的采样格式，需要做一下重新采样</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div></pre></td><td class="code"><pre><div class="line">//是否需要重采样</div><div class="line">SwrContext *swrContext = NULL;</div><div class="line">if (![self audioCodecIsSupported:codecCtx]) &#123;</div><div class="line">    </div><div class="line">    NSLog(@&quot;because of audio Codec Is Not Supported so we will init swresampler...&quot;);</div><div class="line">    /**</div><div class="line">     * 初始化resampler</div><div class="line">     * @param s               Swr context, can be NULL</div><div class="line">     * @param out_ch_layout   output channel layout (AV_CH_LAYOUT_*)</div><div class="line">     * @param out_sample_fmt  output sample format (AV_SAMPLE_FMT_*).</div><div class="line">     * @param out_sample_rate output sample rate (frequency in Hz)</div><div class="line">     * @param in_ch_layout    input channel layout (AV_CH_LAYOUT_*)</div><div class="line">     * @param in_sample_fmt   input sample format (AV_SAMPLE_FMT_*).</div><div class="line">     * @param in_sample_rate  input sample rate (frequency in Hz)</div><div class="line">     * @param log_offset      logging level offset</div><div class="line">     * @param log_ctx         parent logging context, can be NULL</div><div class="line">     */</div><div class="line">    swrContext = swr_alloc_set_opts(NULL, av_get_default_channel_layout(codecCtx-&gt;channels), AV_SAMPLE_FMT_S16, codecCtx-&gt;sample_rate, av_get_default_channel_layout(codecCtx-&gt;channels), codecCtx-&gt;sample_fmt, codecCtx-&gt;sample_rate, 0, NULL);</div><div class="line">    if (!swrContext || swr_init(swrContext)) &#123;</div><div class="line">        if (swrContext)</div><div class="line">            swr_free(&amp;swrContext);</div><div class="line">        avcodec_close(codecCtx);</div><div class="line">        NSLog(@&quot;init resampler failed...&quot;);</div><div class="line">        return NO;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line">- (BOOL)audioCodecIsSupported:(AVCodecContext *) audioCodecCtx;&#123;</div><div class="line">    if (audioCodecCtx-&gt;sample_fmt == AV_SAMPLE_FMT_S16) &#123;</div><div class="line">        return true;</div><div class="line">    &#125;</div><div class="line">    return false;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="11-初始化一个AVFrame"><a href="#11-初始化一个AVFrame" class="headerlink" title="11.初始化一个AVFrame"></a>11.初始化一个AVFrame</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">_audioFrame = av_frame_alloc();</div><div class="line">if (!_audioFrame) &#123;</div><div class="line">    NSLog(@&quot;Alloc Audio Frame Failed...&quot;);</div><div class="line">    if (swrContext)</div><div class="line">        swr_free(&amp;swrContext);</div><div class="line">    avcodec_close(codecCtx);</div><div class="line">    return NO;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="12-获取AVPacket"><a href="#12-获取AVPacket" class="headerlink" title="12.获取AVPacket"></a>12.获取AVPacket</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">AVPacket packet;</div><div class="line">if (av_read_frame(_formatCtx, &amp;packet) &lt; 0) &#123;</div><div class="line">        _isEOF = YES;</div><div class="line">        break;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="13-获取AVFrame"><a href="#13-获取AVFrame" class="headerlink" title="13.获取AVFrame"></a>13.获取AVFrame</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">int gotFrame = 0;</div><div class="line">//len =  number of bytes consumed from the input *AVPacket</div><div class="line">int len = avcodec_decode_audio4(_audioCodecCtx, _audioFrame, &amp;gotFrame, &amp;packet);</div><div class="line">if (len &lt; 0) &#123;</div><div class="line">    NSLog(@&quot;decode audio error, skip packet&quot;);</div><div class="line">    break;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="14-将AVFrame转为自定义的LLYAudioFrame"><a href="#14-将AVFrame转为自定义的LLYAudioFrame" class="headerlink" title="14.将AVFrame转为自定义的LLYAudioFrame"></a>14.将AVFrame转为自定义的LLYAudioFrame</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div></pre></td><td class="code"><pre><div class="line">- (LLYAudioFrame *)handleAudioFrame&#123;</div><div class="line">    </div><div class="line">    if (!_audioFrame-&gt;data[0]) &#123;</div><div class="line">        return nil;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    const NSUInteger numChannels = _audioCodecCtx-&gt;channels;</div><div class="line">    NSInteger numFrames;</div><div class="line">    </div><div class="line">    void *audioData;</div><div class="line">    </div><div class="line">    if (_swrContext) &#123;</div><div class="line">        const NSUInteger ratio = 2;</div><div class="line">        const int bufSize = av_samples_get_buffer_size(NULL, (int)numChannels ,(int)(_audioFrame-&gt;nb_samples * ratio), AV_SAMPLE_FMT_S16, 1);</div><div class="line">        if (!_swrBuffer || _swrBufferSize &lt; bufSize) &#123;</div><div class="line">            _swrBufferSize = bufSize;</div><div class="line">            _swrBuffer = realloc(_swrBuffer, _swrBufferSize);</div><div class="line">        &#125;</div><div class="line">        Byte *outbuf[2] = &#123;_swrBuffer,0&#125;;</div><div class="line">        numFrames = swr_convert(_swrContext, outbuf, (int)(_audioFrame-&gt;nb_samples * ratio), (const uint8_t **)_audioFrame-&gt;data, _audioFrame-&gt;nb_samples);</div><div class="line">        if (numFrames &lt; 0) &#123;</div><div class="line">            NSLog(@&quot;fail resample audio&quot;);</div><div class="line">            return nil;</div><div class="line">        &#125;</div><div class="line">        audioData = _swrBuffer;</div><div class="line">    &#125;else&#123;</div><div class="line">        if (_audioCodecCtx-&gt;sample_fmt != AV_SAMPLE_FMT_S16) &#123;</div><div class="line">            NSLog(@&quot;Audio format is invalid&quot;);</div><div class="line">            return nil;</div><div class="line">        &#125;</div><div class="line">        audioData = _audioFrame-&gt;data[0];</div><div class="line">        numFrames = _audioFrame-&gt;nb_samples;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    //总帧数 = 一条信道的帧数*信道数</div><div class="line">    const NSUInteger numElements = numFrames * numChannels;</div><div class="line">    NSMutableData *pcmData = [NSMutableData dataWithLength:numElements * sizeof(SInt16)];</div><div class="line">    memcpy(pcmData.mutableBytes, audioData, numElements * sizeof(SInt16));</div><div class="line">    LLYAudioFrame *frame = [[LLYAudioFrame alloc]init];</div><div class="line">    frame.position = av_frame_get_best_effort_timestamp(_audioFrame) * _audioTimeBase;</div><div class="line">    frame.duration = av_frame_get_pkt_duration(_audioFrame) * _audioTimeBase;</div><div class="line">    frame.sampleData = pcmData;</div><div class="line">    frame.frameType = LLYFrameType_Audio;</div><div class="line">    </div><div class="line">    return frame;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里判断一下如果是重采样的，需要做一个转换。</p>
+<p>主要流程大概就是上面这些了。当然还有一些细节的东西，这里没有一一列出来，可以从demo中寻找答案。</p>
+<p><a href="https://github.com/lilingyu0620/LLYFFMPEGPlayer.git" target="_blank" rel="noopener">LLYFFMPEGPlayer</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/05/07/FFMPEG学习笔记/" rel="next" title="FFMPEG学习笔记">
+                <i class="fa fa-chevron-left"></i> FFMPEG学习笔记
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2018/05/15/使用FFMPEG解码之-音频解码/"
+           data-title="使用FFMPEG解码之--音频解码" data-url="http://yoursite.com/2018/05/15/使用FFMPEG解码之-音频解码/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/head.png"
+               alt="lly" />
+          <p class="site-author-name" itemprop="name">lly</p>
+          <p class="site-description motion-element" itemprop="description">耿直的一Boy</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">35</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-注册ffmpeg"><span class="nav-number">1.</span> <span class="nav-text">1.注册ffmpeg</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-初始化AVFormatContext"><span class="nav-number">2.</span> <span class="nav-text">2.初始化AVFormatContext</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-可以注册一个打断回调"><span class="nav-number">3.</span> <span class="nav-text">3.可以注册一个打断回调</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-打开流地址"><span class="nav-number">4.</span> <span class="nav-text">4.打开流地址</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-设置解析参数probesize-amp-max-analyze-duration"><span class="nav-number">5.</span> <span class="nav-text">5.设置解析参数probesize &amp; max_analyze_duration</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#6-获取音视频信息"><span class="nav-number">6.</span> <span class="nav-text">6.获取音视频信息</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#7-获取流数据的索引数组"><span class="nav-number">7.</span> <span class="nav-text">7.获取流数据的索引数组</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#8-通过流的索引，获取每一路流的AVCodecContext-amp-AVCodec"><span class="nav-number">8.</span> <span class="nav-text">8.通过流的索引，获取每一路流的AVCodecContext &amp; AVCodec</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#9-打开解码器"><span class="nav-number">9.</span> <span class="nav-text">9.打开解码器</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#10-如果不支持当前流的采样格式，需要做一下重新采样"><span class="nav-number">10.</span> <span class="nav-text">10.如果不支持当前流的采样格式，需要做一下重新采样</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#11-初始化一个AVFrame"><span class="nav-number">11.</span> <span class="nav-text">11.初始化一个AVFrame</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#12-获取AVPacket"><span class="nav-number">12.</span> <span class="nav-text">12.获取AVPacket</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#13-获取AVFrame"><span class="nav-number">13.</span> <span class="nav-text">13.获取AVFrame</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#14-将AVFrame转为自定义的LLYAudioFrame"><span class="nav-number">14.</span> <span class="nav-text">14.将AVFrame转为自定义的LLYAudioFrame</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lly</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"llyblog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
