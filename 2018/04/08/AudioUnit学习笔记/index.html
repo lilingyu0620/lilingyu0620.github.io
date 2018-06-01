@@ -84,12 +84,12 @@
 
 
 
-<meta name="description" content="AudioUnit简介在iOS中，所有的上层音频技术都是基于AudioUnit来实现的。下图可以直观的反应出AudioUnit的层级关系。  对于普通的音频播放功能可能不需要直接使用AudioUnit来实现，但是如果你需要实现比较高级的功能（比如回声消除），就需要使用AudioUnit了。 根据不同的音频目的，iOS将AudioUnit共分为7类。如下图所示   effect units 这个是用">
+<meta name="description" content="AudioUnit简介在iOS中，所有的上层音频技术都是基于AudioUnit和CoreMedia来实现的。下图可以直观的反应出AudioUnit的层级关系。  对于普通的音频播放功能可能不需要直接使用AudioUnit来实现，但是如果你需要实现比较高级的功能（比如录音，混音等），就需要使用AudioUnit了。 根据不同的音频目的，iOS将AudioUnit共分为7类。如下图所示   effec">
 <meta property="og:type" content="article">
 <meta property="og:title" content="AudioUnit学习笔记">
 <meta property="og:url" content="http://yoursite.com/2018/04/08/AudioUnit学习笔记/index.html">
 <meta property="og:site_name" content="lly&#39;s Blog">
-<meta property="og:description" content="AudioUnit简介在iOS中，所有的上层音频技术都是基于AudioUnit来实现的。下图可以直观的反应出AudioUnit的层级关系。  对于普通的音频播放功能可能不需要直接使用AudioUnit来实现，但是如果你需要实现比较高级的功能（比如回声消除），就需要使用AudioUnit了。 根据不同的音频目的，iOS将AudioUnit共分为7类。如下图所示   effect units 这个是用">
+<meta property="og:description" content="AudioUnit简介在iOS中，所有的上层音频技术都是基于AudioUnit和CoreMedia来实现的。下图可以直观的反应出AudioUnit的层级关系。  对于普通的音频播放功能可能不需要直接使用AudioUnit来实现，但是如果你需要实现比较高级的功能（比如录音，混音等），就需要使用AudioUnit了。 根据不同的音频目的，iOS将AudioUnit共分为7类。如下图所示   effec">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/auidounit1-1.png">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/audiounit1-2.png">
@@ -107,10 +107,10 @@
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/audiounit3-3.png">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/audiounit3-4.png">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/audiounit3-5.png">
-<meta property="og:updated_time" content="2018-04-09T03:12:39.403Z">
+<meta property="og:updated_time" content="2018-06-01T07:45:51.959Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="AudioUnit学习笔记">
-<meta name="twitter:description" content="AudioUnit简介在iOS中，所有的上层音频技术都是基于AudioUnit来实现的。下图可以直观的反应出AudioUnit的层级关系。  对于普通的音频播放功能可能不需要直接使用AudioUnit来实现，但是如果你需要实现比较高级的功能（比如回声消除），就需要使用AudioUnit了。 根据不同的音频目的，iOS将AudioUnit共分为7类。如下图所示   effect units 这个是用">
+<meta name="twitter:description" content="AudioUnit简介在iOS中，所有的上层音频技术都是基于AudioUnit和CoreMedia来实现的。下图可以直观的反应出AudioUnit的层级关系。  对于普通的音频播放功能可能不需要直接使用AudioUnit来实现，但是如果你需要实现比较高级的功能（比如录音，混音等），就需要使用AudioUnit了。 根据不同的音频目的，iOS将AudioUnit共分为7类。如下图所示   effec">
 <meta name="twitter:image" content="http://ofy1hyquv.bkt.clouddn.com/auidounit1-1.png">
 
 
@@ -291,9 +291,9 @@
       
 
       
-        <h3 id="AudioUnit简介"><a href="#AudioUnit简介" class="headerlink" title="AudioUnit简介"></a>AudioUnit简介</h3><p>在iOS中，所有的上层音频技术都是基于AudioUnit来实现的。<br>下图可以直观的反应出AudioUnit的层级关系。</p>
+        <h3 id="AudioUnit简介"><a href="#AudioUnit简介" class="headerlink" title="AudioUnit简介"></a>AudioUnit简介</h3><p>在iOS中，所有的上层音频技术都是基于AudioUnit和CoreMedia来实现的。<br>下图可以直观的反应出AudioUnit的层级关系。</p>
 <p><img src="http://ofy1hyquv.bkt.clouddn.com/auidounit1-1.png" alt=""></p>
-<p>对于普通的音频播放功能可能不需要直接使用AudioUnit来实现，但是如果你需要实现比较高级的功能（比如回声消除），就需要使用AudioUnit了。</p>
+<p>对于普通的音频播放功能可能不需要直接使用AudioUnit来实现，但是如果你需要实现比较高级的功能（比如录音，混音等），就需要使用AudioUnit了。</p>
 <p>根据不同的音频目的，iOS将AudioUnit共分为7类。如下图所示</p>
 <p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit1-2.png" alt=""></p>
 <ul>
