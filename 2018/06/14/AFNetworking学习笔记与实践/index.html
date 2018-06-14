@@ -1,0 +1,597 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="自从AF使用NSURLSession重写之后，还没有看过源码，NSURLSession是基于NSURLConnection的封装，应该是汲取了AF之前的设计，内部封装了一个NSOperation来实现异步请求。最近要做一个音频播放的边播边缓存的功能，网路请求这块需要封装一下，随便研究一下AF的源码，这里我按模块逐个分析一下。 AFURLSessionManager这个模块是AF中最大也是最重要的一">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AFNetworking学习笔记与实践">
+<meta property="og:url" content="http://yoursite.com/2018/06/14/AFNetworking学习笔记与实践/index.html">
+<meta property="og:site_name" content="lly&#39;s Blog">
+<meta property="og:description" content="自从AF使用NSURLSession重写之后，还没有看过源码，NSURLSession是基于NSURLConnection的封装，应该是汲取了AF之前的设计，内部封装了一个NSOperation来实现异步请求。最近要做一个音频播放的边播边缓存的功能，网路请求这块需要封装一下，随便研究一下AF的源码，这里我按模块逐个分析一下。 AFURLSessionManager这个模块是AF中最大也是最重要的一">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-06-14T04:14:32.246Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="AFNetworking学习笔记与实践">
+<meta name="twitter:description" content="自从AF使用NSURLSession重写之后，还没有看过源码，NSURLSession是基于NSURLConnection的封装，应该是汲取了AF之前的设计，内部封装了一个NSOperation来实现异步请求。最近要做一个音频播放的边播边缓存的功能，网路请求这块需要封装一下，随便研究一下AF的源码，这里我按模块逐个分析一下。 AFURLSessionManager这个模块是AF中最大也是最重要的一">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/06/14/AFNetworking学习笔记与实践/"/>
+
+  <title> AFNetworking学习笔记与实践 | lly's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">lly's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">用心记录点滴</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                AFNetworking学习笔记与实践
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-06-14T09:58:47+08:00" content="2018-06-14">
+              2018-06-14
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/06/14/AFNetworking学习笔记与实践/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/06/14/AFNetworking学习笔记与实践/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>自从AF使用NSURLSession重写之后，还没有看过源码，NSURLSession是基于NSURLConnection的封装，应该是汲取了AF之前的设计，内部封装了一个NSOperation来实现异步请求。最近要做一个音频播放的边播边缓存的功能，网路请求这块需要封装一下，随便研究一下AF的源码，这里我按模块逐个分析一下。</p>
+<h4 id="AFURLSessionManager"><a href="#AFURLSessionManager" class="headerlink" title="AFURLSessionManager"></a>AFURLSessionManager</h4><p>这个模块是AF中最大也是最重要的一个模块，它封装了一个session,提供了一系列的初始化方法和创建task的方法。如果大家对session和task的概念还不太理解，可以先看一下NSURLSession这个类的相关内容（这个大概说一下，session是管理所有网络请求的，每一个网络请求是一个task，task是使用session创建的，所有task共享session的相关设置）。</p>
+<p>先来看一下创建task的方法，这里总共有datatask,uploadtask和downloadtask三种task，不过他们的创建逻辑都是一样的，以datatask为例</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">- (NSURLSessionDataTask *)dataTaskWithRequest:(NSURLRequest *)request</div><div class="line">                               uploadProgress:(nullable void (^)(NSProgress *uploadProgress)) uploadProgressBlock</div><div class="line">                             downloadProgress:(nullable void (^)(NSProgress *downloadProgress)) downloadProgressBlock</div><div class="line">                            completionHandler:(nullable void (^)(NSURLResponse *response, id _Nullable responseObject,  NSError * _Nullable error))completionHandler &#123;</div><div class="line"></div><div class="line">    __block NSURLSessionDataTask *dataTask = nil;</div><div class="line">    url_session_manager_create_task_safely(^&#123;</div><div class="line">        dataTask = [self.session dataTaskWithRequest:request];</div><div class="line">    &#125;);</div><div class="line"></div><div class="line">    [self addDelegateForDataTask:dataTask uploadProgress:uploadProgressBlock downloadProgress:downloadProgressBlock completionHandler:completionHandler];</div><div class="line"></div><div class="line">    return dataTask;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>先看看上面这个宏的实现</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">static void url_session_manager_create_task_safely(dispatch_block_t block) &#123;</div><div class="line">    if (NSFoundationVersionNumber &lt; NSFoundationVersionNumber_With_Fixed_5871104061079552_bug) &#123;</div><div class="line">        // Fix of bug</div><div class="line">        // Open Radar:http://openradar.appspot.com/radar?id=5871104061079552 (status: Fixed in iOS8)</div><div class="line">        // Issue about:https://github.com/AFNetworking/AFNetworking/issues/2093</div><div class="line">        dispatch_sync(url_session_manager_creation_queue(), block);</div><div class="line">    &#125; else &#123;</div><div class="line">        block();</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">static dispatch_queue_t url_session_manager_creation_queue() &#123;</div><div class="line">    static dispatch_queue_t af_url_session_manager_creation_queue;</div><div class="line">    static dispatch_once_t onceToken;</div><div class="line">    dispatch_once(&amp;onceToken, ^&#123;</div><div class="line">        af_url_session_manager_creation_queue = dispatch_queue_create(&quot;com.alamofire.networking.session.manager.creation&quot;, DISPATCH_QUEUE_SERIAL);</div><div class="line">    &#125;);</div><div class="line"></div><div class="line">    return af_url_session_manager_creation_queue;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里这样做主要是为了解决ios8之前的一个bug，如果异步同时创建task的话，task的id有可能是一样的，这会导致回调时出现问题（completionHandler被替换），为了解决这个问题，创建task的操作都放在一个串行队列中执行。</p>
+<p>然后看一下添加代理这个又是要干嘛</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line">- (void)addDelegateForDataTask:(NSURLSessionDataTask *)dataTask</div><div class="line">                uploadProgress:(nullable void (^)(NSProgress *uploadProgress)) uploadProgressBlock</div><div class="line">              downloadProgress:(nullable void (^)(NSProgress *downloadProgress)) downloadProgressBlock</div><div class="line">             completionHandler:(void (^)(NSURLResponse *response, id responseObject, NSError *error))completionHandler</div><div class="line">&#123;</div><div class="line">    AFURLSessionManagerTaskDelegate *delegate = [[AFURLSessionManagerTaskDelegate alloc] initWithTask:dataTask];</div><div class="line">    delegate.manager = self;</div><div class="line">    delegate.completionHandler = completionHandler;</div><div class="line"></div><div class="line">    dataTask.taskDescription = self.taskDescriptionForSessionTasks;</div><div class="line">    [self setDelegate:delegate forTask:dataTask];</div><div class="line"></div><div class="line">    delegate.uploadProgressBlock = uploadProgressBlock;</div><div class="line">    delegate.downloadProgressBlock = downloadProgressBlock;</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (void)setDelegate:(AFURLSessionManagerTaskDelegate *)delegate</div><div class="line">            forTask:(NSURLSessionTask *)task</div><div class="line">&#123;</div><div class="line">    NSParameterAssert(task);</div><div class="line">    NSParameterAssert(delegate);</div><div class="line"></div><div class="line">    [self.lock lock];</div><div class="line">    self.mutableTaskDelegatesKeyedByTaskIdentifier[@(task.taskIdentifier)] = delegate;</div><div class="line">    [self addNotificationObserverForTask:task];</div><div class="line">    [self.lock unlock];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>可以看到，af为每一个task都创建了一个delegate，然后将代理存在了self.mutableTaskDelegatesKeyedByTaskIdentifier这个字典中，键值是task的id,这里也解释和上面的为啥要同步创建task,那么它为啥要为每个task添加一个代理呢，我们继续往下看。</p>
+<p>看完task的创建，然后我们再来看一下数据的回调。<strong>af为大部分NSURLSession的回调函数创建了对应block和setBlock的方法，如果你需要哪个代理里面的数据，直接创建对应的block即可。</strong></p>
+<p>我们先来看最常用的回调方法，即请求完成的回调</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div></pre></td><td class="code"><pre><div class="line">- (void)URLSession:(NSURLSession *)session</div><div class="line">              task:(NSURLSessionTask *)task</div><div class="line">didCompleteWithError:(NSError *)error</div><div class="line">&#123;</div><div class="line">    AFURLSessionManagerTaskDelegate *delegate = [self delegateForTask:task];</div><div class="line"></div><div class="line">    // delegate may be nil when completing a task in the background</div><div class="line">    if (delegate) &#123;</div><div class="line">        [delegate URLSession:session task:task didCompleteWithError:error];</div><div class="line">        </div><div class="line">        //将该task的代理从字典中移除</div><div class="line">        [self removeDelegateForTask:task];</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    if (self.taskDidComplete) &#123;</div><div class="line">        self.taskDidComplete(session, task, error);</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line">- (void)URLSession:(__unused NSURLSession *)session</div><div class="line">              task:(NSURLSessionTask *)task</div><div class="line">didCompleteWithError:(NSError *)error</div><div class="line">&#123;</div><div class="line">    __strong AFURLSessionManager *manager = self.manager;</div><div class="line"></div><div class="line">    __block id responseObject = nil;</div><div class="line"></div><div class="line">    __block NSMutableDictionary *userInfo = [NSMutableDictionary dictionary];</div><div class="line">    userInfo[AFNetworkingTaskDidCompleteResponseSerializerKey] = manager.responseSerializer;</div><div class="line"></div><div class="line">    //Performance Improvement from #2672</div><div class="line">    NSData *data = nil;</div><div class="line">    if (self.mutableData) &#123;</div><div class="line">        data = [self.mutableData copy];</div><div class="line">        //We no longer need the reference, so nil it out to gain back some memory.</div><div class="line">        self.mutableData = nil;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    if (self.downloadFileURL) &#123;</div><div class="line">        userInfo[AFNetworkingTaskDidCompleteAssetPathKey] = self.downloadFileURL;</div><div class="line">    &#125; else if (data) &#123;</div><div class="line">        userInfo[AFNetworkingTaskDidCompleteResponseDataKey] = data;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    if (error) &#123;</div><div class="line">        userInfo[AFNetworkingTaskDidCompleteErrorKey] = error;</div><div class="line"></div><div class="line">        dispatch_group_async(manager.completionGroup ?: url_session_manager_completion_group(), manager.completionQueue ?: dispatch_get_main_queue(), ^&#123;</div><div class="line">            if (self.completionHandler) &#123;</div><div class="line">                self.completionHandler(task.response, responseObject, error);</div><div class="line">            &#125;</div><div class="line"></div><div class="line">            dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">                [[NSNotificationCenter defaultCenter] postNotificationName:AFNetworkingTaskDidCompleteNotification object:task userInfo:userInfo];</div><div class="line">            &#125;);</div><div class="line">        &#125;);</div><div class="line">    &#125; else &#123;</div><div class="line">        dispatch_async(url_session_manager_processing_queue(), ^&#123;</div><div class="line">            NSError *serializationError = nil;</div><div class="line">            responseObject = [manager.responseSerializer responseObjectForResponse:task.response data:data error:&amp;serializationError];</div><div class="line"></div><div class="line">            if (self.downloadFileURL) &#123;</div><div class="line">                responseObject = self.downloadFileURL;</div><div class="line">            &#125;</div><div class="line"></div><div class="line">            if (responseObject) &#123;</div><div class="line">                userInfo[AFNetworkingTaskDidCompleteSerializedResponseKey] = responseObject;</div><div class="line">            &#125;</div><div class="line"></div><div class="line">            if (serializationError) &#123;</div><div class="line">                userInfo[AFNetworkingTaskDidCompleteErrorKey] = serializationError;</div><div class="line">            &#125;</div><div class="line"></div><div class="line">            dispatch_group_async(manager.completionGroup ?: url_session_manager_completion_group(), manager.completionQueue ?: dispatch_get_main_queue(), ^&#123;</div><div class="line">                if (self.completionHandler) &#123;</div><div class="line">                    self.completionHandler(task.response, responseObject, serializationError);</div><div class="line">                &#125;</div><div class="line"></div><div class="line">                dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">                    [[NSNotificationCenter defaultCenter] postNotificationName:AFNetworkingTaskDidCompleteNotification object:task userInfo:userInfo];</div><div class="line">                &#125;);</div><div class="line">            &#125;);</div><div class="line">        &#125;);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>咋一看有点奇怪，这2方法名一毛一样啊。没有错，这两个方法是同一个代理方法，只是他们的实现对象是不一样的，第一个的实现对象是AFURLSessionManager类,第二个的实现对象则是AFURLSessionManagerTaskDelegate这个类，这里就解释上面的为啥要为每一个task设置一个代理，af这里其实是吧NSURLSession的代理又包了一层，将NSURLSession的数据都传到AFURLSessionManagerTaskDelegate这个类里面去处理了。</p>
+<p>然后我们看一下这个回调中对数据的处理，可以看到回调的返回都是放在一个gcd的group中处理的，如果我们设置了返回处理线程的话就使用设置的线程，否则会在主线程中处理数据的返回，如果有错误是直接返回了，没有错误的话，会先使用responeseSerializer去验证一下返回的数据格式是否合法，这个类我们下面在细看。</p>
+<p>继续看其他几个我觉得比较常用的回调</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">- (void)URLSession:(NSURLSession *)session</div><div class="line">          dataTask:(NSURLSessionDataTask *)dataTask</div><div class="line">didReceiveResponse:(NSURLResponse *)response</div><div class="line"> completionHandler:(void (^)(NSURLSessionResponseDisposition disposition))completionHandler</div><div class="line">&#123;</div><div class="line">    NSURLSessionResponseDisposition disposition = NSURLSessionResponseAllow;</div><div class="line"></div><div class="line">    if (self.dataTaskDidReceiveResponse) &#123;</div><div class="line">        disposition = self.dataTaskDidReceiveResponse(session, dataTask, response);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    if (completionHandler) &#123;</div><div class="line">        completionHandler(disposition);</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line">- (void)URLSession:(NSURLSession *)session</div><div class="line">          dataTask:(NSURLSessionDataTask *)dataTask</div><div class="line">    didReceiveData:(NSData *)data</div><div class="line">&#123;</div><div class="line"></div><div class="line">    AFURLSessionManagerTaskDelegate *delegate = [self delegateForTask:dataTask];</div><div class="line">    [delegate URLSession:session dataTask:dataTask didReceiveData:data];</div><div class="line"></div><div class="line">    if (self.dataTaskDidReceiveData) &#123;</div><div class="line">        self.dataTaskDidReceiveData(session, dataTask, data);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这2个回调一个是收到responese被触发，这个回调可以拿到相应头部信息，比如接收文件的大小，格式等，一个是收到数据时被触发，进度相关的信息就在通过这个回调拿到的。<strong>还有一点就是，download的task不会走datatask的代理，意味着download的数据只能在下载完成后通过文件的方式拿到。</strong></p>
+<h4 id="AFHTTPSessionManager"><a href="#AFHTTPSessionManager" class="headerlink" title="AFHTTPSessionManager"></a>AFHTTPSessionManager</h4><p>这个类就是继承了AFURLSessionManager，然后提供了一些封装好的创建task的方法。平时二次封装也是使用这个类就行。</p>
+<p>然后这个类有三个比较重要的属性</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">@property (nonatomic, strong) AFHTTPRequestSerializer &lt;AFURLRequestSerialization&gt; * requestSerializer;</div><div class="line"></div><div class="line">@property (nonatomic, strong) AFHTTPResponseSerializer &lt;AFURLResponseSerialization&gt; * responseSerializer;</div><div class="line"></div><div class="line">@property (nonatomic, strong) AFSecurityPolicy *securityPolicy;</div></pre></td></tr></table></figure>
+<p>这里简单介绍每个属性的用途，下面还有详解。<br>requestSerializer主要用来设置httpheader，responseSerializer主要用来解析返回数据是否合法，<br>securityPolicy主要用来验证服务器证书。</p>
+<h4 id="AFHTTPRequestSerializer"><a href="#AFHTTPRequestSerializer" class="headerlink" title="AFHTTPRequestSerializer"></a>AFHTTPRequestSerializer</h4><h4 id="AFHTTPResponseSerializer"><a href="#AFHTTPResponseSerializer" class="headerlink" title="AFHTTPResponseSerializer"></a>AFHTTPResponseSerializer</h4><h4 id="AFSecurityPolicy"><a href="#AFSecurityPolicy" class="headerlink" title="AFSecurityPolicy"></a>AFSecurityPolicy</h4><p>af提供了三种验证证书的方式，第一种不需要本地证书。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">typedef NS_ENUM(NSUInteger, AFSSLPinningMode) &#123;</div><div class="line">    AFSSLPinningModeNone,//默认方式，只需要验证服务器返回的证书是否合法</div><div class="line">    AFSSLPinningModePublicKey,//需要验证本地证书中的公钥是否和服务器返回的公钥一致</div><div class="line">    AFSSLPinningModeCertificate,//需要验证本地证书是否在服务器证书的证书链中</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>对应的有几种不同的初始化方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div></pre></td><td class="code"><pre><div class="line">+ (NSSet *)certificatesInBundle:(NSBundle *)bundle &#123;</div><div class="line">    NSArray *paths = [bundle pathsForResourcesOfType:@&quot;cer&quot; inDirectory:@&quot;.&quot;];</div><div class="line"></div><div class="line">    NSMutableSet *certificates = [NSMutableSet setWithCapacity:[paths count]];</div><div class="line">    for (NSString *path in paths) &#123;</div><div class="line">        NSData *certificateData = [NSData dataWithContentsOfFile:path];</div><div class="line">        [certificates addObject:certificateData];</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    return [NSSet setWithSet:certificates];</div><div class="line">&#125;</div><div class="line"></div><div class="line">+ (NSSet *)defaultPinnedCertificates &#123;</div><div class="line">    static NSSet *_defaultPinnedCertificates = nil;</div><div class="line">    static dispatch_once_t onceToken;</div><div class="line">    dispatch_once(&amp;onceToken, ^&#123;</div><div class="line">        NSBundle *bundle = [NSBundle bundleForClass:[self class]];</div><div class="line">        _defaultPinnedCertificates = [self certificatesInBundle:bundle];</div><div class="line">    &#125;);</div><div class="line"></div><div class="line">    return _defaultPinnedCertificates;</div><div class="line">&#125;</div><div class="line"></div><div class="line">+ (instancetype)defaultPolicy &#123;</div><div class="line">    AFSecurityPolicy *securityPolicy = [[self alloc] init];</div><div class="line">    securityPolicy.SSLPinningMode = AFSSLPinningModeNone;</div><div class="line"></div><div class="line">    return securityPolicy;</div><div class="line">&#125;</div><div class="line"></div><div class="line">+ (instancetype)policyWithPinningMode:(AFSSLPinningMode)pinningMode &#123;</div><div class="line">    return [self policyWithPinningMode:pinningMode withPinnedCertificates:[self defaultPinnedCertificates]];</div><div class="line">&#125;</div><div class="line"></div><div class="line">+ (instancetype)policyWithPinningMode:(AFSSLPinningMode)pinningMode withPinnedCertificates:(NSSet *)pinnedCertificates &#123;</div><div class="line">    AFSecurityPolicy *securityPolicy = [[self alloc] init];</div><div class="line">    securityPolicy.SSLPinningMode = pinningMode;</div><div class="line"></div><div class="line">    [securityPolicy setPinnedCertificates:pinnedCertificates];</div><div class="line"></div><div class="line">    return securityPolicy;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>然后我们看一下到底是如何进行证书验证的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div></pre></td><td class="code"><pre><div class="line">- (BOOL)evaluateServerTrust:(SecTrustRef)serverTrust</div><div class="line">                  forDomain:(NSString *)domain</div><div class="line">&#123;</div><div class="line">    if (domain &amp;&amp; self.allowInvalidCertificates &amp;&amp; self.validatesDomainName &amp;&amp; (self.SSLPinningMode == AFSSLPinningModeNone || [self.pinnedCertificates count] == 0)) &#123;</div><div class="line">        // https://developer.apple.com/library/mac/documentation/NetworkingInternet/Conceptual/NetworkingTopics/Articles/OverridingSSLChainValidationCorrectly.html</div><div class="line">        //  According to the docs, you should only trust your provided certs for evaluation.</div><div class="line">        //  Pinned certificates are added to the trust. Without pinned certificates,</div><div class="line">        //  there is nothing to evaluate against.</div><div class="line">        //</div><div class="line">        //  From Apple Docs:</div><div class="line">        //          &quot;Do not implicitly trust self-signed certificates as anchors (kSecTrustOptionImplicitAnchors).</div><div class="line">        //           Instead, add your own (self-signed) CA certificate to the list of trusted anchors.&quot;</div><div class="line">        NSLog(@&quot;In order to validate a domain name for self signed certificates, you MUST use pinning.&quot;);</div><div class="line">        return NO;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    NSMutableArray *policies = [NSMutableArray array];</div><div class="line">    if (self.validatesDomainName) &#123;</div><div class="line">        [policies addObject:(__bridge_transfer id)SecPolicyCreateSSL(true, (__bridge CFStringRef)domain)];</div><div class="line">    &#125; else &#123;</div><div class="line">        [policies addObject:(__bridge_transfer id)SecPolicyCreateBasicX509()];</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    SecTrustSetPolicies(serverTrust, (__bridge CFArrayRef)policies);</div><div class="line"></div><div class="line">    if (self.SSLPinningMode == AFSSLPinningModeNone) &#123;</div><div class="line">        return self.allowInvalidCertificates || AFServerTrustIsValid(serverTrust);</div><div class="line">    &#125; else if (!AFServerTrustIsValid(serverTrust) &amp;&amp; !self.allowInvalidCertificates) &#123;</div><div class="line">        return NO;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    switch (self.SSLPinningMode) &#123;</div><div class="line">        case AFSSLPinningModeNone:</div><div class="line">        default:</div><div class="line">            return NO;</div><div class="line">        case AFSSLPinningModeCertificate: &#123;</div><div class="line">            NSMutableArray *pinnedCertificates = [NSMutableArray array];</div><div class="line">            for (NSData *certificateData in self.pinnedCertificates) &#123;</div><div class="line">                [pinnedCertificates addObject:(__bridge_transfer id)SecCertificateCreateWithData(NULL, (__bridge CFDataRef)certificateData)];</div><div class="line">            &#125;</div><div class="line">            SecTrustSetAnchorCertificates(serverTrust, (__bridge CFArrayRef)pinnedCertificates);</div><div class="line"></div><div class="line">            if (!AFServerTrustIsValid(serverTrust)) &#123;</div><div class="line">                return NO;</div><div class="line">            &#125;</div><div class="line"></div><div class="line">            // obtain the chain after being validated, which *should* contain the pinned certificate in the last position (if it&apos;s the Root CA)</div><div class="line">            NSArray *serverCertificates = AFCertificateTrustChainForServerTrust(serverTrust);</div><div class="line">            </div><div class="line">            for (NSData *trustChainCertificate in [serverCertificates reverseObjectEnumerator]) &#123;</div><div class="line">                if ([self.pinnedCertificates containsObject:trustChainCertificate]) &#123;</div><div class="line">                    return YES;</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">            </div><div class="line">            return NO;</div><div class="line">        &#125;</div><div class="line">        case AFSSLPinningModePublicKey: &#123;</div><div class="line">            NSUInteger trustedPublicKeyCount = 0;</div><div class="line">            NSArray *publicKeys = AFPublicKeyTrustChainForServerTrust(serverTrust);</div><div class="line"></div><div class="line">            for (id trustChainPublicKey in publicKeys) &#123;</div><div class="line">                for (id pinnedPublicKey in self.pinnedPublicKeys) &#123;</div><div class="line">                    if (AFSecKeyIsEqualToKey((__bridge SecKeyRef)trustChainPublicKey, (__bridge SecKeyRef)pinnedPublicKey)) &#123;</div><div class="line">                        trustedPublicKeyCount += 1;</div><div class="line">                    &#125;</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">            return trustedPublicKeyCount &gt; 0;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    return NO;</div><div class="line">&#125;</div><div class="line"></div><div class="line">static BOOL AFServerTrustIsValid(SecTrustRef serverTrust) &#123;</div><div class="line">    BOOL isValid = NO;</div><div class="line">    SecTrustResultType result;</div><div class="line">    __Require_noErr_Quiet(SecTrustEvaluate(serverTrust, &amp;result), _out);</div><div class="line"></div><div class="line">    isValid = (result == kSecTrustResultUnspecified || result == kSecTrustResultProceed);</div><div class="line"></div><div class="line">_out:</div><div class="line">    return isValid;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里重点看一下self.allowInvalidCertificates这个参数，可以看到，如果使用默认的验证策略，同时self.allowInvalidCertificates = YES的话，会直接返回YES，相当于没有验证，所有这里我们一般将self.allowInvalidCertificates = NO。self.validatesDomainName这个参数默认为YES就可以了。</p>
+<p>验证服务器证书是否合法的方法为AFServerTrustIsValid，这个方法里面就是调用的系统的方法。</p>
+<p>那这个验证方法到底在哪里调用的呢，我们看一下下面这个代理，在NSURLSessionManager中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">- (void)URLSession:(NSURLSession *)session</div><div class="line">didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge</div><div class="line"> completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition disposition, NSURLCredential *credential))completionHandler</div><div class="line">&#123;</div><div class="line">    NSURLSessionAuthChallengeDisposition disposition = NSURLSessionAuthChallengePerformDefaultHandling;</div><div class="line">    __block NSURLCredential *credential = nil;</div><div class="line"></div><div class="line">    if (self.sessionDidReceiveAuthenticationChallenge) &#123;</div><div class="line">        disposition = self.sessionDidReceiveAuthenticationChallenge(session, challenge, &amp;credential);</div><div class="line">    &#125; else &#123;</div><div class="line">        if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) &#123;</div><div class="line">            if ([self.securityPolicy evaluateServerTrust:challenge.protectionSpace.serverTrust forDomain:challenge.protectionSpace.host]) &#123;</div><div class="line">                credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];</div><div class="line">                if (credential) &#123;</div><div class="line">                    disposition = NSURLSessionAuthChallengeUseCredential;</div><div class="line">                &#125; else &#123;</div><div class="line">                    disposition = NSURLSessionAuthChallengePerformDefaultHandling;</div><div class="line">                &#125;</div><div class="line">            &#125; else &#123;</div><div class="line">                disposition = NSURLSessionAuthChallengeCancelAuthenticationChallenge;</div><div class="line">            &#125;</div><div class="line">        &#125; else &#123;</div><div class="line">            disposition = NSURLSessionAuthChallengePerformDefaultHandling;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    if (completionHandler) &#123;</div><div class="line">        completionHandler(disposition, credential);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>所有的https请求都会先进这个代理，这个challenge.protectionSpace对象中就是服务器发过来的需要客户端验证的证书，域名等相关重要信息，然后af调用evaluateServerTrust这个方法对相关信息进行验证。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/05/15/使用FFMPEG解码之-音频解码/" rel="next" title="使用FFMPEG解码之--音频解码">
+                <i class="fa fa-chevron-left"></i> 使用FFMPEG解码之--音频解码
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2018/06/14/AFNetworking学习笔记与实践/"
+           data-title="AFNetworking学习笔记与实践" data-url="http://yoursite.com/2018/06/14/AFNetworking学习笔记与实践/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/head.png"
+               alt="lly" />
+          <p class="site-author-name" itemprop="name">lly</p>
+          <p class="site-description motion-element" itemprop="description">耿直的一Boy</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">36</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#AFURLSessionManager"><span class="nav-number">1.</span> <span class="nav-text">AFURLSessionManager</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#AFHTTPSessionManager"><span class="nav-number">2.</span> <span class="nav-text">AFHTTPSessionManager</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#AFHTTPRequestSerializer"><span class="nav-number">3.</span> <span class="nav-text">AFHTTPRequestSerializer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#AFHTTPResponseSerializer"><span class="nav-number">4.</span> <span class="nav-text">AFHTTPResponseSerializer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#AFSecurityPolicy"><span class="nav-number">5.</span> <span class="nav-text">AFSecurityPolicy</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lly</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"llyblog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
