@@ -291,6 +291,7 @@
 <h4 id="LLYHttpSessionManager"><a href="#LLYHttpSessionManager" class="headerlink" title="LLYHttpSessionManager"></a>LLYHttpSessionManager</h4><p>网络模块是基于AFNetworking做的一个二次封装<a href="http://llyblog.com/2018/06/14/AFNetworking学习笔记与实践/" target="_blank" rel="noopener">(参考这篇文章)</a>，主要就是请求音频数据。</p>
 <h3 id="播放优化"><a href="#播放优化" class="headerlink" title="播放优化"></a>播放优化</h3><p>在播放前，我们需判断一下当前url对应的文件是否已经下载到本地了，如果已经下载就直接播本地的文件，否则还是走网络播放的逻辑。</p>
 <p>这个判断逻辑我是这样处理的，先发送一个http head请求，拿到对应url文件的countOfBytesExpectedToReceive，然后将countOfBytesExpectedToReceive和本地文件大小（fileSize）进行比较，如果fileSize &gt;= contentExceptLength，则说明本地文件是完整的音频文件，可以直接播放，否则的话还是走网络播放的逻辑，并在success回调中覆盖之前的不完整文件。</p>
+<p><a href="https://github.com/lilingyu0620/LLYAudioPlayer.git" target="_blank" rel="noopener">我的demo</a></p>
 
           
         
