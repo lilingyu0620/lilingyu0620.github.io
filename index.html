@@ -229,6 +229,117 @@
             
               
                 
+                <a class="post-title-link" href="/2018/06/14/使用AudioQueue实现一个音频播放-二-边播边缓存/" itemprop="url">
+                  使用AudioQueue实现一个音频播放(二)--边播边缓存
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-06-14T16:01:06+08:00" content="2018-06-14">
+              2018-06-14
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/06/14/使用AudioQueue实现一个音频播放-二-边播边缓存/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/06/14/使用AudioQueue实现一个音频播放-二-边播边缓存/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><a href="http://llyblog.com/2018/05/07/使用AudioQueue实现一个音频播放器/" target="_blank" rel="noopener">前一篇文章</a>中介绍了使用AuidoQueue实现一个音频播放器的功能,最近我又把这个项目完善了一下，做了一个边播边缓存的功能。</p>
+<p>因为播放部分的逻辑我们已经完成，这里主要是怎么缓存数据的问题，实现之前我想到了2种方案。</p>
+<h3 id="方案一-在didReceiveDataBlock中缓存文件"><a href="#方案一-在didReceiveDataBlock中缓存文件" class="headerlink" title="方案一 在didReceiveDataBlock中缓存文件"></a>方案一 在didReceiveDataBlock中缓存文件</h3><p>直接在拿到音频数据进行播放的同时就将数据写入文件，这种方案的优点是实时性，播放过的音频数据都会被缓存起来，缺点就是缓存的文件可能并不是一个完整的音频，比如播了1分钟后seek到2分钟的地方继续播，中间1分钟的数据可能就没有收到，这就导致缓存的文件是有问题的，如果下次直接播这个本地文件可能就凉凉了。。。</p>
+<h3 id="方案二-在success的回调中缓存数据"><a href="#方案二-在success的回调中缓存数据" class="headerlink" title="方案二 在success的回调中缓存数据"></a>方案二 在success的回调中缓存数据</h3><p>在success中回调回来的数据就是完整的音频数据，缓存这个数据不会出现数据不完整的情况，但是这个回调并不是实时返回的，会在整个音频的数据都获取到以后才会返回，有一个延迟，如果网络不太好，可能直到音频播放完了才会返回。</p>
+<p>考虑到方案的可行性和数据的可用性，这里我选择了方案二，毕竟完整的数据比缓存的实时性更重要一些。当然，这个方案一我觉得还是有优化的空间，如果能够优化到保证了数据的完整性，会比方案二更优。</p>
+<h3 id="增加的模块"><a href="#增加的模块" class="headerlink" title="增加的模块"></a>增加的模块</h3><p>这里我增加了2个模块，一个是文件的操作模块，还有一个是网络模块。</p>
+<h4 id="LLYFileManager"><a href="#LLYFileManager" class="headerlink" title="LLYFileManager"></a>LLYFileManager</h4><p>文件操作模块是对音频数据的存储相关操作。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">@interface LLYFileManager : NSObject</div><div class="line"></div><div class="line">//网络地址转本地地址</div><div class="line">+ (NSString *)pathWithUrl:(NSString *)fileUrl;</div><div class="line">//将数据保存到本地目录下</div><div class="line">+ (BOOL)saveFileWithPath:(NSString *)path fileObject:(id)fileObject;</div><div class="line">//判断当前url对应的文件是否已经缓存</div><div class="line">+ (BOOL)isFileExit:(NSString *)url;</div><div class="line">//获取文件大小</div><div class="line">+ (unsigned long long)fileSizeWithFilePath:(NSString *)filePath;</div><div class="line"></div><div class="line">@end</div></pre></td></tr></table></figure>
+<h4 id="LLYHttpSessionManager"><a href="#LLYHttpSessionManager" class="headerlink" title="LLYHttpSessionManager"></a>LLYHttpSessionManager</h4><p>网络模块是基于AFNetworking做的一个二次封装<a href="http://llyblog.com/2018/06/14/AFNetworking学习笔记与实践/" target="_blank" rel="noopener">(参考这篇文章)</a>，主要就是请求音频数据。</p>
+<h3 id="播放优化"><a href="#播放优化" class="headerlink" title="播放优化"></a>播放优化</h3><p>在播放前，我们需判断一下当前url对应的文件是否已经下载到本地了，如果已经下载就直接播本地的文件，否则还是走网络播放的逻辑。</p>
+<p>这个判断逻辑我是这样处理的，先发送一个http head请求，拿到对应url文件的countOfBytesExpectedToReceive，然后将countOfBytesExpectedToReceive和本地文件大小（fileSize）进行比较，如果fileSize &gt;= contentExceptLength，则说明本地文件是完整的音频文件，可以直接播放，否则的话还是走网络播放的逻辑，并在success回调中覆盖之前的不完整文件。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/06/14/AFNetworking学习笔记与实践/" itemprop="url">
                   AFNetworking学习笔记与实践
                 </a>
@@ -1633,181 +1744,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/03/05/TCP协议学习笔记/" itemprop="url">
-                  TCP协议学习笔记
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-03-05T10:35:50+08:00" content="2018-03-05">
-              2018-03-05
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2018/03/05/TCP协议学习笔记/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/03/05/TCP协议学习笔记/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="tcp报文段格式如下"><a href="#tcp报文段格式如下" class="headerlink" title="tcp报文段格式如下"></a>tcp报文段格式如下</h3><p>图中保留字段有6位，看最新的书上面是4位，还有2位分别是<strong>CWR</strong>和<strong>ECE</strong>位。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/tcp%E5%A4%B4%E9%83%A8%E7%BB%93%E6%9E%84.jpg" alt=""></p>
-<h4 id="源端口和目的端口"><a href="#源端口和目的端口" class="headerlink" title="源端口和目的端口"></a>源端口和目的端口</h4><p>这两个值与IP头部的源和目标IP地址一起唯一的标识了每个连接。端口和IP地址的组合被称为端点或套接字</p>
-<h4 id="序列号"><a href="#序列号" class="headerlink" title="序列号"></a>序列号</h4><p>在发送用于建立连接的SYN之前，通信双方会选择一个初始序列号。<strong>初始序列号会随着时间而改变</strong>。因此每一个连接都拥有不同的序列号。文档指出，序列号可以被视为一个32位的计算器。<strong>该计算器的数值每4微秒+1</strong><br>主要是防止序列号重复。</p>
-<p>标识了TCP发送端发送到接收端的数据的一个字节，该字节代表着包含该序列号的报文段的数据中的第一个字节。这是一个32位的无符号数，到达2的32次方-1之后在循环回到0。</p>
-<p><strong>消耗一个序列号意味着使用重传进行可靠传输</strong></p>
-<h4 id="确认序号"><a href="#确认序号" class="headerlink" title="确认序号"></a>确认序号</h4><p>包含的值是该确认号的发送方期待接收到的下一个序列号。 <strong>即最后被成功接收的数据字节的序列号+1.</strong></p>
-<p>这个字段只有在ACK位被启用的情况下才有效。这个ACK位字段通常用于除了初始化和末尾报文段之外的所有报文段。</p>
-<h4 id="数据偏移（头部长度）"><a href="#数据偏移（头部长度）" class="headerlink" title="数据偏移（头部长度）"></a>数据偏移（头部长度）</h4><p>给出了头部的长度，以32位字节为单位，这个字段是必须的，因为选项字段的长度是可变的。作为一个4位的字段，TCP被限制为只能带60个字节的头部。而不带选项。大小是20字节。</p>
-<h4 id="窗口大小"><a href="#窗口大小" class="headerlink" title="窗口大小"></a>窗口大小</h4><p>TCP的流量控制由每一个端点使用窗口大小字段来通告一个窗口大小来完成。这个窗口大小是字节数，从ACK号指定的，也是接收方想要接收的那个字节开始。这是一个16位的字段，限制窗口大小65535字节，从而限制了TCP的吞吐量性能。</p>
-<h4 id="TCP校验和"><a href="#TCP校验和" class="headerlink" title="TCP校验和"></a>TCP校验和</h4><p>覆盖了TCP的头部和数据以及头部中的一些字段。这个字段是强制的，由发送发进行计算和保存，然后由接收发验证。</p>
-<h4 id="CWR拥塞窗口减（发送方降低它的发送速度）"><a href="#CWR拥塞窗口减（发送方降低它的发送速度）" class="headerlink" title="CWR拥塞窗口减（发送方降低它的发送速度）"></a>CWR拥塞窗口减（发送方降低它的发送速度）</h4><h4 id="ECE（发送发接收了一个更早的拥塞通告）"><a href="#ECE（发送发接收了一个更早的拥塞通告）" class="headerlink" title="ECE（发送发接收了一个更早的拥塞通告）"></a>ECE（发送发接收了一个更早的拥塞通告）</h4><h4 id="URG-紧急（紧急字段有效很少被用到）"><a href="#URG-紧急（紧急字段有效很少被用到）" class="headerlink" title="URG 紧急（紧急字段有效很少被用到）"></a>URG 紧急（紧急字段有效很少被用到）</h4><h4 id="ACK-确认（确认号字段有效，连接建立以后一般都是开启状态）"><a href="#ACK-确认（确认号字段有效，连接建立以后一般都是开启状态）" class="headerlink" title="ACK 确认（确认号字段有效，连接建立以后一般都是开启状态）"></a>ACK 确认（确认号字段有效，连接建立以后一般都是开启状态）</h4><h4 id="PSH-推送"><a href="#PSH-推送" class="headerlink" title="PSH 推送"></a>PSH 推送</h4><h4 id="RST重置连接（连接取消，一般是因为错误）"><a href="#RST重置连接（连接取消，一般是因为错误）" class="headerlink" title="RST重置连接（连接取消，一般是因为错误）"></a>RST重置连接（连接取消，一般是因为错误）</h4><h4 id="SYN（用于初始化一个连接的同步序列号）"><a href="#SYN（用于初始化一个连接的同步序列号）" class="headerlink" title="SYN（用于初始化一个连接的同步序列号）"></a>SYN（用于初始化一个连接的同步序列号）</h4><h4 id="FIN-该报文段的发送发已经结束向对方发送数据"><a href="#FIN-该报文段的发送发已经结束向对方发送数据" class="headerlink" title="FIN 该报文段的发送发已经结束向对方发送数据"></a>FIN 该报文段的发送发已经结束向对方发送数据</h4><h4 id="tcp选项"><a href="#tcp选项" class="headerlink" title="tcp选项"></a>tcp选项</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/tcpchoice.png" alt=""></p>
-<h3 id="三次握手与四次挥手"><a href="#三次握手与四次挥手" class="headerlink" title="三次握手与四次挥手"></a>三次握手与四次挥手</h3><p><img src="http://ofy1hyquv.bkt.clouddn.com/tcpshark.png" alt=""></p>
-<p>一个TCP连接由4个元组组成，它们分别是2个IP地址和2个端口号。即一对端点或者套接字。</p>
-<p>为了建立一个TCP连接，需要完成以下步骤：</p>
-<ul>
-<li><p>主动开启者（一般称为客户端）发送一个SYN报文段，并指明自己想要连接的端口号和它的客户端初始序列号（即为ISN(c)）。通常客户端还会借此发送一个或者多个选项。</p>
-</li>
-<li><p>服务器在收到客户端的SYN报文段后，也发送自己的SYN报文段作为响应，并包含它们初始序列号（记为SIN(s)）。此外，为了确认客户端的SYN，服务器将其包含的ISN(c)数值+1后作为返回的ACK数值。因此，每发送一个SYN，序列号就会自动+1，这样如果出现丢失的情况，该SYN段将会重传。</p>
-</li>
-<li><p>为了确认服务器的SYN，客户端将ISN(s)的数字+1作为返回的ACK数值。</p>
-</li>
-</ul>
-<p>通过上述的3个报文段就能够完成一个TCP连接的建立。它们也常称为<em>三次握手</em></p>
-<p>TCP协议规定通过发送一个FIN段来发起关闭操作。只有当连接双方都完成关闭操作以后，才构成一个完整关闭。</p>
-<ul>
-<li><p>连接的主动关闭者发送一个FIN段指明接收者希望看到的自己当前的序列号（K），FIN段还包含了一个ACK段用于确认对方最近一次发来的数据。</p>
-</li>
-<li><p>连接的被动关闭者将K的数值+1作为响应的ACK值，以表示它已经成功接收到主动关闭者发送的FIN。</p>
-</li>
-<li><p>被动关闭者将身份转变为主动关闭者，发送自己的FIN.</p>
-</li>
-<li><p>为了完成连接的关闭，最后发送的报文段还包含一个ACK用于确认上一个FIN.值得注定的是，如果出现FIN丢失的情况，那么被动关闭方将重新传输直到收到一个ACK确认为止。</p>
-</li>
-</ul>
-<p>通过上诉的4个报文就能够完成一个TCP连接的关闭。他们也常称为<em>四次挥手</em></p>
-<h3 id="TCP的状态转换图"><a href="#TCP的状态转换图" class="headerlink" title="TCP的状态转换图"></a>TCP的状态转换图</h3><p><img src="http://ofy1hyquv.bkt.clouddn.com/tcpstatus.png" alt=""></p>
-<p>tcp连接和断开过程中的状态变化</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/tcpsharkstatus.png" alt=""></p>
-<h3 id="设置重传超时"><a href="#设置重传超时" class="headerlink" title="设置重传超时"></a>设置重传超时</h3><p>TCP拥有两套独立机制来完成重传，一是基于时间，二是基于确认信息的构成。</p>
-<p>TCP在发送数据的会设置一个计时器，若计时器超时仍未收到数据的确认信息，则会引发相应的<em>超时</em>或者<em>基于计时器的重传</em>操作，计时器超时称为<em>重传超时（RTO）</em>。</p>
-<p>另一种方式的重传称为<em>快速重传</em>，通常发生在没有延时的情况下，若TCP累计确认无法返回新的ACK，或者当ACK包含的选择确认信息（SACK）表明出现失序报文段时，快速重传会推断出现丢失包。在发送端认为接收端可能出现数据丢失时，需要决定发送新数据还是重传。</p>
-<ul>
-<li><p>使用往返时间（RTT）估计策略</p>
-<p>  TCP在收到数据后会返回确认信息，因此可在该信息中携带一个字节的数据来测量传输该确认信息所需要的时间。每个此类的测量结果称为RTT样本。TCP首先需要根据一段时间内的样本值建立好的估计值。然后使用计算公式根据RTT估值得到RTO值。</p>
-<p>  选择一组RTT样本的样本均值作为真实的RTT是最有可能的，注意这个均值很自然的会随着时间而改变，因为通信穿过的网络的路径可能改变。</p>
-</li>
-</ul>
-<h4 id="快速重传"><a href="#快速重传" class="headerlink" title="快速重传"></a>快速重传</h4><p>快速重传机制基于接收端的反馈信息来引发重传，而非重传计时器的超时。因此与超时重传相比，快速重传能更加及时有效的修复丢包情况。</p>
-<p>当接收到失序报文段时，TCP需要立即生成确认信息（重复ACK）。并且失序情况表明在后续数据到达前出现了丢段，即<strong>接收端缓存</strong>出现了空缺。发送端的工作即为尽快的，高效的填补空缺。所以当失序数据到达是，重复ACK应该立即返回，不能延迟发送。</p>
-<p>当重复ACK的数量达到一定的数目（称为重复ACK阈值）时，快速重传机制才会被触发。</p>
-<h4 id="带选择确认的重传"><a href="#带选择确认的重传" class="headerlink" title="带选择确认的重传"></a>带选择确认的重传</h4><p>ACK号与接收端缓存中的的其他数据之间的间隔称为空缺。序列号高于空缺的数据称为<strong>失序数据</strong>，因为这些数据与之前接收的序列号不连续。</p>
-<p>TCP发送端的任务是通过重传丢失数据来填补接收端缓存中的空缺，但同时也要尽可能保证不重传 已正确接收到的数据。在很多环境下，合理采用SACK信息能更快的实现空缺填补，且能减少不必要的重传，原因在于其在一个RTT内能获知多个空缺。当采用SACK选项时，一个ACK可包含三四个告知失序数据的SACK信息。每个SACK信息包含32位的序列号，代表接收端存储的失序数据的起始至最后一个序列号（+1）。    </p>
-<h3 id="数据流与窗口管理"><a href="#数据流与窗口管理" class="headerlink" title="数据流与窗口管理"></a>数据流与窗口管理</h3><p>可以采用可变滑动窗口来实现流量控制</p>
-<h4 id="发送窗口结构"><a href="#发送窗口结构" class="headerlink" title="发送窗口结构"></a>发送窗口结构</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/tcpwindow.png" alt=""></p>
-<p>TCP发送端滑动窗口结构记录了已确认，在传以及还未传的数据的序列号。<strong>提供窗口的大小控制由接收端返回的ACK中的窗口大小字段控制</strong></p>
-<p>随着时间的推移，当接收到返回的数据ACK，滑动窗口也随之右移。窗口两端的相对运动使得窗口增大或减小。可用三个术语来描述窗口左右边界的运动。</p>
-<ul>
-<li>关闭：即窗口左边界右移。当已发送数据得到ACK确认时，窗口会减小。</li>
-<li>打开：即窗口右边界右移，使得可发送数据增大。当已确认数据得到处理，接收端可用缓存增大，窗口也随之变大。</li>
-<li>收缩：即窗口右边界左移。</li>
-</ul>
-<h4 id="接收窗口结构"><a href="#接收窗口结构" class="headerlink" title="接收窗口结构"></a>接收窗口结构</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/tcpreceivewindow.png" alt=""></p>
-<p>该窗口结构记录了已接收并确认的数据，以及它能够接收的最大序列号。该窗口可以保证其接收数据的正确性。特别是接收端希望避免存储重复的已接收和确认的数据，以及避免存储不应该接收的数据。</p>
-<h3 id="拥塞控制"><a href="#拥塞控制" class="headerlink" title="拥塞控制"></a>拥塞控制</h3><p>路由器因无法处理高速率到达的流量而被迫丢弃数据信息的现象称为拥塞。</p>
-<p>在有线网络中，出现在路由器或者交换机中的拥塞是造成丢包的主要原因；<br>在无线网络中，传输和接收错误是导致丢包的重要因素。</p>
-<p>反映网络传输能力的变量称为拥塞窗口，记做（cwnd）.</p>
-<h4 id="慢启动"><a href="#慢启动" class="headerlink" title="慢启动"></a>慢启动</h4><p>当一个新的TCP连接建立或者检测到由重传超时（RTO）导致的丢包时，需要执行慢启动。TCP发送端长时间处于空闲状态也可能调用慢启动算法。慢启动的目的是，是TCP在用拥塞避免探寻更多可用带宽之前得到cwnd值，以及帮助TCP建立ACK时钟。通常，TCP在建立新连接时执行慢启动，直至有丢包时，执行拥塞避免算法进入稳定状态。</p>
-<p><strong>在传输初始阶段，由于未知网络传输能力，需要缓慢探测可用传输资源，防止短时间内大量数据注入导致拥塞。慢启动算法正是针对这一问题而设计。在数据传输之初或者重传计时器检测到丢包后，需要执行慢启动</strong></p>
-<h4 id="拥塞避免"><a href="#拥塞避免" class="headerlink" title="拥塞避免"></a>拥塞避免</h4><p>为了得到更多的传输资源而不至于影响其他连接传输，TCP实现了拥塞避免算法。一旦确立慢启动阈值，TCP会进入拥塞避免阶段，cwnd每次的增长值近似于成功传输的数据段大小。这种随时间线性增长的方式于慢启动的指数增长相比缓慢许多。</p>
-<h4 id="慢启动和拥塞避免的选择"><a href="#慢启动和拥塞避免的选择" class="headerlink" title="慢启动和拥塞避免的选择"></a>慢启动和拥塞避免的选择</h4><p>慢启动阈值（ssthresh）和cwnd的关系决定了采用慢启动还是拥塞避免的界限。当cwnd<ssthresh 使用慢启动算法。当cwnd="">ssthresh时，需要执行拥塞避免，而当两者相等时，任何一种算法都可以。</ssthresh></p>
-<p>慢启动和拥塞控制之间最大的却别在于，cwnd怎样增长。慢启动是指数增长，拥塞避免时是线性增长。</p>
-<h3 id="TCP保活机制（keepalive）"><a href="#TCP保活机制（keepalive）" class="headerlink" title="TCP保活机制（keepalive）"></a>TCP保活机制（keepalive）</h3><p>保活机制是一种不影响数据流内容的情况下探测对方的方式。它是由一个保活计时器实现的。当计时器被激活，连接一端将发送一个保活报文，另一端接收到报文的同时会发送一个ACK作为响应。</p>
-<p>如果在一段时间（<strong>保活时间keepalive time</strong>）内连接处于非活动状态，开启保活功能的一端将向对方发送一个保活探测报文。如果发送端没有收到响应报文，那么经过一个已经提前配置好的保活时间间隔（keepalive interval），将继续发送保活探测报文，直到发送探测报文的次数达到保活探测数（keepalive probe）。这是对方主机将被确认为不可到达，连接也将中断。</p>
-<p>保活探测报文为一个空报文段（或只包含一个字节），他的序列号等于对方主机发送的ACK报文的最大序列号减1.因为这一序列号的数据已经被成功接收，所以不会对到达的报文段造成影响。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1853,7 +1789,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">36</span>
+              <span class="site-state-item-count">37</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
