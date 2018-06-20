@@ -229,6 +229,161 @@
             
               
                 
+                <a class="post-title-link" href="/2018/06/19/SDWebImage学习笔记/" itemprop="url">
+                  SDWebImage学习笔记
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-06-19T11:09:20+08:00" content="2018-06-19">
+              2018-06-19
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/06/19/SDWebImage学习笔记/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/06/19/SDWebImage学习笔记/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><img src="http://ofy1hyquv.bkt.clouddn.com/sd1.png" alt=""></p>
+<p>上图按模块整理了sd各模块的类</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/sd2.png" alt=""></p>
+<p>上图则表示了各模块和类在整理项目中的层级关系。</p>
+<p>根据上面的模块图，我这里先按照模块对源码进行学习和分析。</p>
+<h3 id="下载模块"><a href="#下载模块" class="headerlink" title="下载模块"></a>下载模块</h3><p>因为之前看了af，sd的下载模块应该也是基于NSUrlSession封装的，所以先看下载模块。</p>
+<h4 id="SDWebImageDownloaderOperation"><a href="#SDWebImageDownloaderOperation" class="headerlink" title="SDWebImageDownloaderOperation"></a>SDWebImageDownloaderOperation</h4><p>SDWebImageDownloaderOperation是继承自系统的NSOperation,然后自己实现了一套异步操作的相关操作。这里不展开讲自定义NSOpration需要做哪些事情，网上应该有很多相关demo和文章。</p>
+<p>SDWebImageDownloaderOperation的内部通过NSUrlSession创建task进行图片的下载，每个request的httpmethod默认为GET方式，这也方便拿到下载过程中的图片数据。</p>
+<p>SDWebImageDownloaderOperation里面使用NSURLCache对URL的resopne进行缓存，代码如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">if (self.options &amp; SDWebImageDownloaderIgnoreCachedResponse) &#123;</div><div class="line">    // Grab the cached data for later check</div><div class="line">    NSURLCache *URLCache = session.configuration.URLCache;</div><div class="line">    if (!URLCache) &#123;</div><div class="line">        URLCache = [NSURLCache sharedURLCache];</div><div class="line">    &#125;</div><div class="line">    NSCachedURLResponse *cachedResponse;</div><div class="line">    // NSURLCache&apos;s `cachedResponseForRequest:` is not thread-safe, see https://developer.apple.com/documentation/foundation/nsurlcache#2317483</div><div class="line">    @synchronized (URLCache) &#123;</div><div class="line">        cachedResponse = [URLCache cachedResponseForRequest:self.request];</div><div class="line">    &#125;</div><div class="line">    if (cachedResponse) &#123;</div><div class="line">        self.cachedData = cachedResponse.data;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>URLCache相关内容可以<a href="http://nshipster.cn/nsurlcache/" target="_blank" rel="noopener">参考这一篇文章</a></p>
+<p>SDWebImageDownloaderOperation同时支持了后台下载，代码如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">Class UIApplicationClass = NSClassFromString(@&quot;UIApplication&quot;);</div><div class="line">BOOL hasApplication = UIApplicationClass &amp;&amp; [UIApplicationClass respondsToSelector:@selector(sharedApplication)];</div><div class="line">if (hasApplication &amp;&amp; [self shouldContinueWhenAppEntersBackground]) &#123;</div><div class="line">    __weak __typeof__ (self) wself = self;</div><div class="line">    UIApplication * app = [UIApplicationClass performSelector:@selector(sharedApplication)];</div><div class="line">    self.backgroundTaskId = [app beginBackgroundTaskWithExpirationHandler:^&#123;</div><div class="line">        __strong __typeof (wself) sself = wself;</div><div class="line"></div><div class="line">        if (sself) &#123;</div><div class="line">            [sself cancel];</div><div class="line"></div><div class="line">            [app endBackgroundTask:sself.backgroundTaskId];</div><div class="line">            sself.backgroundTaskId = UIBackgroundTaskInvalid;</div><div class="line">        &#125;</div><div class="line">    &#125;];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>SDWebImageDownloaderOperation将每个task的progress回调和Complete回调存放在一个 <em>callbackBlocks</em> 的数组中，方便在收到NSURLSessionDelegate的代理时调用相对应的block,将数据传出去。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div></pre></td><td class="code"><pre><div class="line">//添加了查找block</div><div class="line"></div><div class="line">- (nullable id)addHandlersForProgress:(nullable SDWebImageDownloaderProgressBlock)progressBlock</div><div class="line">                            completed:(nullable SDWebImageDownloaderCompletedBlock)completedBlock &#123;</div><div class="line">    SDCallbacksDictionary *callbacks = [NSMutableDictionary new];</div><div class="line">    if (progressBlock) callbacks[kProgressCallbackKey] = [progressBlock copy];</div><div class="line">    if (completedBlock) callbacks[kCompletedCallbackKey] = [completedBlock copy];</div><div class="line">    LOCK(self.callbacksLock);</div><div class="line">    [self.callbackBlocks addObject:callbacks];</div><div class="line">    UNLOCK(self.callbacksLock);</div><div class="line">    return callbacks;</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (nullable NSArray&lt;id&gt; *)callbacksForKey:(NSString *)key &#123;</div><div class="line">    LOCK(self.callbacksLock);</div><div class="line">    NSMutableArray&lt;id&gt; *callbacks = [[self.callbackBlocks valueForKey:key] mutableCopy];</div><div class="line">    UNLOCK(self.callbacksLock);</div><div class="line">    // We need to remove [NSNull null] because there might not always be a progress block for each callback</div><div class="line">    [callbacks removeObjectIdenticalTo:[NSNull null]];</div><div class="line">    return [callbacks copy]; // strip mutability here</div><div class="line">&#125;</div><div class="line"></div><div class="line">//调用Progress block</div><div class="line">for (SDWebImageDownloaderProgressBlock progressBlock in [self callbacksForKey:kProgressCallbackKey]) &#123;</div><div class="line">    progressBlock(self.imageData.length, self.expectedSize, self.request.URL);</div><div class="line">&#125;</div><div class="line"></div><div class="line">//调用Complete block</div><div class="line"></div><div class="line">[self callCompletionBlocksWithImage:image imageData:nil error:nil finished:NO];</div><div class="line"></div><div class="line">- (void)callCompletionBlocksWithImage:(nullable UIImage *)image</div><div class="line">                            imageData:(nullable NSData *)imageData</div><div class="line">                                error:(nullable NSError *)error</div><div class="line">                             finished:(BOOL)finished &#123;</div><div class="line">    NSArray&lt;id&gt; *completionBlocks = [self callbacksForKey:kCompletedCallbackKey];</div><div class="line">    dispatch_main_async_safe(^&#123;</div><div class="line">        for (SDWebImageDownloaderCompletedBlock completedBlock in completionBlocks) &#123;</div><div class="line">            completedBlock(image, imageData, error, finished);</div><div class="line">        &#125;</div><div class="line">    &#125;);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在收到didReceiveData回调后，如果当前options为SDWebImageDownloaderProgressiveDownload的话，还需要将收到的这部分图片数据进行解码后显示，显然这不是完整的数据，不过这部分数据也是可以正常显示的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line">if (!self.progressiveCoder) &#123;</div><div class="line">    // We need to create a new instance for progressive decoding to avoid conflicts</div><div class="line">    for (id&lt;SDWebImageCoder&gt;coder in [SDWebImageCodersManager sharedInstance].coders) &#123;</div><div class="line">        if ([coder conformsToProtocol:@protocol(SDWebImageProgressiveCoder)] &amp;&amp;</div><div class="line">            [((id&lt;SDWebImageProgressiveCoder&gt;)coder) canIncrementallyDecodeFromData:imageData]) &#123;</div><div class="line">            self.progressiveCoder = [[[coder class] alloc] init];</div><div class="line">            break;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line">    </div><div class="line">// progressive decode the image in coder queue</div><div class="line">dispatch_async(self.coderQueue, ^&#123;</div><div class="line">    UIImage *image = [self.progressiveCoder incrementallyDecodedImageWithData:imageData finished:finished];</div><div class="line">    if (image) &#123;</div><div class="line">        NSString *key = [[SDWebImageManager sharedManager] cacheKeyForURL:self.request.URL];</div><div class="line">        image = [self scaledImageForKey:key image:image];</div><div class="line">        if (self.shouldDecompressImages) &#123;</div><div class="line">            image = [[SDWebImageCodersManager sharedInstance] decompressedImageWithImage:image data:&amp;imageData options:@&#123;SDWebImageCoderScaleDownLargeImagesKey: @(NO)&#125;];</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        // We do not keep the progressive decoding image even when `finished`=YES. Because they are for view rendering but not take full function from downloader options. And some coders implementation may not keep consistent between progressive decoding and normal decoding.</div><div class="line">        </div><div class="line">        [self callCompletionBlocksWithImage:image imageData:nil error:nil finished:NO];</div><div class="line">    &#125;</div><div class="line">&#125;);</div></pre></td></tr></table></figure>
+<p>在收到didCompleteWithError回调后，会异步解码收到的image数据,gif和webp除外，这两会走另外的解码接口。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line">// decode the image in coder queue</div><div class="line">dispatch_async(self.coderQueue, ^&#123;</div><div class="line">    UIImage *image = [[SDWebImageCodersManager sharedInstance] decodedImageWithData:imageData];</div><div class="line">    NSString *key = [[SDWebImageManager sharedManager] cacheKeyForURL:self.request.URL];</div><div class="line">    image = [self scaledImageForKey:key image:image];</div><div class="line">    </div><div class="line">    BOOL shouldDecode = YES;</div><div class="line">    // Do not force decoding animated GIFs and WebPs</div><div class="line">    if (image.images) &#123;</div><div class="line">        shouldDecode = NO;</div><div class="line">    &#125; else &#123;</div><div class="line">#ifdef SD_WEBP</div><div class="line">        SDImageFormat imageFormat = [NSData sd_imageFormatForImageData:imageData];</div><div class="line">        if (imageFormat == SDImageFormatWebP) &#123;</div><div class="line">            shouldDecode = NO;</div><div class="line">        &#125;</div><div class="line">#endif</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    if (shouldDecode) &#123;</div><div class="line">        if (self.shouldDecompressImages) &#123;</div><div class="line">            BOOL shouldScaleDown = self.options &amp; SDWebImageDownloaderScaleDownLargeImages;</div><div class="line">            image = [[SDWebImageCodersManager sharedInstance] decompressedImageWithImage:image data:&amp;imageData options:@&#123;SDWebImageCoderScaleDownLargeImagesKey: @(shouldScaleDown)&#125;];</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    CGSize imageSize = image.size;</div><div class="line">    if (imageSize.width == 0 || imageSize.height == 0) &#123;</div><div class="line">        [self callCompletionBlocksWithError:[NSError errorWithDomain:SDWebImageErrorDomain code:0 userInfo:@&#123;NSLocalizedDescriptionKey : @&quot;Downloaded image has 0 pixels&quot;&#125;]];</div><div class="line">    &#125; else &#123;</div><div class="line">        [self callCompletionBlocksWithImage:image imageData:imageData error:nil finished:YES];</div><div class="line">    &#125;</div><div class="line">    [self done];</div><div class="line">&#125;);</div></pre></td></tr></table></figure>
+<p>sd做https的证书验证方法很简单，如果自定义的证书不为空，则返回自定义的证书，为空的话，直接将服务器的证书返回并标识验证成功，所以实际上它这里只是简单的返回证书，并没有对证书做一个校验。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line">- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition disposition, NSURLCredential *credential))completionHandler &#123;</div><div class="line">    </div><div class="line">    NSURLSessionAuthChallengeDisposition disposition = NSURLSessionAuthChallengePerformDefaultHandling;</div><div class="line">    __block NSURLCredential *credential = nil;</div><div class="line">    </div><div class="line">    if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) &#123;</div><div class="line">        if (!(self.options &amp; SDWebImageDownloaderAllowInvalidSSLCertificates)) &#123;</div><div class="line">            disposition = NSURLSessionAuthChallengePerformDefaultHandling;</div><div class="line">        &#125; else &#123;</div><div class="line">            credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];</div><div class="line">            disposition = NSURLSessionAuthChallengeUseCredential;</div><div class="line">        &#125;</div><div class="line">    &#125; else &#123;</div><div class="line">        if (challenge.previousFailureCount == 0) &#123;</div><div class="line">            if (self.credential) &#123;</div><div class="line">                credential = self.credential;</div><div class="line">                disposition = NSURLSessionAuthChallengeUseCredential;</div><div class="line">            &#125; else &#123;</div><div class="line">                disposition = NSURLSessionAuthChallengeCancelAuthenticationChallenge;</div><div class="line">            &#125;</div><div class="line">        &#125; else &#123;</div><div class="line">            disposition = NSURLSessionAuthChallengeCancelAuthenticationChallenge;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    if (completionHandler) &#123;</div><div class="line">        completionHandler(disposition, credential);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="SDWebImageDownloader"><a href="#SDWebImageDownloader" class="headerlink" title="SDWebImageDownloader"></a>SDWebImageDownloader</h4><p>SDWebImageDownloader是SDWebImageDownloaderOperation的管理类，和af不同的是，SDWebImageDownloader创建了一个NSOperationQueue，管理每个nsoperation。当nsoperation被标记为finish或者cancel后，会自动从Queue中移除。</p>
+<p>看一下SDWebImageDownloader是如何管理operation的，比较重要的就是下面这一段代码了</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div></pre></td><td class="code"><pre><div class="line">- (nullable SDWebImageDownloadToken *)addProgressCallback:(SDWebImageDownloaderProgressBlock)progressBlock</div><div class="line">                                           completedBlock:(SDWebImageDownloaderCompletedBlock)completedBlock</div><div class="line">                                                   forURL:(nullable NSURL *)url</div><div class="line">                                           createCallback:(SDWebImageDownloaderOperation *(^)(void))createCallback &#123;</div><div class="line">    // The URL will be used as the key to the callbacks dictionary so it cannot be nil. If it is nil immediately call the completed block with no image or data.</div><div class="line">    if (url == nil) &#123;</div><div class="line">        if (completedBlock != nil) &#123;</div><div class="line">            completedBlock(nil, nil, nil, NO);</div><div class="line">        &#125;</div><div class="line">        return nil;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    LOCK(self.operationsLock);</div><div class="line">    SDWebImageDownloaderOperation *operation = [self.URLOperations objectForKey:url];</div><div class="line">    // There is a case that the operation may be marked as finished, but not been removed from `self.URLOperations`.</div><div class="line">    if (!operation || operation.isFinished) &#123;</div><div class="line">        operation = createCallback();</div><div class="line">        __weak typeof(self) wself = self;</div><div class="line">        operation.completionBlock = ^&#123;</div><div class="line">            __strong typeof(wself) sself = wself;</div><div class="line">            if (!sself) &#123;</div><div class="line">                return;</div><div class="line">            &#125;</div><div class="line">            LOCK(sself.operationsLock);</div><div class="line">            [sself.URLOperations removeObjectForKey:url];</div><div class="line">            UNLOCK(sself.operationsLock);</div><div class="line">        &#125;;</div><div class="line">        [self.URLOperations setObject:operation forKey:url];</div><div class="line">        // Add operation to operation queue only after all configuration done according to Apple&apos;s doc.</div><div class="line">        // `addOperation:` does not synchronously execute the `operation.completionBlock` so this will not cause deadlock.</div><div class="line">        [self.downloadQueue addOperation:operation];</div><div class="line">    &#125;</div><div class="line">    UNLOCK(self.operationsLock);</div><div class="line"></div><div class="line">    id downloadOperationCancelToken = [operation addHandlersForProgress:progressBlock completed:completedBlock];</div><div class="line">    </div><div class="line">    SDWebImageDownloadToken *token = [SDWebImageDownloadToken new];</div><div class="line">    token.downloadOperation = operation;</div><div class="line">    token.url = url;</div><div class="line">    token.downloadOperationCancelToken = downloadOperationCancelToken;</div><div class="line"></div><div class="line">    return token;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>sd将每一个operation存在URLOperations里面，key是url，value是operation,当需要创建一个下载任务时，先从这个URLOperations的字典中查找是否已经有对应的下载任务，如果没有的话，将createCallback（）这个block的返回值赋值给一个新的operation对象（并在opration的完成块中将它从URLOperations字典中移除），给opration添加相应的progressBlock和completeBlock,后将它存入URLOperations中，并创建opration对应的SDWebImageDownloadToken对象，再将该token对象返回。</p>
+<p>上面这段描述中有2个地方需要注意下：</p>
+<p>第一个是createCallback（）这个是个啥？看看下面这段代码就会明白：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div></pre></td><td class="code"><pre><div class="line">- (nullable SDWebImageDownloadToken *)downloadImageWithURL:(nullable NSURL *)url</div><div class="line">                                                   options:(SDWebImageDownloaderOptions)options</div><div class="line">                                                  progress:(nullable SDWebImageDownloaderProgressBlock)progressBlock</div><div class="line">                                                 completed:(nullable SDWebImageDownloaderCompletedBlock)completedBlock &#123;</div><div class="line">    __weak SDWebImageDownloader *wself = self;</div><div class="line"></div><div class="line">    return [self addProgressCallback:progressBlock completedBlock:completedBlock forURL:url createCallback:^SDWebImageDownloaderOperation *&#123;</div><div class="line">        __strong __typeof (wself) sself = wself;</div><div class="line">        NSTimeInterval timeoutInterval = sself.downloadTimeout;</div><div class="line">        if (timeoutInterval == 0.0) &#123;</div><div class="line">            timeoutInterval = 15.0;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        // In order to prevent from potential duplicate caching (NSURLCache + SDImageCache) we disable the cache for image requests if told otherwise</div><div class="line">        NSURLRequestCachePolicy cachePolicy = options &amp; SDWebImageDownloaderUseNSURLCache ? NSURLRequestUseProtocolCachePolicy : NSURLRequestReloadIgnoringLocalCacheData;</div><div class="line">        NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:url</div><div class="line">                                                                    cachePolicy:cachePolicy</div><div class="line">                                                                timeoutInterval:timeoutInterval];</div><div class="line">        </div><div class="line">        request.HTTPShouldHandleCookies = (options &amp; SDWebImageDownloaderHandleCookies);</div><div class="line">        request.HTTPShouldUsePipelining = YES;</div><div class="line">        if (sself.headersFilter) &#123;</div><div class="line">            request.allHTTPHeaderFields = sself.headersFilter(url, [sself allHTTPHeaderFields]);</div><div class="line">        &#125;</div><div class="line">        else &#123;</div><div class="line">            request.allHTTPHeaderFields = [sself allHTTPHeaderFields];</div><div class="line">        &#125;</div><div class="line">        SDWebImageDownloaderOperation *operation = [[sself.operationClass alloc] initWithRequest:request inSession:sself.session options:options];</div><div class="line">        operation.shouldDecompressImages = sself.shouldDecompressImages;</div><div class="line">        </div><div class="line">        if (sself.urlCredential) &#123;</div><div class="line">            operation.credential = sself.urlCredential;</div><div class="line">        &#125; else if (sself.username &amp;&amp; sself.password) &#123;</div><div class="line">            operation.credential = [NSURLCredential credentialWithUser:sself.username password:sself.password persistence:NSURLCredentialPersistenceForSession];</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        if (options &amp; SDWebImageDownloaderHighPriority) &#123;</div><div class="line">            operation.queuePriority = NSOperationQueuePriorityHigh;</div><div class="line">        &#125; else if (options &amp; SDWebImageDownloaderLowPriority) &#123;</div><div class="line">            operation.queuePriority = NSOperationQueuePriorityLow;</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        if (sself.executionOrder == SDWebImageDownloaderLIFOExecutionOrder) &#123;</div><div class="line">            // Emulate LIFO execution order by systematically adding new operations as last operation&apos;s dependency</div><div class="line">            [sself.lastAddedOperation addDependency:operation];</div><div class="line">            sself.lastAddedOperation = operation;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        return operation;</div><div class="line">    &#125;];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>createCallback其实就是创建一个新的downloadoperation，然后将这个downloadoperation返回。</p>
+<p>第二个问题是SDWebImageDownloadToken这个类是用来干嘛的，也是看一下下面这个方法应该就清楚了：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">- (void)cancel:(nullable SDWebImageDownloadToken *)token &#123;</div><div class="line">    NSURL *url = token.url;</div><div class="line">    if (!url) &#123;</div><div class="line">        return;</div><div class="line">    &#125;</div><div class="line">    LOCK(self.operationsLock);</div><div class="line">    SDWebImageDownloaderOperation *operation = [self.URLOperations objectForKey:url];</div><div class="line">    if (operation) &#123;</div><div class="line">        BOOL canceled = [operation cancel:token.downloadOperationCancelToken];</div><div class="line">        if (canceled) &#123;</div><div class="line">            [self.URLOperations removeObjectForKey:url];</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    UNLOCK(self.operationsLock);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>token.url为下载的文件url,operation为当前下载这个文件的任务，downloadOperationCancelToken实际上是一个字典，里面存了这个任务的progressBlock和completedBlock，保存这个主要是为了取消的时候把operation中保存的这两block给移除掉。</p>
+<p>总结一下就是，这个SDWebImageDownloadToken对象其实就是用在cancel的时候移除之前保存在相关字典中的数据的。在SDWebImageManager中也是这么用的。</p>
+<h3 id="缓存模块"><a href="#缓存模块" class="headerlink" title="缓存模块"></a>缓存模块</h3><p>看完下载模块，再来看一下缓存模块。大家都知道sd里面的缓存用到了NSCache,那它到底是咋用的呢，我们具体看一下吧。</p>
+<h4 id="SDImageCacheConfig"><a href="#SDImageCacheConfig" class="headerlink" title="SDImageCacheConfig"></a>SDImageCacheConfig</h4><p>先来看一下这个config类中都定义了哪些变量</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">static const NSInteger kDefaultCacheMaxCacheAge = 60 * 60 * 24 * 7; // 1 week</div><div class="line"></div><div class="line">@implementation SDImageCacheConfig</div><div class="line"></div><div class="line">- (instancetype)init &#123;</div><div class="line">    if (self = [super init]) &#123;</div><div class="line">    	//需要解码</div><div class="line">        _shouldDecompressImages = YES;</div><div class="line">        //不适用iCloud存储</div><div class="line">        _shouldDisableiCloud = YES;</div><div class="line">        //存到内存</div><div class="line">        _shouldCacheImagesInMemory = YES;</div><div class="line">        //系统读写相关属性</div><div class="line">        _diskCacheReadingOptions = 0;</div><div class="line">        _diskCacheWritingOptions = NSDataWritingAtomic;</div><div class="line">        //过期时间</div><div class="line">        _maxCacheAge = kDefaultCacheMaxCacheAge;</div><div class="line">        //最大存储空间 0则为没有限制</div><div class="line">        _maxCacheSize = 0;</div><div class="line">    &#125;</div><div class="line">    return self;</div><div class="line">&#125;</div><div class="line"></div><div class="line">@end</div></pre></td></tr></table></figure>
+<h4 id="SDImageCache"><a href="#SDImageCache" class="headerlink" title="SDImageCache"></a>SDImageCache</h4><p>NSCache相关内容：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">// A memory cache which auto purge the cache on memory warning and support weak cache.</div><div class="line">@interface SDMemoryCache &lt;KeyType, ObjectType&gt; : NSCache &lt;KeyType, ObjectType&gt;</div><div class="line"></div><div class="line">@end</div><div class="line"></div><div class="line">// Private</div><div class="line">@interface SDMemoryCache &lt;KeyType, ObjectType&gt; ()</div><div class="line"></div><div class="line">@property (nonatomic, strong, nonnull) NSMapTable&lt;KeyType, ObjectType&gt; *weakCache; // strong-weak cache</div><div class="line">@property (nonatomic, strong, nonnull) dispatch_semaphore_t weakCacheLock; // a lock to keep the access to `weakCache` thread-safe</div><div class="line"></div><div class="line">@end</div></pre></td></tr></table></figure>
+<p>可以看到sd自定义了一个继承自NSCache的类，并申明了一个NSMapTable类型的属性weakCache，直接用NSCache不就可以存储变量到内存了吗，这里为啥还要加一个NSMapTable呢。我们先看一下这个NSMapTable的初始化（<a href="http://www.isaced.com/post-235.html" target="_blank" rel="noopener">NSMapTable相关内容参考这里</a>）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">self.weakCache = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsStrongMemory valueOptions:NSPointerFunctionsWeakMemory capacity:0];</div></pre></td></tr></table></figure>
+<p>可以看到，NSMapTable中存在值都是weak的，如果value被释放，则存的值将变为空，然后我们看一下自定义的SDMemoryCache类的get和set方法。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line">// `setObject:forKey:` just call this with 0 cost. Override this is enough</div><div class="line">- (void)setObject:(id)obj forKey:(id)key cost:(NSUInteger)g &#123;</div><div class="line">    [super setObject:obj forKey:key cost:g];</div><div class="line">    if (key &amp;&amp; obj) &#123;</div><div class="line">        // Store weak cache</div><div class="line">        LOCK(self.weakCacheLock);</div><div class="line">        [self.weakCache setObject:obj forKey:key];</div><div class="line">        UNLOCK(self.weakCacheLock);</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (id)objectForKey:(id)key &#123;</div><div class="line">    id obj = [super objectForKey:key];</div><div class="line">    if (key &amp;&amp; !obj) &#123;</div><div class="line">        // Check weak cache</div><div class="line">        LOCK(self.weakCacheLock);</div><div class="line">        obj = [self.weakCache objectForKey:key];</div><div class="line">        UNLOCK(self.weakCacheLock);</div><div class="line">        if (obj) &#123;</div><div class="line">            // Sync cache</div><div class="line">            NSUInteger cost = 0;</div><div class="line">            if ([obj isKindOfClass:[UIImage class]]) &#123;</div><div class="line">                cost = SDCacheCostForImage(obj);</div><div class="line">            &#125;</div><div class="line">            [super setObject:obj forKey:key cost:cost];</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    return obj;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>对内存中图片的存取都是做了2次操作，一次是存到NSCache中，一次是存到NSMapTable中，大家都知道NSCache有一个特性就是当系统内存不足的时候会首先回收NSCache的内存，看这段get的代码，这里作者应该是考虑如果NSCache中内存被回收了可以从NSMapTable中继续找到该图片数据，不用去读磁盘数据或者重新下载。</p>
+<p>然后我们来看一下存储到disk的过程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">if (toDisk) &#123;</div><div class="line">    dispatch_async(self.ioQueue, ^&#123;</div><div class="line">        @autoreleasepool &#123;</div><div class="line">            NSData *data = imageData;</div><div class="line">            if (!data &amp;&amp; image) &#123;</div><div class="line">                // If we do not have any data to detect image format, check whether it contains alpha channel to use PNG or JPEG format</div><div class="line">                SDImageFormat format;</div><div class="line">                if (SDCGImageRefContainsAlpha(image.CGImage)) &#123;</div><div class="line">                    format = SDImageFormatPNG;</div><div class="line">                &#125; else &#123;</div><div class="line">                    format = SDImageFormatJPEG;</div><div class="line">                &#125;</div><div class="line">                data = [[SDWebImageCodersManager sharedInstance] encodedDataWithImage:image format:format];</div><div class="line">            &#125;</div><div class="line">            [self _storeImageDataToDisk:data forKey:key];</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        if (completionBlock) &#123;</div><div class="line">            dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">                completionBlock();</div><div class="line">            &#125;);</div><div class="line">        &#125;</div><div class="line">    &#125;);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>如果当前的图片data不为空则直接存在磁盘，如果为空而且图片对象不为空，则需要先对图片进行编码处理转为data在存到磁盘中,这是因为data是直接从服务器拿到的数据，是编码过的，而image则是已经解码了的，是原始数据，数据量会比较大，所以需要先编码在存储。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">- (void)_storeImageDataToDisk:(nullable NSData *)imageData forKey:(nullable NSString *)key &#123;</div><div class="line">    if (!imageData || !key) &#123;</div><div class="line">        return;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    if (![self.fileManager fileExistsAtPath:_diskCachePath]) &#123;</div><div class="line">        [self.fileManager createDirectoryAtPath:_diskCachePath withIntermediateDirectories:YES attributes:nil error:NULL];</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    // get cache Path for image key</div><div class="line">    NSString *cachePathForKey = [self defaultCachePathForKey:key];</div><div class="line">    // transform to NSUrl</div><div class="line">    NSURL *fileURL = [NSURL fileURLWithPath:cachePathForKey];</div><div class="line">    </div><div class="line">    [imageData writeToURL:fileURL options:self.config.diskCacheWritingOptions error:nil];</div><div class="line">    </div><div class="line">    // disable iCloud backup</div><div class="line">    if (self.config.shouldDisableiCloud) &#123;</div><div class="line">        [fileURL setResourceValue:@YES forKey:NSURLIsExcludedFromBackupKey error:nil];</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>存储过程很简单，就是一个文件写入就OK了。写入前先判断一下文件夹是否存在，不存在的话先创建一个。</p>
+<p>然后我们看一下比较重要的一个方法，图片的查询</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div></pre></td><td class="code"><pre><div class="line">// First check the in-memory cache...</div><div class="line">UIImage *image = [self imageFromMemoryCacheForKey:key];</div><div class="line">BOOL shouldQueryMemoryOnly = (image &amp;&amp; !(options &amp; SDImageCacheQueryDataWhenInMemory));</div><div class="line">if (shouldQueryMemoryOnly) &#123;</div><div class="line">    if (doneBlock) &#123;</div><div class="line">        doneBlock(image, nil, SDImageCacheTypeMemory);</div><div class="line">    &#125;</div><div class="line">    return nil;</div><div class="line">&#125;</div><div class="line">    </div><div class="line">NSOperation *operation = [NSOperation new];</div><div class="line">void(^queryDiskBlock)(void) =  ^&#123;</div><div class="line">    if (operation.isCancelled) &#123;</div><div class="line">        // do not call the completion if cancelled</div><div class="line">        return;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    @autoreleasepool &#123;</div><div class="line">        NSData *diskData = [self diskImageDataBySearchingAllPathsForKey:key];</div><div class="line">        UIImage *diskImage;</div><div class="line">        SDImageCacheType cacheType = SDImageCacheTypeDisk;</div><div class="line">        if (image) &#123;</div><div class="line">            // the image is from in-memory cache</div><div class="line">            diskImage = image;</div><div class="line">            cacheType = SDImageCacheTypeMemory;</div><div class="line">        &#125; else if (diskData) &#123;</div><div class="line">            // decode image data only if in-memory cache missed</div><div class="line">            diskImage = [self diskImageForKey:key data:diskData options:options];</div><div class="line">            if (diskImage &amp;&amp; self.config.shouldCacheImagesInMemory) &#123;</div><div class="line">                NSUInteger cost = SDCacheCostForImage(diskImage);</div><div class="line">                [self.memCache setObject:diskImage forKey:key cost:cost];</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        if (doneBlock) &#123;</div><div class="line">            if (options &amp; SDImageCacheQueryDiskSync) &#123;</div><div class="line">                doneBlock(diskImage, diskData, cacheType);</div><div class="line">            &#125; else &#123;</div><div class="line">                dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">                    doneBlock(diskImage, diskData, cacheType);</div><div class="line">                &#125;);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;;</div><div class="line">    </div><div class="line">if (options &amp; SDImageCacheQueryDiskSync) &#123;</div><div class="line">    queryDiskBlock();</div><div class="line">&#125; else &#123;</div><div class="line">    dispatch_async(self.ioQueue, queryDiskBlock);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>先从nscache中查找，如果查找成功且options为SDImageCacheQueryDataWhenInMemory，则返回nscache中的结果<br>如果nscache查找失败，则查找disk中的data,并解码该data同时将解码后的image塞到nscache中,然后返回。</p>
+<p>sd还提供了一个删除缓存文件的方法，在该方法中，一共使用了2种删除策略，第一种是按过期时间删除</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div></pre></td><td class="code"><pre><div class="line">NSDate *expirationDate = [NSDate dateWithTimeIntervalSinceNow:-self.config.maxCacheAge];</div><div class="line">NSMutableDictionary&lt;NSURL *, NSDictionary&lt;NSString *, id&gt; *&gt; *cacheFiles = [NSMutableDictionary dictionary];</div><div class="line">NSUInteger currentCacheSize = 0;</div><div class="line"></div><div class="line">// Enumerate all of the files in the cache directory.  This loop has two purposes:</div><div class="line">//</div><div class="line">//  1. Removing files that are older than the expiration date.</div><div class="line">//  2. Storing file attributes for the size-based cleanup pass.</div><div class="line">NSMutableArray&lt;NSURL *&gt; *urlsToDelete = [[NSMutableArray alloc] init];</div><div class="line">for (NSURL *fileURL in fileEnumerator) &#123;</div><div class="line">    NSError *error;</div><div class="line">    NSDictionary&lt;NSString *, id&gt; *resourceValues = [fileURL resourceValuesForKeys:resourceKeys error:&amp;error];</div><div class="line"></div><div class="line">    // Skip directories and errors.</div><div class="line">    if (error || !resourceValues || [resourceValues[NSURLIsDirectoryKey] boolValue]) &#123;</div><div class="line">        continue;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // Remove files that are older than the expiration date;</div><div class="line">    NSDate *modificationDate = resourceValues[NSURLContentModificationDateKey];</div><div class="line">    if ([[modificationDate laterDate:expirationDate] isEqualToDate:expirationDate]) &#123;</div><div class="line">        [urlsToDelete addObject:fileURL];</div><div class="line">        continue;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // Store a reference to this file and account for its total size.</div><div class="line">    NSNumber *totalAllocatedSize = resourceValues[NSURLTotalFileAllocatedSizeKey];</div><div class="line">    currentCacheSize += totalAllocatedSize.unsignedIntegerValue;</div><div class="line">    cacheFiles[fileURL] = resourceValues;</div><div class="line">&#125;</div><div class="line">    </div><div class="line">for (NSURL *fileURL in urlsToDelete) &#123;</div><div class="line">    [self.fileManager removeItemAtURL:fileURL error:nil];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>如果按过期时间删除后的文件大小还是大于最大缓存空间（maxCacheSize）的话，还有一种删除策略，就是删除现有文件大小的一半的文件。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">// If our remaining disk cache exceeds a configured maximum size, perform a second</div><div class="line">// size-based cleanup pass.  We delete the oldest files first.</div><div class="line">if (self.config.maxCacheSize &gt; 0 &amp;&amp; currentCacheSize &gt; self.config.maxCacheSize) &#123;</div><div class="line">    // Target half of our maximum cache size for this cleanup pass.</div><div class="line">    const NSUInteger desiredCacheSize = self.config.maxCacheSize / 2;</div><div class="line"></div><div class="line">    // Sort the remaining cache files by their last modification time (oldest first).</div><div class="line">    NSArray&lt;NSURL *&gt; *sortedFiles = [cacheFiles keysSortedByValueWithOptions:NSSortConcurrent</div><div class="line">                                                             usingComparator:^NSComparisonResult(id obj1, id obj2) &#123;</div><div class="line">                                                                 return [obj1[NSURLContentModificationDateKey] compare:obj2[NSURLContentModificationDateKey]];</div><div class="line">                                                             &#125;];</div><div class="line"></div><div class="line">    // Delete files until we fall below our desired cache size.</div><div class="line">    for (NSURL *fileURL in sortedFiles) &#123;</div><div class="line">        if ([self.fileManager removeItemAtURL:fileURL error:nil]) &#123;</div><div class="line">            NSDictionary&lt;NSString *, id&gt; *resourceValues = cacheFiles[fileURL];</div><div class="line">            NSNumber *totalAllocatedSize = resourceValues[NSURLTotalFileAllocatedSizeKey];</div><div class="line">            currentCacheSize -= totalAllocatedSize.unsignedIntegerValue;</div><div class="line"></div><div class="line">            if (currentCacheSize &lt; desiredCacheSize) &#123;</div><div class="line">                break;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/06/14/使用AudioQueue实现一个音频播放-二-边播边缓存/" itemprop="url">
                   使用AudioQueue实现一个音频播放(二)--边播边缓存
                 </a>
@@ -1616,135 +1771,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/03/20/IP地址与协议详解/" itemprop="url">
-                  IP地址与协议详解
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-03-20T18:29:57+08:00" content="2018-03-20">
-              2018-03-20
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2018/03/20/IP地址与协议详解/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/03/20/IP地址与协议详解/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="基本的ip地址结构"><a href="#基本的ip地址结构" class="headerlink" title="基本的ip地址结构"></a>基本的ip地址结构</h3><p>ipv4:点分十进制，共32位</p>
-<p>ipv6:冒号隔开8个16位数，共128位</p>
-<h4 id="分类寻址"><a href="#分类寻址" class="headerlink" title="分类寻址"></a>分类寻址</h4><p>ip地址中一些连续的位称为网络号，其余位称为主机号。</p>
-<p>ip地址空间的划分涉及五大类：</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/ipcategory.png" alt=""></p>
-<p>A,B,C为单播，D为组播。</p>
-<h4 id="子网寻址"><a href="#子网寻址" class="headerlink" title="子网寻址"></a>子网寻址</h4><p>在一个站点接入Internet后为其分配一个网络号，然后由站点管理员进一步划分本地的子网数。</p>
-<p>通过子网寻址，一个站点被分配一个A，B或C类的<strong>网络号</strong>，保留一些剩余主机号进一步用于站点内分配。该站点可能将基础地址中的主机部分进一步划分为一个<strong>子网号</strong>和一个<strong>主机号</strong>.</p>
-<p>如下图，该站点将每一个地址的前16位固定为网络号，后16位8位为子网号，8位为主机号。这个特殊配置允许站点支持256个子网，每个子网最多可包含254台主机。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/subnet.png" alt=""></p>
-<p><strong>同一个子网中每台主机的IPv4地址拥有相同的子网号</strong></p>
-<h4 id="子网掩码"><a href="#子网掩码" class="headerlink" title="子网掩码"></a>子网掩码</h4><p>子网掩码是由一台主机或路由器使用的分配位，以确定如何从一台主机对应的IP地址中获取网络和子网信息。</p>
-<p>掩码由路由器和主机使用，以确认一个IP地址的网络/子网部分的结束和主机部分的开始。子网掩码中的一位设为1表示一个IP地址的对应位与一个地址的网络/子网部分的对应位相结合（位与）.并将结果作为转发数据报的基础。</p>
-<p>IP地址与子网掩码做（位与）运算，以形成用于路由的地址的网络/子网标识符。</p>
-<p>子网掩码纯粹是站点内部的局部问题。。。</p>
-<h3 id="IP协议"><a href="#IP协议" class="headerlink" title="IP协议"></a>IP协议</h3><p>IP协议是无连接的，这意味着IP不维护网络单元（路由器）中数据报相关的任何链接状态信息，每个数据报独立于其他数据报来处理。这也意味着IP数据报可不按顺序交付。</p>
-<p>当某些错误发生时，例如一台路由器临时用尽缓冲区，IP提供一个简单的错误处理方式：丢弃一些数据（通常是最后到达的数据报）。</p>
-<h4 id="协议头部结构"><a href="#协议头部结构" class="headerlink" title="协议头部结构"></a>协议头部结构</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/ipv4head.png" alt=""></p>
-<h4 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h4><p>它包含IP数据报的版本号：IPV4是4，IPV6是6.</p>
-<p>IPV4和IPV6两个协议之间不能直接互操作。</p>
-<h4 id="IHL（头部长度）"><a href="#IHL（头部长度）" class="headerlink" title="IHL（头部长度）"></a>IHL（头部长度）</h4><p>保存IPV4头部中32位字的数量，包括任何选项。由于他是一个4位的字段，所以IPV4的头部被限制最多15个32位字（60个字节）.</p>
-<h4 id="DS-区分服务"><a href="#DS-区分服务" class="headerlink" title="DS(区分服务)"></a>DS(区分服务)</h4><p>前6位被称为区分服务字段，后两位是显示拥塞通知字段或指示位。</p>
-<h4 id="总长度"><a href="#总长度" class="headerlink" title="总长度"></a>总长度</h4><p>IPV4数据报的总长度。通过这个字段和IHL字段，我们知道数据报的数据部分从哪里开始，以及他的长度。由于它是一个16位的字段，所以IPV4数据报的最大长度是65535字节。</p>
-<p>由于一些携带IPV4数据报的低层协议不能精确表达自己封装数据的大小，所以需要在头部中给出总长度字段。例如，以太网会将短帧补充到最小长度（64字节）。虽然以太网最小有效载荷为46字节，单一个IPV4数据报也可能会更小（20字节）。如果没有提供总长度字段，IPV4实现将无法知道一个46字节的以太网帧是一个IP数据报，还是经过填充的IP数据报，这样可能会导致混淆。</p>
-<p>尽管可发送一个65535字节的IP数据报，但是大多数链路层不能携带这么大的数据，所以会对发数据进行<strong>分片</strong>。主机不接受大于576字节的IPV4数据报。</p>
-<h4 id="标识"><a href="#标识" class="headerlink" title="标识"></a>标识</h4><p>标识字段帮助标识由IPV4主机发送的数据报，为了避免将一个数据报分片和其他分片混淆，发送主机通常在每次发送数据报时都将一个内部计数器加1，并将该计算器值复制到IPV4标识字段。</p>
-<h4 id="生存期"><a href="#生存期" class="headerlink" title="生存期"></a>生存期</h4><p>TTL字段用于设置一个数据报可经过的路由器数量的上限。发送方将他初始化为某一个值（文档建议为64，但128或255也不少见），每台路由器在转发数据报时将该值减1.当这个字段值达到0时，改数据报被丢弃，并使用一个ICMP消息通知发送方。</p>
-<h4 id="协议"><a href="#协议" class="headerlink" title="协议"></a>协议</h4><p>IPV4头部中的协议字段包含一个数字，表示数据报有效载荷部分的数据类型。最常见的值为17（UDP）和6（TCP）。</p>
-<h4 id="头部校验和"><a href="#头部校验和" class="headerlink" title="头部校验和"></a>头部校验和</h4><p>头部校验和字段仅计算IPV4头部。理解这一点很重要，因为这意味着IP协议不检测IPV4数据报有效载荷的正确性。需要其他上层协议自己去实现（<strong>比如TCP的校验和字段</strong>）。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1790,7 +1816,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">37</span>
+              <span class="site-state-item-count">38</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
