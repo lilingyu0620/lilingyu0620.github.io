@@ -229,6 +229,156 @@
             
               
                 
+                <a class="post-title-link" href="/2018/07/20/UIViewController的内存泄露检测实践/" itemprop="url">
+                  UIViewController的内存泄露检测实践
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-07-20T11:02:55+08:00" content="2018-07-20">
+              2018-07-20
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/07/20/UIViewController的内存泄露检测实践/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/07/20/UIViewController的内存泄露检测实践/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>内存泄露在性能优化中一直是一个老生常谈的问题，而且最常出现在UIViewController的使用过程中。一般当VC退出UI堆栈后，如果使用过的内存没有被释放，就会产生内存泄露。所以在使用UIViewController的时候需要特别注意。</p>
+<h3 id="内存泄露原理及解决方案"><a href="#内存泄露原理及解决方案" class="headerlink" title="内存泄露原理及解决方案"></a>内存泄露原理及解决方案</h3><p>一般在VC中出现内存泄露主要原理是产生了循环引用导致内存得不到释放，而循环引用产生的主要case大概了一下三种情况：</p>
+<h4 id="NSTimer"><a href="#NSTimer" class="headerlink" title="NSTimer"></a>NSTimer</h4><p>在使用NSTimer的时候一般会把target设置为self，而timer本身又是VC的成员变量，这样就会产生循环引用的问题。</p>
+<p>打破循环的方式是在VC退出时停掉timer并将成员变量置空。</p>
+<h4 id="delegate"><a href="#delegate" class="headerlink" title="delegate"></a>delegate</h4><p>delegate产生循环引用的原理和timer类同，一般我们会将delegate修饰为weak来打破循环</p>
+<h4 id="block"><a href="#block" class="headerlink" title="block"></a>block</h4><p>block也是最容易产生循环引用的地方，稍不注意就会造成内存泄露。所以在使用block的也需要格外留神。block产生循环引用的原理主要还得出它的内存说起，这里不细说（网上讲这个case的情况不要太多）。</p>
+<p>有2中方法可以打破block的循环引用：</p>
+<ul>
+<li><ol>
+<li>使用weak修饰self</li>
+</ol>
+</li>
+<li><ol>
+<li>使用__block修饰self，在block内部将self置空</li>
+</ol>
+</li>
+</ul>
+<p>不过方案2有个小问题，如果该block没有被调用的话这个循环引用就没法被打破了，所以通常我们都使用第一种方案。</p>
+<p>但是在开发业务的过程中难免会有疏漏的地方，经验丰富的老鸟还好，如果组内有小萌新的话，这种问题就很可能会出现，这里写这个工具也是做一个保护。</p>
+<h3 id="内存泄露检测原理"><a href="#内存泄露检测原理" class="headerlink" title="内存泄露检测原理"></a>内存泄露检测原理</h3><p>当VC被pop或者diss后，正常的流程是走到dealloc，然后使用的内存会被释放，self会为nil,如果有循环引用，则不会走dealloc,内存得不到释放，self也不会为nil.</p>
+<p>这里我们就利用了释放后self会被置空，而不释放self不会为nil的原理来实现内存泄露的警告。</p>
+<h3 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h3><p>首先我们需要hook UIViewController的下面几个方法：</p>
+<ul>
+<li>viewWillAppear</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">+ (void)swizzledViewWillAppear&#123;</div><div class="line">    </div><div class="line">    Class class = [self class];</div><div class="line">    </div><div class="line">    SEL originalSelector = @selector(viewWillAppear:);</div><div class="line">    SEL swizzledSelector = @selector(ocn_viewWillAppear:);</div><div class="line">    </div><div class="line">    Method originalMethod = class_getInstanceMethod(class, originalSelector);</div><div class="line">    Method swizzledMethod = class_getInstanceMethod(class, swizzledSelector);</div><div class="line">    </div><div class="line">    BOOL success = class_addMethod(class, originalSelector, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod));</div><div class="line">    if (success) &#123;</div><div class="line">        class_replaceMethod(class, swizzledSelector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod));</div><div class="line">    &#125;</div><div class="line">    else&#123;</div><div class="line">        method_exchangeImplementations(originalMethod, swizzledMethod);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ul>
+<li>viewDidDisappear</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">+ (void)swizzledViewDidDisappear&#123;</div><div class="line">    </div><div class="line">    Class class = [self class];</div><div class="line">    </div><div class="line">    SEL originalSelector = @selector(viewDidDisappear:);</div><div class="line">    SEL swizzledSelector = @selector(ocn_viewDidDisappear:);</div><div class="line">    </div><div class="line">    Method originalMethod = class_getInstanceMethod(class, originalSelector);</div><div class="line">    Method swizzledMethod = class_getInstanceMethod(class, swizzledSelector);</div><div class="line">    </div><div class="line">    BOOL success = class_addMethod(class, originalSelector, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod));</div><div class="line">    if (success) &#123;</div><div class="line">        class_replaceMethod(class, swizzledSelector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod));</div><div class="line">    &#125;</div><div class="line">    else&#123;</div><div class="line">        method_exchangeImplementations(originalMethod, swizzledMethod);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ul>
+<li>dismissViewControllerAnimated</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">+ (void)swizzledDismissViewController&#123;</div><div class="line">    </div><div class="line">    Class class = [self class];</div><div class="line">    </div><div class="line">    SEL originalSelector = @selector(dismissViewControllerAnimated:completion:);</div><div class="line">    SEL swizzledSelector = @selector(ocn_dismissViewControllerAnimated:completion:);</div><div class="line">    </div><div class="line">    Method originalMethod = class_getInstanceMethod(class, originalSelector);</div><div class="line">    Method swizzledMethod = class_getInstanceMethod(class, swizzledSelector);</div><div class="line">    </div><div class="line">    BOOL success = class_addMethod(class, originalSelector, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod));</div><div class="line">    if (success) &#123;</div><div class="line">        class_replaceMethod(class, swizzledSelector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod));</div><div class="line">    &#125;</div><div class="line">    else&#123;</div><div class="line">        method_exchangeImplementations(originalMethod, swizzledMethod);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>同时我们还需要hook 一下UINavigationController的pop方法:</p>
+<ul>
+<li>popViewControllerAnimated</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">+ (void)swizzledPopViewControllerAnimated&#123;</div><div class="line">    </div><div class="line">    Class class = [self class];</div><div class="line">    </div><div class="line">    SEL originalSelector = @selector(popViewControllerAnimated:);</div><div class="line">    SEL swizzledSelector = @selector(ocn_popViewControllerAnimated:);</div><div class="line">    </div><div class="line">    Method originalMethod = class_getInstanceMethod(class, originalSelector);</div><div class="line">    Method swizzledMethod = class_getInstanceMethod(class, swizzledSelector);</div><div class="line">    </div><div class="line">    BOOL success = class_addMethod(class, originalSelector, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod));</div><div class="line">    if (success) &#123;</div><div class="line">        class_replaceMethod(class, swizzledSelector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod));</div><div class="line">    &#125;</div><div class="line">    else&#123;</div><div class="line">        method_exchangeImplementations(originalMethod, swizzledMethod);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里当然选择在分类中进行hook最方便了。我们把hook的代码放在load函数中执行，具体原因参考<a href="https://nshipster.cn/method-swizzling/" target="_blank" rel="noopener">这里</a>.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">+ (void)load&#123;</div><div class="line">    </div><div class="line">#if defined(DATAONLINE) &amp;&amp; DATAONLINE == 0</div><div class="line">    static dispatch_once_t onceToken;</div><div class="line">    dispatch_once(&amp;onceToken, ^&#123;</div><div class="line">        </div><div class="line">        [self swizzledViewWillAppear];</div><div class="line">        [self swizzledViewDidDisappear];</div><div class="line">        [self swizzledDismissViewController];</div><div class="line">        </div><div class="line">    &#125;);</div><div class="line">#endif</div><div class="line">    </div><div class="line">&#125;</div><div class="line"></div><div class="line">+ (void)load&#123;</div><div class="line">    </div><div class="line">#if defined(DATAONLINE) &amp;&amp; DATAONLINE == 0 </div><div class="line">    static dispatch_once_t onceToken;</div><div class="line">    dispatch_once(&amp;onceToken, ^&#123;</div><div class="line">        [self swizzledPopViewControllerAnimated];</div><div class="line">    &#125;);</div><div class="line">#endif</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里的宏表示是测试环境。</p>
+<p>在viewWillAppear中，我们记录一下当前VC的状态。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">- (void)ocn_viewWillAppear:(BOOL)animated&#123;</div><div class="line">    </div><div class="line">    [self ocn_viewWillAppear:animated];</div><div class="line">    </div><div class="line">    [self setOcn_hasBeenPopped:NO];</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>然后在viewDidDisappear时，我们判断一下当前VC的状态，如果VC被pop或者dismiss了，我们调用一下内存泄露提醒的方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">- (void)ocn_viewDidDisappear:(BOOL)animated&#123;</div><div class="line">    </div><div class="line">    [self ocn_viewDidDisappear:animated];</div><div class="line"></div><div class="line">    __weak __typeof(self)weakSelf = self;</div><div class="line">    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^&#123;</div><div class="line">        if ([weakSelf ocn_hasBeenPopped]) &#123;</div><div class="line">            [weakSelf alertWithClassName:NSStringFromClass([weakSelf class])];</div><div class="line">        &#125;</div><div class="line">    &#125;);</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里我们做了一个延时调用，前面已经说过，如果VC走正常流程，内存被释放，self会被置空，所以这里如果没有内存泄露的话，weakself应该是为nil，我们使用nil对象调用这两个方法不会有提醒，而如果发生了内存泄露，weakself不会为nil，这时调用者这2个方法就会弹出内存泄露的警告了。</p>
+<p>当然，我们还需要再dismiss和pop的时候设置当前vc的状态为已pop的状态，只有是已经被pop了，才会去尝试调用提醒事件。因为当vc的调用栈被push到下一级，也就是上面有新的vc时，viewDidDisappear也会被调用，但是此时vc的内存还会保存在内存中，只有在被pop或者dismiss后，vc的内存才有可能被释放。</p>
+<h3 id="后续"><a href="#后续" class="headerlink" title="后续"></a>后续</h3><p>这个工具目前只能检测UIViewController的内存泄露问题，后续还可以再加上其他类型的检测方法。写这个工具也算是对runtime学习的一个实践。</p>
+<p><a href="https://github.com/lilingyu0620/LLYMemoryLeakDetector" target="_blank" rel="noopener">这里是demo</a></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/07/04/FDFullscreenPopGesture全屏返回实现原理解析/" itemprop="url">
                   FDFullscreenPopGesture实现原理解析
                 </a>
@@ -1680,191 +1830,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/04/08/AudioUnit学习笔记/" itemprop="url">
-                  AudioUnit学习笔记
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-04-08T16:15:43+08:00" content="2018-04-08">
-              2018-04-08
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2018/04/08/AudioUnit学习笔记/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/04/08/AudioUnit学习笔记/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="AudioUnit简介"><a href="#AudioUnit简介" class="headerlink" title="AudioUnit简介"></a>AudioUnit简介</h3><p>在iOS中，所有的上层音频技术都是基于AudioUnit和CoreMedia来实现的。<br>下图可以直观的反应出AudioUnit的层级关系。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/auidounit1-1.png" alt=""></p>
-<p>对于普通的音频播放功能可能不需要直接使用AudioUnit来实现，但是如果你需要实现比较高级的功能（比如录音，混音等），就需要使用AudioUnit了。</p>
-<p>根据不同的音频目的，iOS将AudioUnit共分为7类。如下图所示</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit1-2.png" alt=""></p>
-<ul>
-<li><p>effect units 这个是用在ipod类app上的，比较少使用到。</p>
-</li>
-<li><p>mixer units 做混音的，有2个audio unit，3D mixer比较适合用来做游戏的3d音效。multichannel mixer提供混合任意数量的单声道或立体声流,立体声输出。</p>
-</li>
-<li><p>i/o units  远程I/O单元是最常用的。它连接到输入和输出音频硬件和给你对传入和传出的低延迟访问音频样本值。它提供了硬件音频格式和应用程序之间的格式转换音频格式。声音处理I/O单元扩展了远程I/O单元，通过添加声学回声取消使用网络电话或者语音聊天应用程序。通用输出装置不连接到音频硬件,而是提供了一个机制来处理链的输出发送到您的应用程序。</p>
-</li>
-<li><p>Format Converter Unit 用来处理音频格式的转换。</p>
-</li>
-</ul>
-<h3 id="iOS提供了2种创建AudioUnit方式，一种是直接创建AudioUnit-另一种是通过AUGraph来使用AudioUnit"><a href="#iOS提供了2种创建AudioUnit方式，一种是直接创建AudioUnit-另一种是通过AUGraph来使用AudioUnit" class="headerlink" title="iOS提供了2种创建AudioUnit方式，一种是直接创建AudioUnit,另一种是通过AUGraph来使用AudioUnit."></a>iOS提供了2种创建AudioUnit方式，一种是直接创建AudioUnit,另一种是通过AUGraph来使用AudioUnit.</h3><h4 id="通过AudioComponentDescription-amp-AudioComponent音频组件创建AudioUnit"><a href="#通过AudioComponentDescription-amp-AudioComponent音频组件创建AudioUnit" class="headerlink" title="通过AudioComponentDescription&amp;AudioComponent音频组件创建AudioUnit"></a>通过AudioComponentDescription&amp;AudioComponent音频组件创建AudioUnit</h4><p>在创建一个AudioUnit实例之前，需要先创建一个audiocomponent 创建方式如下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">//组件描述</div><div class="line">AudioComponentDescription ioUnitDescription;</div><div class="line">//组件类型</div><div class="line">ioUnitDescription.componentType          = kAudioUnitType_Output;</div><div class="line">//组件子类型</div><div class="line">ioUnitDescription.componentSubType       = kAudioUnitSubType_RemoteIO;</div><div class="line">//默认值</div><div class="line">ioUnitDescription.componentManufacturer  = kAudioUnitManufacturer_Apple;</div><div class="line">ioUnitDescription.componentFlags         = 0;</div><div class="line">ioUnitDescription.componentFlagsMask     = 0;</div><div class="line"></div><div class="line">AudioComponent foundIoUnitReference = AudioComponentFindNext (NULL,&amp;ioUnitDescription);</div><div class="line">AudioUnit ioUnitInstance;</div><div class="line">AudioComponentInstanceNew (</div><div class="line">    foundIoUnitReference,</div><div class="line">    &amp;ioUnitInstance</div><div class="line">);</div></pre></td></tr></table></figure>
-<h4 id="使用AUGraph创建AudioUnit"><a href="#使用AUGraph创建AudioUnit" class="headerlink" title="使用AUGraph创建AudioUnit"></a>使用AUGraph创建AudioUnit</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">AUGraph processingGraph;</div><div class="line">NewAUGraph (&amp;processingGraph);</div><div class="line"> </div><div class="line">// Add an audio unit node to the graph, then instantiate the audio unit</div><div class="line">AUNode ioNode;</div><div class="line">AUGraphAddNode (</div><div class="line">    processingGraph,</div><div class="line">    &amp;ioUnitDescription,</div><div class="line">    &amp;ioNode</div><div class="line">);</div><div class="line">AUGraphOpen (processingGraph); // indirectly performs audio unit instantiation</div><div class="line"> </div><div class="line">// Obtain a reference to the newly-instantiated I/O unit</div><div class="line">AudioUnit ioUnit;</div><div class="line">AUGraphNodeInfo (</div><div class="line">    processingGraph,</div><div class="line">    ioNode,</div><div class="line">    NULL,</div><div class="line">    &amp;ioUnit</div><div class="line">);</div></pre></td></tr></table></figure>
-<h3 id="使用Scopes和Elements来指定AudioUnit"><a href="#使用Scopes和Elements来指定AudioUnit" class="headerlink" title="使用Scopes和Elements来指定AudioUnit"></a>使用Scopes和Elements来指定AudioUnit</h3><p>Scope和Elements的关系如下图所示：</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit1-3.png" alt=""></p>
-<p>对于通用的audioUnit,可以有1-2条输入输出流，输入和输出不一定相等，比如mixer,可以两个音频输入，混音合成一个音频流输出。每个element表示一个音频处理上下文(context), 也称为bus。每个element有输出和输出部分，称为scope，分别是input scope和Output scope。Global scope确定只有一个element，就是element0，有些属性只能在Global scope上设置。</p>
-<p>inputbus = Element1 = 1,outputbus = Element0 = 0</p>
-<h3 id="使用Property来config-AudioUnit"><a href="#使用Property来config-AudioUnit" class="headerlink" title="使用Property来config AudioUnit"></a>使用Property来config AudioUnit</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">UInt32 busCount = 2;</div><div class="line"> </div><div class="line">OSStatus result = AudioUnitSetProperty (</div><div class="line">    mixerUnit,</div><div class="line">    kAudioUnitProperty_ElementCount,   // the property key</div><div class="line">    kAudioUnitScope_Input,             // the scope to set the property on</div><div class="line">    0,                                 // the element to set the property on</div><div class="line">    &amp;busCount,                         // the property value</div><div class="line">    sizeof (busCount)</div><div class="line">);</div></pre></td></tr></table></figure>
-<p>一个普通的播放行为可能需要设置的属性有 <em>kAudioOutputUnitProperty_EnableIO</em>，<em>kAudioUnitProperty_StreamFormat</em>，<em>kAudioUnitProperty_SetRenderCallback</em> 三个，不同行为需要设置不同的属性。</p>
-<h3 id="I-O-Unit的基本特征"><a href="#I-O-Unit的基本特征" class="headerlink" title="I/O Unit的基本特征"></a>I/O Unit的基本特征</h3><p>i/o unit是最常见的一种AudioUnit</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit1-4.png" alt=""></p>
-<p>对于remote_IO类型audioUnit，即从硬件采集和输出到硬件的audioUnit,它的逻辑是固定的：固定2个element,麦克风经过element1到APP，APP经element0到扬声器。</p>
-<p>我们能把控的是中间的“APP内处理”部分，结合上图，淡黄色的部分就是APP可控的，Element1这个组件负责链接麦克风和APP，它的输入部分是系统控制，输出部分是APP控制；Element0负责连接APP和扬声器，输入部分APP控制，输出部分系统控制。</p>
-<h3 id="使用AUGraph来管理AudioUnit"><a href="#使用AUGraph来管理AudioUnit" class="headerlink" title="使用AUGraph来管理AudioUnit"></a>使用AUGraph来管理AudioUnit</h3><h3 id="Render-Callback-Functions-Feed-Audio-to-Audio-Units"><a href="#Render-Callback-Functions-Feed-Audio-to-Audio-Units" class="headerlink" title="Render Callback Functions Feed Audio to Audio Units"></a>Render Callback Functions Feed Audio to Audio Units</h3><p>当音频数据是由内存或者磁盘提供的话，数据都需要从渲染回调函数这里提供给inputbus，当你想要对音频数据进行自定义的处理的话，就在这里进行吧。</p>
-<p>渲染回调函数格式如下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">static OSStatus MyAURenderCallback (</div><div class="line">    void                        *inRefCon,</div><div class="line">    AudioUnitRenderActionFlags  *ioActionFlags,</div><div class="line">    const AudioTimeStamp        *inTimeStamp,</div><div class="line">    UInt32                      inBusNumber,</div><div class="line">    UInt32                      inNumberFrames,</div><div class="line">    AudioBufferList             *ioData</div><div class="line">) &#123; /* callback body */ &#125;</div></pre></td></tr></table></figure>
-<p>各参数的关系如下图：</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit1-5.png" alt=""></p>
-<h3 id="Working-with-the-AudioStreamBasicDescription-structure"><a href="#Working-with-the-AudioStreamBasicDescription-structure" class="headerlink" title="Working with the AudioStreamBasicDescription structure"></a>Working with the AudioStreamBasicDescription structure</h3><p>AudioStreamBasicDescription 这个结构体表示当前音频的格式，如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">struct AudioStreamBasicDescription &#123;</div><div class="line">    Float64 mSampleRate;//采样率</div><div class="line">    UInt32  mFormatID;//格式ID</div><div class="line">    UInt32  mFormatFlags;//存储标识</div><div class="line">    UInt32  mBytesPerPacket;//每个packet的字节数</div><div class="line">    UInt32  mFramesPerPacket;//每个packet包含几个frame</div><div class="line">    UInt32  mBytesPerFrame;//每个frame的字节数</div><div class="line">    UInt32  mChannelsPerFrame;//每个frame的声道数</div><div class="line">    UInt32  mBitsPerChannel;//每个声道的位数</div><div class="line">    UInt32  mReserved;</div><div class="line">&#125;;</div><div class="line">typedef struct AudioStreamBasicDescription  AudioStreamBasicDescription;</div></pre></td></tr></table></figure>
-<h3 id="Understanding-Where-and-How-to-Set-Stream-Formats"><a href="#Understanding-Where-and-How-to-Set-Stream-Formats" class="headerlink" title="Understanding Where and How to Set Stream Formats"></a>Understanding Where and How to Set Stream Formats</h3><p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit1-6.png" alt=""></p>
-<p>这个图展示了一个完整的录音+混音+播放的流程，在组件两边设置stream的格式，在代码里的概念是scope。</p>
-<h3 id="在使用AUGraph时选择不同的设计模式"><a href="#在使用AUGraph时选择不同的设计模式" class="headerlink" title="在使用AUGraph时选择不同的设计模式"></a>在使用AUGraph时选择不同的设计模式</h3><h4 id="I-O-Pass-Through"><a href="#I-O-Pass-Through" class="headerlink" title="I/O Pass Through"></a>I/O Pass Through</h4><p>简单的音频输入输出场景，直接使用AudioUnit链接两端，不需要设置渲染回调.</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit2-1.png" alt=""></p>
-<h4 id="I-O-Without-a-Render-Callback-Function"><a href="#I-O-Without-a-Render-Callback-Function" class="headerlink" title="I/O Without a Render Callback Function"></a>I/O Without a Render Callback Function</h4><p>需要多个AudioUnit来处理的场景，使用AudioUnit链接各部分，不需要设置回调。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit2-2.png" alt=""></p>
-<h4 id="I-O-with-a-Render-Callback-Function"><a href="#I-O-with-a-Render-Callback-Function" class="headerlink" title="I/O with a Render Callback Function"></a>I/O with a Render Callback Function</h4><p>设置渲染回调的方式来处理输入输出的链接。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit2-3.png" alt=""></p>
-<h4 id="Output-Only-with-a-Render-Callback-Function"><a href="#Output-Only-with-a-Render-Callback-Function" class="headerlink" title="Output-Only with a Render Callback Function"></a>Output-Only with a Render Callback Function</h4><p>只有输出没有输入的场景，设置渲染回调来链接输出端。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit2-4.png" alt=""></p>
-<p>复杂的场景，需要设置多个渲染回调。同时需要多个AudioUnit来处理链接。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit2-5.png" alt=""></p>
-<h3 id="构建AudioUnit-app的流程"><a href="#构建AudioUnit-app的流程" class="headerlink" title="构建AudioUnit app的流程"></a>构建AudioUnit app的流程</h3><p>无论选择上面的哪种设计，构建app的基本流程如下：</p>
-<ul>
-<li><p>Configure your audio session.</p>
-</li>
-<li><p>Specify audio units.</p>
-</li>
-<li><p>Create an audio processing graph, then obtain the<br>audio units.</p>
-</li>
-<li><p>Configure the audio units.</p>
-</li>
-<li><p>Connect the audio unit nodes.</p>
-</li>
-<li><p>Provide a user interface.</p>
-</li>
-<li><p>Initialize and then start the audio processing graph.</p>
-</li>
-</ul>
-<h3 id="使用指定的AudioUnit"><a href="#使用指定的AudioUnit" class="headerlink" title="使用指定的AudioUnit"></a>使用指定的AudioUnit</h3><h4 id="Using-I-O-Units"><a href="#Using-I-O-Units" class="headerlink" title="Using I/O Units"></a>Using I/O Units</h4><ul>
-<li>Remote I/O Unit</li>
-</ul>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit3-1.png" alt=""></p>
-<ul>
-<li><p>Voice-Processing I/O Unit</p>
-</li>
-<li><p>Generic Output Unit</p>
-</li>
-</ul>
-<h4 id="Using-Mixer-Units"><a href="#Using-Mixer-Units" class="headerlink" title="Using Mixer Units"></a>Using Mixer Units</h4><ul>
-<li>Multichannel Mixer Unit</li>
-</ul>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit3-2.png" alt=""></p>
-<ul>
-<li>3D Mixer Unit</li>
-</ul>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit3-3.png" alt=""></p>
-<h4 id="Using-Effect-Units"><a href="#Using-Effect-Units" class="headerlink" title="Using Effect Units"></a>Using Effect Units</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit3-4.png" alt=""></p>
-<h3 id="Identifier-Keys-for-Audio-Units"><a href="#Identifier-Keys-for-Audio-Units" class="headerlink" title="Identifier Keys for Audio Units"></a>Identifier Keys for Audio Units</h3><p><img src="http://ofy1hyquv.bkt.clouddn.com/audiounit3-5.png" alt=""></p>
-<p><a href="https://developer.apple.com/library/content/documentation/MusicAudio/Conceptual/AudioUnitHostingGuide_iOS/AudioUnitHostingFundamentals/AudioUnitHostingFundamentals.html" target="_blank" rel="noopener">参考文档</a></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1910,7 +1875,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">39</span>
+              <span class="site-state-item-count">40</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
