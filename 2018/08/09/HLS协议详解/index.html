@@ -1,0 +1,704 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="HLS协议详解HLS （HTTP Live Streaming）, 是由 Apple 公司实现的基于 HTTP 的媒体流传输协议。Apple 的全系列产品支持，由于 HLS 是苹果提出的， 所以在 Apple 的全系列产品包括 iphone、 ipad、safari 都不需要安装任何插件就可以原生支持播放 HLS， 现在Android 也加入了对 HLS 的支持。但PC端目前除了Microsoft">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HLS协议详解">
+<meta property="og:url" content="http://yoursite.com/2018/08/09/HLS协议详解/index.html">
+<meta property="og:site_name" content="lly&#39;s Blog">
+<meta property="og:description" content="HLS协议详解HLS （HTTP Live Streaming）, 是由 Apple 公司实现的基于 HTTP 的媒体流传输协议。Apple 的全系列产品支持，由于 HLS 是苹果提出的， 所以在 Apple 的全系列产品包括 iphone、 ipad、safari 都不需要安装任何插件就可以原生支持播放 HLS， 现在Android 也加入了对 HLS 的支持。但PC端目前除了Microsoft">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/hls01.png">
+<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/hls02.png">
+<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/hls03.png">
+<meta property="og:updated_time" content="2018-08-09T07:55:50.468Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="HLS协议详解">
+<meta name="twitter:description" content="HLS协议详解HLS （HTTP Live Streaming）, 是由 Apple 公司实现的基于 HTTP 的媒体流传输协议。Apple 的全系列产品支持，由于 HLS 是苹果提出的， 所以在 Apple 的全系列产品包括 iphone、 ipad、safari 都不需要安装任何插件就可以原生支持播放 HLS， 现在Android 也加入了对 HLS 的支持。但PC端目前除了Microsoft">
+<meta name="twitter:image" content="http://ofy1hyquv.bkt.clouddn.com/hls01.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/08/09/HLS协议详解/"/>
+
+  <title> HLS协议详解 | lly's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">lly's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">用心记录点滴</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                HLS协议详解
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-08-09T15:54:42+08:00" content="2018-08-09">
+              2018-08-09
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/08/09/HLS协议详解/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/08/09/HLS协议详解/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="HLS协议详解"><a href="#HLS协议详解" class="headerlink" title="HLS协议详解"></a>HLS协议详解</h3><p>HLS （HTTP Live Streaming）, 是由 Apple 公司实现的基于 HTTP 的媒体流传输协议。Apple 的全系列产品支持，由于 HLS 是苹果提出的， 所以在 Apple 的全系列产品包括 iphone、 ipad、safari 都不需要安装任何插件就可以原生支持播放 HLS， 现在Android 也加入了对 HLS 的支持。但PC端目前除了Microsoft Edge外，Chrome、Firefox等浏览器均不支持该协议的播放。</p>
+<p>HLS跟 DASH 协议的原理非常类似，<strong>通过将整条流切割成一个小的可以通过 HTTP 下载的媒体文件，然后提供一个配套的媒体列表文件给客户端，让客户端顺序地拉取这些媒体文件播放, 来实现看上去是在播放一条流的效果。</strong> HLS 目前广泛地应用于点播和直播领域</p>
+<h4 id="HLS-的优势"><a href="#HLS-的优势" class="headerlink" title="HLS 的优势"></a>HLS 的优势</h4><ul>
+<li><p>客户端支持简单，只需要支持 HTTP 请求即可，HTTP 协议无状态，只需要按顺序下载媒体片段即可。</p>
+</li>
+<li><p>使用 HTTP 协议网络兼容性好， HTTP 数据包也可以方便地通过防火墙或者代理服务器，CDN 支持良好。</p>
+</li>
+<li><p>自带多码率自适应，Apple 在提出 HLS 时，就已经考虑了码流自适应的问题。</p>
+</li>
+</ul>
+<h4 id="HLS-的劣势"><a href="#HLS-的劣势" class="headerlink" title="HLS 的劣势"></a>HLS 的劣势</h4><ul>
+<li><p>相比 RTMP 这类长连接协议，延时较高，难以用到互动直播场景。</p>
+</li>
+<li><p>对于点播服务来说，由于 TS 切片通常较小，海量碎片在文件分发、一致性缓存、存储等方面都有较大挑战。</p>
+</li>
+</ul>
+<h3 id="协议详解"><a href="#协议详解" class="headerlink" title="协议详解"></a>协议详解</h3><p><img src="http://ofy1hyquv.bkt.clouddn.com/hls01.png" alt=""></p>
+<p>上图可以看出，HLS总共有三个部分: Serve、CDN、Client。HLS 协议的主要内容是关于 M3U8 这个文本协议，其实生成与解析都非常简单，示例如下：</p>
+<p>简单的Media Playlist:</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/hls02.png" alt=""></p>
+<p>包含多种比特率的 Master Playlist:</p>
+<p><img src="http://ofy1hyquv.bkt.clouddn.com/hls03.png" alt=""></p>
+<ul>
+<li>HLS 通过 URI(RFC3986) 指向的一个 Playlist 来表示一个媒体流.</li>
+<li>一个 Playlist 可以是一个 Media Playlist 或者 Master Playlist, 使用 UTF-8 编码的文本文件, 包含一些 URI 跟描述性的 tags.</li>
+<li>一个 Media Playlist 包含一个 Media Segments 列表,当顺序播放时, 能播放整个完整的流.</li>
+<li>要想播放这个 Playlist, 客户端需要首先下载他, 然后播放里面的每一个 Media Segment.</li>
+<li>更加复杂的情况是, Playlist 是一个 Master Playlist, 包含一个 Variant Stream 集合, 通常每个 Variant Stream 里面是同一个流的多个不同版本(如: 分辨率, 码率不同).</li>
+</ul>
+<h4 id="HLS-Media-Segments"><a href="#HLS-Media-Segments" class="headerlink" title="HLS Media Segments"></a>HLS Media Segments</h4><ul>
+<li>每一个 Media Segment 通过一个 URI 指定, 可能包含一个 byte range.</li>
+<li>每一个 Media Segment 的 duration 通过 EXTINF tag 指定.</li>
+<li>每一个 Media Segment 有一个唯一的整数 Media Segment Number.</li>
+<li>有些媒体格式需要一个 format-specific sequence 来初始化一个 parser, 在 Media Segment 被 parse 之前. 这个字段叫做 Media Initialization Section, 通过 EXT-X-MAP tag 来指定. </li>
+</ul>
+<h4 id="支持的Media-Segment格式"><a href="#支持的Media-Segment格式" class="headerlink" title="支持的Media Segment格式"></a>支持的Media Segment格式</h4><h5 id="MPEG-2-Transport-Streams"><a href="#MPEG-2-Transport-Streams" class="headerlink" title="MPEG-2 Transport Streams"></a>MPEG-2 Transport Streams</h5><ul>
+<li>即最常见的 TS 文件.</li>
+<li>RFC: ISO_13818.</li>
+<li>Media Initialization Section: PAT(Program Association Table) 跟 PMT(Program Map Table).</li>
+<li>每个 TS segment 必须值含一个 MPEG-2 Program.</li>
+<li>每个 TS segment 包含一个 PAT 和 PMT, 最好在 segment 的开始处, 或者通过一个 EXT-X-MAP tag 来指定.</li>
+</ul>
+<h5 id="Fragmented-MPEG-4"><a href="#Fragmented-MPEG-4" class="headerlink" title="Fragmented MPEG-4"></a>Fragmented MPEG-4</h5><ul>
+<li>即常提到的 fMP4.</li>
+<li>RFC: ISOBMFF.</li>
+<li>Media Initialization Section: ftyp box(包含一个高于 ios6 的 brand), ftyp box 必须紧跟在 moov box 之后. moov box 必须包含一个 trak box(对于每个 fMP4 segment 里面的 traf box, 包含匹配的 track_ID). 每个 trak box 应该包含一个 sample table, 但是他的 sample count 必须为 0. mvhd box 跟 tkhd 的 duration 必须为 0. mvex box 必须跟在上一个 trak box 后面.</li>
+<li>不像普通的 MP4 文件包含一个 moov box(包含 sample tables) 和一个 mdat box(包含对应的 samples), 一个 fMP4 包含一个 moof box (包含 sample table 的子集), 和一个 mdat box(包含对应的 samples).</li>
+<li>在每一个 fMP4 segment 里面, 每一个 traf box 必须包含一个 tfdt box, fMP4 segment 必须使用 movie-fragment relative addressing. fMP4 segments 绝对不能使用外部的 data references.</li>
+<li>每一个 fMP4 segment 必须有一个 EXT-X-MAP tag.</li>
+</ul>
+<h5 id="Packed-Audio"><a href="#Packed-Audio" class="headerlink" title="Packed Audio"></a>Packed Audio</h5><ul>
+<li>一个 Packed Audio Segment 包含编码的 audio samples 和 ID3 tags. 简单的打包到一起, 包含最小的 framing, 并且没有 per-sample timestamp.</li>
+<li>支持的 Packed Audio: AAC with ADTS framing [ISO_13818_7], MP3 [ISO_13818_3], AC-3 [AC_3], Enhanced AC-3 [AC_3].</li>
+<li>一个 Packed Audio Segment 没有 Media Initialization Section.</li>
+<li>每一个 Packed Audio Segment 必须在他的第一个 sample 指定 timestamp 通过一个 ID3 PRIV tag.</li>
+<li>ID3 PRIV owner identifier 必须是 com.apple.streaming.transportStreamTimestamp.</li>
+<li>ID3 payload 必须是一个 33-bit MPEG-2 Program Elementary Stream timestamp 的大端 eight-octet number, 高 31 为设置为 0.</li>
+</ul>
+<h5 id="WebVTT"><a href="#WebVTT" class="headerlink" title="WebVTT"></a>WebVTT</h5><ul>
+<li>一个 WebVTT Segment 是一个 WebVTT 文件的一个 section, WebVTT Segment 包含 subtitles.</li>
+<li>Media Initialization Section: WebVTT header.</li>
+<li>每一个 WebVTT Segment 必须有以一个 WebVTT header 开始, 或者有一个 EXT-X-MAP tag 来指定.</li>
+<li>每一个 WebVTT header 应该有一个 X-TIMESTAMP-MAP 来保证音视频同步.</li>
+</ul>
+<h4 id="HLS-Playlists"><a href="#HLS-Playlists" class="headerlink" title="HLS Playlists"></a>HLS Playlists</h4><ul>
+<li>Playlist 文件的格式是起源于 M3U, 并且继承两个 tag: EXTM3U 和 EXTINF</li>
+<li>下面的 tags 通过 BNF-style 语法来指定.</li>
+<li>一个 Playlist 文件必须通过 URI(.m3u8 或 m3u) 或者 HTTP Content-Type 来识别(application/vnd.apple.mpegurl 或 audio/mpegurl).</li>
+<li>换行符可以用 \n 或者 \r\n.</li>
+<li>以 # 开头的是 tag 或者注释, 以 #EXT 开头的是 tag, 其余的为注释, 在解析时应该忽略.</li>
+<li>Playlist 里面的 URI 可以用绝对地址或者相对地址, 如果使用相对地址, 那么是相对于 Playlist 文件的地址.</li>
+</ul>
+<h5 id="Attribute-Lists"><a href="#Attribute-Lists" class="headerlink" title="Attribute Lists"></a>Attribute Lists</h5><ul>
+<li>有的 tags 的值是 Attribute Lists.</li>
+<li>一个 Attribute List 是一个用逗号分隔的 attribute/value 对列表.</li>
+<li>格式为: AttributeName=AttributeValue.</li>
+</ul>
+<h5 id="Basic-Tags"><a href="#Basic-Tags" class="headerlink" title="Basic Tags"></a>Basic Tags</h5><p>Basic Tags 可以用在 Media Playlist 和 Master Playlist 里面.</p>
+<ul>
+<li>EXTM3U: 必须在文件的第一行, 标识是一个 Extended M3U Playlist 文件.</li>
+<li>EXT-X-VERSION: 表示 Playlist 兼容的版本.</li>
+</ul>
+<h5 id="Media-Segment-Tags"><a href="#Media-Segment-Tags" class="headerlink" title="Media Segment Tags"></a>Media Segment Tags</h5><p>每一个 Media Segment 通过一系列的 Media Segment tags 跟一个 URI 来指定. 有的 Media Segment tags 只应用与下一个 segment, 有的则是应用所有下面的 segments. 一个 Media Segment tag 只能出现在 Media Playlist 里面.</p>
+<ul>
+<li>EXTINF: 用于指定 Media Segment 的 duration</li>
+<li>EXT-X-BYTERANGE: 用于指定 URI 的 sub-range</li>
+<li>EXT-X-DISCONTINUITY: 表示不连续.</li>
+<li>EXT-X-KEY: 表示 Media Segment 已加密, 该值用于解密.</li>
+<li>EXT-X-MAP: 用于指定 Media Initialization Section.</li>
+<li>EXT-X-PROGRAM-DATE-TIME: 和 Media Segment 的第一个 sample 一起来确定时间戳.</li>
+<li>EXT-X-DATERANGE: 将一个时间范围和一组属性键值对结合到一起.</li>
+</ul>
+<h5 id="Media-Playlist-Tags"><a href="#Media-Playlist-Tags" class="headerlink" title="Media Playlist Tags"></a>Media Playlist Tags</h5><p>Media Playlist tags 描述 Media Playlist 的全局参数. 同样地, Media Playlist tags 只能出现在 Media Playlist 里面.</p>
+<ul>
+<li>EXT-X-TARGETDURATION: 用于指定最大的 Media Segment duration.</li>
+<li>EXT-X-MEDIA-SEQUENCE: 用于指定第一个 Media Segment 的 Media Sequence Number.</li>
+<li>EXT-X-DISCONTINUITY-SEQUENCE: 用于不同 Variant Stream 之间同步.</li>
+<li>EXT-X-ENDLIST: 表示结束.</li>
+<li>EXT-X-PLAYLIST-TYPE: 可选, 指定整个 Playlist 的类型.</li>
+<li>EXT-X-I-FRAMES-ONLY: 表示每个 Media Segment 描述一个单一的 I-frame.</li>
+</ul>
+<h5 id="Master-Playlist-Tags"><a href="#Master-Playlist-Tags" class="headerlink" title="Master Playlist Tags"></a>Master Playlist Tags</h5><p>Master Playlist tags 定义 Variant Streams, Renditions 和 其他显示的全局参数. Master Playlist tags 只能出现在 Master Playlist 中.</p>
+<ul>
+<li>EXT-X-MEDIA: 用于关联同一个内容的多个 Media Playlist 的多种 renditions.</li>
+<li>EXT-X-STREAM-INF: 用于指定一个 Variant Stream.</li>
+<li>EXT-X-I-FRAME-STREAM-INF: 用于指定一个 Media Playlist 包含媒体的 I-frames.</li>
+<li>EXT-X-SESSION-DATA: 存放一些 session 数据.</li>
+<li>EXT-X-SESSION-KEY: 用于解密.</li>
+</ul>
+<h5 id="Media-or-Master-Playlist-Tags"><a href="#Media-or-Master-Playlist-Tags" class="headerlink" title="Media or Master Playlist Tags"></a>Media or Master Playlist Tags</h5><p>这里的 tags 可以出现在 Media Playlist 或者 Master Playlist 中. 但是如果同时出现在同一个 Master Playlist 和 Media Playlist 中时, 必须为相同值.</p>
+<ul>
+<li>EXT-X-INDEPENDENT-SEGMENTS: 表示每个 Media Segment 可以独立解码.</li>
+<li>EXT-X-START: 标识一个优选的点来播放这个 Playlist.</li>
+</ul>
+<h3 id="服务器端与客户端逻辑"><a href="#服务器端与客户端逻辑" class="headerlink" title="服务器端与客户端逻辑"></a>服务器端与客户端逻辑</h3><p>以下流程仅供参考, 其实不同的播放器客户端以及服务器端的拉取规则都有很多细节差异.</p>
+<h4 id="服务器端逻辑"><a href="#服务器端逻辑" class="headerlink" title="服务器端逻辑"></a>服务器端逻辑</h4><ul>
+<li>将媒体源切片成 Media Segment, 应该优先从可以高效解码的时间点来进行切片(如: I-frame).</li>
+<li>为每一个 Media Segment 生成 URI.</li>
+<li>Server 需要支持 “gzip” 方式压缩文本内容.</li>
+<li>创建一个 Media Playlist 索引文件, EXT-X-VERSION 不要高于他需要的版本, 来提供更好的兼容性.</li>
+<li>Server 不能随便修改 Media Playlist, 除了 Append 文本到文件末尾, 按顺序移除 Media Segment URIs, 增长 EXT-X-MEDIA-SEQUENCE 和 EXT-X-DISCONTINUITY-SEQUENCE, 添加 EXT-X-ENDLIST 到文件尾.</li>
+<li>在最后添加 EXT-X-ENDLIST tag, 来减少 Client reload Playlist 的次数.</li>
+<li>注意点播与直播服务器不同的地方是, 直播的 m3u8 文件会不断更新, 而点播的 m3u8 文件是不会变的, 只需要客户端在开始时请求一次即可.</li>
+</ul>
+<h4 id="客户端逻辑"><a href="#客户端逻辑" class="headerlink" title="客户端逻辑"></a>客户端逻辑</h4><ul>
+<li>客户端通过 URI 获取 Playlist. 如果是 Master Playlist, 客户端可以选择一个 Variant Stream 来播放.</li>
+<li>客户端检查 EXT-X-VERSION 版本是否满足.</li>
+<li>客户端应该忽略不可识别的 tags, 忽略不可识别的属性键值对.</li>
+<li>加载 Media Playlist file.</li>
+<li>播放 Media Playlist file.</li>
+<li>重加载 Media Playlist file.</li>
+<li>决定下一次要加载的 Media Segment.</li>
+</ul>
+<h3 id="HLS优化技术"><a href="#HLS优化技术" class="headerlink" title="HLS优化技术"></a>HLS优化技术</h3><p>由于客户端每次请求 TS 或 M3U8 有可能都是一个新的连接请求，所以,我们无法有效的标识客户端，一旦出现问题，基本无法有效的定位问题，因此一般工业级的服务器都会对传统的 HLS 做一些改进。</p>
+<h4 id="302"><a href="#302" class="headerlink" title="302"></a>302</h4><p>首先在客户端第一次进行拉流请求的时候，服务器会做一个302的跳转。</p>
+<h4 id="uuid"><a href="#uuid" class="headerlink" title="uuid"></a>uuid</h4><p>在302跳转后产生的新的url上，服务器会给url加上一个uuid，用来定位可能的问题。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/07/20/UIViewController的内存泄露检测实践/" rel="next" title="UIViewController的内存泄露检测实践">
+                <i class="fa fa-chevron-left"></i> UIViewController的内存泄露检测实践
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2018/08/09/HLS协议详解/"
+           data-title="HLS协议详解" data-url="http://yoursite.com/2018/08/09/HLS协议详解/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/head.png"
+               alt="lly" />
+          <p class="site-author-name" itemprop="name">lly</p>
+          <p class="site-description motion-element" itemprop="description">耿直的一Boy</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">41</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#HLS协议详解"><span class="nav-number">1.</span> <span class="nav-text">HLS协议详解</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#HLS-的优势"><span class="nav-number">1.1.</span> <span class="nav-text">HLS 的优势</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HLS-的劣势"><span class="nav-number">1.2.</span> <span class="nav-text">HLS 的劣势</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#协议详解"><span class="nav-number">2.</span> <span class="nav-text">协议详解</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#HLS-Media-Segments"><span class="nav-number">2.1.</span> <span class="nav-text">HLS Media Segments</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#支持的Media-Segment格式"><span class="nav-number">2.2.</span> <span class="nav-text">支持的Media Segment格式</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#MPEG-2-Transport-Streams"><span class="nav-number">2.2.1.</span> <span class="nav-text">MPEG-2 Transport Streams</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Fragmented-MPEG-4"><span class="nav-number">2.2.2.</span> <span class="nav-text">Fragmented MPEG-4</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Packed-Audio"><span class="nav-number">2.2.3.</span> <span class="nav-text">Packed Audio</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#WebVTT"><span class="nav-number">2.2.4.</span> <span class="nav-text">WebVTT</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HLS-Playlists"><span class="nav-number">2.3.</span> <span class="nav-text">HLS Playlists</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Attribute-Lists"><span class="nav-number">2.3.1.</span> <span class="nav-text">Attribute Lists</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Basic-Tags"><span class="nav-number">2.3.2.</span> <span class="nav-text">Basic Tags</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Media-Segment-Tags"><span class="nav-number">2.3.3.</span> <span class="nav-text">Media Segment Tags</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Media-Playlist-Tags"><span class="nav-number">2.3.4.</span> <span class="nav-text">Media Playlist Tags</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Master-Playlist-Tags"><span class="nav-number">2.3.5.</span> <span class="nav-text">Master Playlist Tags</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Media-or-Master-Playlist-Tags"><span class="nav-number">2.3.6.</span> <span class="nav-text">Media or Master Playlist Tags</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#服务器端与客户端逻辑"><span class="nav-number">3.</span> <span class="nav-text">服务器端与客户端逻辑</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#服务器端逻辑"><span class="nav-number">3.1.</span> <span class="nav-text">服务器端逻辑</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#客户端逻辑"><span class="nav-number">3.2.</span> <span class="nav-text">客户端逻辑</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HLS优化技术"><span class="nav-number">4.</span> <span class="nav-text">HLS优化技术</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#302"><span class="nav-number">4.1.</span> <span class="nav-text">302</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#uuid"><span class="nav-number">4.2.</span> <span class="nav-text">uuid</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lly</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"llyblog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
