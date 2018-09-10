@@ -229,6 +229,316 @@
             
               
                 
+                <a class="post-title-link" href="/2017/08/21/Python的一些高级特性/" itemprop="url">
+                  Python的一些高级特性
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-08-21T10:26:11+08:00" content="2017-08-21">
+              2017-08-21
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/08/21/Python的一些高级特性/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/08/21/Python的一些高级特性/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Python的一些高级特性"><a href="#Python的一些高级特性" class="headerlink" title="Python的一些高级特性"></a>Python的一些高级特性</h3><h4 id="函数相关"><a href="#函数相关" class="headerlink" title="函数相关"></a>函数相关</h4><h5 id="关键字参数"><a href="#关键字参数" class="headerlink" title="关键字参数"></a>关键字参数</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">def person(name, age, **kw):</div><div class="line">    print &apos;name:&apos;, name, &apos;age:&apos;, age, &apos;other:&apos;, kw</div></pre></td></tr></table></figure>
+<p>示例一：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">person(&apos;Michael&apos;, 30)</div><div class="line"></div><div class="line">person(&apos;Bob&apos;, 35, city=&apos;Beijing&apos;)</div><div class="line"></div><div class="line">person(&apos;Adam&apos;, 45, gender=&apos;M&apos;, job=&apos;Engineer&apos;)</div></pre></td></tr></table></figure>
+<p>示例二：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">kw = &#123;&apos;city&apos;: &apos;Beijing&apos;, &apos;job&apos;: &apos;Engineer&apos;&#125;</div><div class="line">person(&apos;Jack&apos;, 24, **kw)</div></pre></td></tr></table></figure>
+<h5 id="高阶函数"><a href="#高阶函数" class="headerlink" title="高阶函数"></a>高阶函数</h5><p><strong>一个函数可以接收另一个函数作为参数，这种函数就称之为高阶函数</strong></p>
+<ul>
+<li>变量可以指向函数</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">f = abs</div><div class="line"></div><div class="line">f(-10)</div></pre></td></tr></table></figure>
+<ul>
+<li>函数名也是变量</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">abs = 10</div><div class="line"></div><div class="line">abs</div><div class="line"></div><div class="line">abs(-10)</div></pre></td></tr></table></figure>
+<ul>
+<li>传入参数</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">f = abs</div><div class="line"></div><div class="line">def add(x,y,f):</div><div class="line">	return f(x) + f(y)</div></pre></td></tr></table></figure>
+<ul>
+<li><p>内建map()</p>
+<p>  <strong>map()函数接收两个参数，一个是函数，一个是序列，map将传入的函数依次作用到序列的每个元素，并把结果作为新的list返回</strong></p>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">def f(x):</div><div class="line">	return x * x</div><div class="line"></div><div class="line">map(f, [1, 2, 3, 4, 5, 6, 7, 8, 9])</div><div class="line"></div><div class="line">map(str, [1, 2, 3, 4, 5, 6, 7, 8, 9])</div><div class="line"></div><div class="line">//&apos;&apos; &quot;&quot; 区别</div></pre></td></tr></table></figure>
+<ul>
+<li><p>内建reduce()</p>
+<p>  <strong>reduce把一个函数作用在一个序列[x1, x2, x3…]上，这个函数必须接收两个参数，reduce把结果继续和序列的下一个元素做累积计算</strong></p>
+</li>
+</ul>
+<p>示例一：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">def add(x,y):</div><div class="line">	return x + y</div><div class="line"></div><div class="line">reduce(add,range(1,10))</div><div class="line"></div><div class="line">sum(range(1,10))</div></pre></td></tr></table></figure>
+<p>示例二：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">def fn(x,y)</div><div class="line">	return x * 10 + y</div><div class="line"></div><div class="line">reduce(fn,[1,3,5,7,9])</div></pre></td></tr></table></figure>
+<ul>
+<li><p>内建filter()</p>
+<p>  <strong>filter()把传入的函数依次作用于每个元素，然后根据返回值是True还是False决定保留还是丢弃该元素</strong></p>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">//奇数</div><div class="line">def is_odd(n):</div><div class="line">    return n % 2 == 1</div><div class="line"></div><div class="line">filter(is_odd,range(1,10))</div></pre></td></tr></table></figure>
+<ul>
+<li>内建sorted()</li>
+</ul>
+<p>示例一：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"># 逆序</div><div class="line">def reversed_cmp(x, y):</div><div class="line">    if x &gt; y:</div><div class="line">        return -1</div><div class="line">    if x &lt; y:</div><div class="line">        return 1</div><div class="line">    return 0</div><div class="line"></div><div class="line">sorted([36, 5, 12, 9, 21], reversed_cmp)</div></pre></td></tr></table></figure>
+<p>示例二：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"># 字符串忽略大小写排序</div><div class="line">def cmp_ignore_case(s1, s2):</div><div class="line">    u1 = s1.upper()</div><div class="line">    u2 = s2.upper()</div><div class="line">    if u1 &lt; u2:</div><div class="line">        return -1</div><div class="line">    if u1 &gt; u2:</div><div class="line">        return 1</div><div class="line">    return 0</div><div class="line"></div><div class="line">sorted([&apos;bob&apos;, &apos;about&apos;, &apos;Zoo&apos;, &apos;Credit&apos;], cmp_ignore_case)</div></pre></td></tr></table></figure>
+<h5 id="返回函数"><a href="#返回函数" class="headerlink" title="返回函数"></a>返回函数</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">def lazy_sum(L=[]):</div><div class="line">    def sum():</div><div class="line">        ax = 0</div><div class="line">        for n in L:</div><div class="line">            ax = ax + n</div><div class="line">        return ax</div><div class="line">    return sum</div><div class="line">    </div><div class="line">f = lazy_sum(range(1,10))</div><div class="line"></div><div class="line">f</div><div class="line"></div><div class="line">f()</div></pre></td></tr></table></figure>
+<h5 id="装饰器"><a href="#装饰器" class="headerlink" title="装饰器"></a>装饰器</h5><p><strong>在代码运行期间动态增加功能的方式，称之为“装饰器”（Decorator）</strong></p>
+<p>示例一：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">def log(func):</div><div class="line">    def wrapper(*args, **kw):</div><div class="line">        print &apos;call %s():&apos; % func.__name__</div><div class="line">        return func(*args, **kw)</div><div class="line">    return wrapper</div><div class="line">    </div><div class="line">@log</div><div class="line">def name():</div><div class="line">    print &apos;lly&apos;</div></pre></td></tr></table></figure>
+<p>把<em>@log</em>放到<em>now()</em>函数的定义处，相当于执行了语句：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">now = log(now)</div></pre></td></tr></table></figure>
+<p>由于<em>log()</em>是一个<strong>decorator</strong>，返回一个函数，所以，原来的<em>now()</em>函数仍然存在，只是现在同名的now变量指向了新的函数，于是调用<em>now()</em>将执行新函数，即在<em>log()</em>函数中返回的<em>wrapper()</em>函数。</p>
+<p>示例二：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">def log(text):</div><div class="line">    def decorator(func):</div><div class="line">        def wrapper(*args, **kw):</div><div class="line">            print &apos;%s %s():&apos; % (text, func.__name__)</div><div class="line">            return func(*args, **kw)</div><div class="line">        return wrapper</div><div class="line">    return decorator</div><div class="line">    </div><div class="line">@log(&apos;netease&apos;)</div><div class="line">def name():</div><div class="line">    print &apos;lly&apos;</div></pre></td></tr></table></figure>
+<p>示例三:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">import functools</div><div class="line"></div><div class="line">def log(func):</div><div class="line">    @functools.wraps(func)</div><div class="line">    def wrapper(*args, **kw):</div><div class="line">        print &apos;call %s():&apos; % func.__name__</div><div class="line">        return func(*args, **kw)</div><div class="line">    return wrapper</div></pre></td></tr></table></figure>
+<h4 id="面向对象"><a href="#面向对象" class="headerlink" title="面向对象"></a>面向对象</h4><h5 id="属性、方法的动态绑定和限制"><a href="#属性、方法的动态绑定和限制" class="headerlink" title="属性、方法的动态绑定和限制"></a>属性、方法的动态绑定和限制</h5><p>一、属性的动态绑定</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">class Student(object):</div><div class="line">	pass</div><div class="line"></div><div class="line">s = Student()</div><div class="line">s.name = &apos;lly&apos;</div><div class="line"></div><div class="line">print s.name</div></pre></td></tr></table></figure>
+<p>二、方法的动态绑定</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">class Student(object):</div><div class="line">	pass</div><div class="line"></div><div class="line">def set_age(self, age): # 定义一个函数作为实例方法</div><div class="line">	self.age = age</div><div class="line"></div><div class="line">from types import MethodType</div><div class="line"></div><div class="line">s.set_age = MethodType(set_age, s, Student)</div><div class="line">s.set_age(25)</div><div class="line"></div><div class="line">s.age</div></pre></td></tr></table></figure>
+<p>三、类的方法绑定</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">class Student(object):</div><div class="line">	pass</div><div class="line"></div><div class="line">def set_score(self, score):</div><div class="line">	self.score = score</div><div class="line"></div><div class="line">from types import MethodType</div><div class="line"></div><div class="line">Student.set_score = MethodType(set_score, None, Student)</div></pre></td></tr></table></figure>
+<p>四、限制动态添加</p>
+<p><strong>Python允许在定义class的时候，定义一个特殊的<strong>slots</strong>变量，来限制该class能添加的属性</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">class Student(object):</div><div class="line">	__slots__ = (&apos;name&apos;, &apos;age&apos;) # 用tuple定义允许绑定的属性名称 插槽</div><div class="line"></div><div class="line">s = Student() # 创建新的实例</div><div class="line">s.name = &apos;Michael&apos; # 绑定属性&apos;name&apos;</div><div class="line">s.age = 25 # 绑定属性&apos;age&apos;</div><div class="line">s.score = 99 # 绑定属性&apos;score&apos;</div></pre></td></tr></table></figure>
+<p><em><strong>slots</strong>定义的属性仅对当前类起作用，对继承的子类是不起作用</em></p>
+<h5 id="安全简洁的属性"><a href="#安全简洁的属性" class="headerlink" title="安全简洁的属性"></a>安全简洁的属性</h5><p><strong>Python内置的@property装饰器就是负责把一个方法变成属性调用</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">class Student(object):</div><div class="line"></div><div class="line">    @property</div><div class="line">    def score(self):</div><div class="line">        return self._score</div><div class="line"></div><div class="line">    @score.setter</div><div class="line">    def score(self, value):</div><div class="line">        if not isinstance(value, int):</div><div class="line">            raise ValueError(&apos;score must be an integer!&apos;)</div><div class="line">        if value &lt; 0 or value &gt; 100:</div><div class="line">            raise ValueError(&apos;score must between 0 ~ 100!&apos;)</div><div class="line">        self._score = value</div><div class="line">        </div><div class="line">s = Student()</div><div class="line">s.score = 60 # OK，实际转化为s.set_score(60)</div><div class="line">s.score # OK，实际转化为s.get_score()</div></pre></td></tr></table></figure>
+<h4 id="多进程和多线程"><a href="#多进程和多线程" class="headerlink" title="多进程和多线程"></a>多进程和多线程</h4><h5 id="多进程"><a href="#多进程" class="headerlink" title="多进程"></a>多进程</h5><p>Unix/Linux操作系统提供了一个fork()系统调用，它非常特殊。普通的函数调用，调用一次，返回一次，但是fork()调用一次，返回两次，因为操作系统自动把当前进程（称为父进程）复制了一份（称为子进程），然后，分别在父进程和子进程内返回。</p>
+<p>子进程永远返回0，而父进程返回子进程的ID。这样做的理由是，一个父进程可以fork出很多子进程，所以，父进程要记下每个子进程的ID，而子进程只需要调用getppid()就可以拿到父进程的ID。</p>
+<p>示例一：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">import os</div><div class="line"></div><div class="line">print &apos;Process (%s) start...&apos; % os.getpid()</div><div class="line">pid = os.fork()</div><div class="line">if pid==0:</div><div class="line">    print &apos;I am child process (%s) and my parent is %s.&apos; % (os.getpid(), os.getppid())</div><div class="line">else:</div><div class="line">    print &apos;I (%s) just created a child process (%s).&apos; % (os.getpid(), pid)</div></pre></td></tr></table></figure>
+<p>示例二：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">def run_proc(name):</div><div class="line">    print &apos;Run child process %s (%s)...&apos; % (name, os.getpid())</div><div class="line"></div><div class="line">if __name__==&apos;__main__&apos;:</div><div class="line">    print &apos;Parent process %s.&apos; % os.getpid()</div><div class="line">    p = multiprocessing.Process(target=run_proc, args=(&apos;test&apos;,))</div><div class="line">    print &apos;Process will start.&apos;</div><div class="line">    p.start()</div><div class="line">    p.join()</div><div class="line">    print &apos;Process end.&apos;</div></pre></td></tr></table></figure>
+<h5 id="多线程"><a href="#多线程" class="headerlink" title="多线程"></a>多线程</h5><p>Python的标准库提供了两个模块：thread和threading，thread是低级模块，threading是高级模块，对thread进行了封装。绝大多数情况下，我们只需要使用threading这个高级模块。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">import time, threading</div><div class="line"></div><div class="line"># 新线程执行的代码:</div><div class="line">def loop():</div><div class="line">    print &apos;thread %s is running...&apos; % threading.current_thread().name</div><div class="line">    n = 0</div><div class="line">    while n &lt; 5:</div><div class="line">        n = n + 1</div><div class="line">        print &apos;thread %s &gt;&gt;&gt; %s&apos; % (threading.current_thread().name, n)</div><div class="line">        time.sleep(1)</div><div class="line">    print &apos;thread %s ended.&apos; % threading.current_thread().name</div><div class="line"></div><div class="line">print &apos;thread %s is running...&apos; % threading.current_thread().name</div><div class="line">t = threading.Thread(target=loop, name=&apos;LoopThread&apos;)</div><div class="line">t.start()</div><div class="line">t.join()</div><div class="line">print &apos;thread %s ended.&apos; % threading.current_thread().name</div></pre></td></tr></table></figure>
+<p>线程加锁</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">balance = 0</div><div class="line">lock = threading.Lock()</div><div class="line"></div><div class="line">def run_thread(n):</div><div class="line">    for i in range(100000):</div><div class="line">        # 先要获取锁:</div><div class="line">        lock.acquire()</div><div class="line">        try:</div><div class="line">            # 放心地改吧:</div><div class="line">            change_it(n)</div><div class="line">        finally:</div><div class="line">            # 改完了一定要释放锁:</div><div class="line">            lock.release()</div></pre></td></tr></table></figure>
+<p>因为Python的线程虽然是真正的线程，但解释器执行代码时，有一个GIL锁：Global Interpreter Lock，任何Python线程执行前，必须先获得GIL锁，然后，每执行100条字节码，解释器就自动释放GIL锁，让别的线程有机会执行。这个GIL全局锁实际上把所有线程的执行代码都给上了锁，所以，多线程在Python中只能交替执行，即使100个线程跑在100核CPU上，也只能用到1个核。</p>
+<h4 id="简单爬虫"><a href="#简单爬虫" class="headerlink" title="简单爬虫"></a>简单爬虫</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">import urllib</div><div class="line"></div><div class="line">uf = urllib.urlopen(&apos;https://baidu.com&apos;)</div><div class="line"></div><div class="line">uf.read()</div><div class="line"></div><div class="line">urllib.urlretrieve(&apos;urlpath&apos;,&apos;filename&apos;)</div></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/07/07/高性能iOS应用开发/高性能iOS应用开发读书笔记/" itemprop="url">
+                  高性能iOS应用开发读书笔记
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-07-07T10:02:22+08:00" content="2017-07-07">
+              2017-07-07
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/07/07/高性能iOS应用开发/高性能iOS应用开发读书笔记/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/07/07/高性能iOS应用开发/高性能iOS应用开发读书笔记/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><img src="http://ofy1hyquv.bkt.clouddn.com/%E9%AB%98%E6%80%A7%E8%83%BDiOS%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91.png" alt=""></p>
+<h3 id="第一章-移动应用的性能"><a href="#第一章-移动应用的性能" class="headerlink" title="第一章 移动应用的性能"></a>第一章 移动应用的性能</h3><ul>
+<li>应用首次工作出错以后，79%的用户只会再重试一两次</li>
+<li>当应用载入时间超过3秒时，25%的用户会放弃使用该应用。</li>
+<li>31%的用户会将糟糕的体验转告他人。</li>
+</ul>
+<h4 id="定义性能"><a href="#定义性能" class="headerlink" title="定义性能"></a>定义性能</h4><p>高性能有着多重的含义和丰富的解释方式。</p>
+<h4 id="性能指标"><a href="#性能指标" class="headerlink" title="性能指标"></a>性能指标</h4><ul>
+<li>内存</li>
+<li>电池消耗</li>
+<li>程序初始化时间</li>
+<li>执行速度</li>
+<li>响应速度</li>
+<li>本地存储</li>
+<li>互操作性</li>
+<li>网络环境</li>
+<li>带宽</li>
+<li>数据刷新</li>
+<li>多用户支持</li>
+<li>单点登录</li>
+<li>安全</li>
+<li>崩溃</li>
+</ul>
+<h4 id="应用性能分析"><a href="#应用性能分析" class="headerlink" title="应用性能分析"></a>应用性能分析</h4><ul>
+<li>采样</li>
+<li>埋点</li>
+</ul>
+<h4 id="测量"><a href="#测量" class="headerlink" title="测量"></a>测量</h4><p>过早优化是编程领域的万恶之源–高德纳？？？</p>
+<p><a href="https://github.com/gvaish/hpios" target="_blank" rel="noopener">测试代码地址</a></p>
+<h3 id="第二章-内存管理"><a href="#第二章-内存管理" class="headerlink" title="第二章 内存管理"></a>第二章 内存管理</h3><p>90%的应用崩溃与内存管理有关，其中最主要的原因是错误的内存访问和保留环所引起的内存泄露 – Apple Dev</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2017/07/06/程序员的自我修养-链接、装载和库读书笔记/" itemprop="url">
                   程序员的自我修养--链接、装载和库读书笔记
                 </a>
@@ -1745,277 +2055,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/03/26/OpenGL-ES-3-0学习笔记-着色器和程序/" itemprop="url">
-                  OpenGL ES 3.0学习笔记-着色器和程序
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-03-26T15:21:00+08:00" content="2017-03-26">
-              2017-03-26
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2017/03/26/OpenGL-ES-3-0学习笔记-着色器和程序/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/03/26/OpenGL-ES-3-0学习笔记-着色器和程序/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><p>如果需要使用着色器进行渲染的话，则首先必须有两个对象，分别是着色器对象及程序对象。那么如何理解这两者呢？可以将其理解为C语言的编译器和链接器。 </p>
-<p>流程是这样的，源代码中提供着色器对象，然后着色器被编译成一个目标形式，再然后链接到一个程序对象。一个程序对象对应多个着色器对象，每个程序对象必须有一个顶点着色器和一个片段着色器。 </p>
-<p>流程如下： </p>
-<p>1.创建一个顶点着色器和一个片段着色器 </p>
-<p>2.将源代码连接到每个着色器对象 </p>
-<p>3.编译着色器对象 </p>
-<p>4.创建一个程序对象 </p>
-<p>5.将上面得到的着色器对象链接进程序对象中 </p>
-<p>6.链接程序对象</p>
-<h3 id="创建和编译一个着色器"><a href="#创建和编译一个着色器" class="headerlink" title="创建和编译一个着色器"></a>创建和编译一个着色器</h3><h4 id="创建"><a href="#创建" class="headerlink" title="创建"></a>创建</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">GLuint shader;</div><div class="line">GLint compiled;</div><div class="line"></div><div class="line">// Create the shader object</div><div class="line">shader = glCreateShader ( type );</div><div class="line"></div><div class="line">if ( shader == 0 )</div><div class="line">&#123;</div><div class="line">   return 0;</div><div class="line">&#125;</div><div class="line"></div><div class="line">//type </div><div class="line">#define GL_FRAGMENT_SHADER        0x8B30 </div><div class="line">#define GL_VERTEX_SHADER          0x8B31</div></pre></td></tr></table></figure>
-<h4 id="删除"><a href="#删除" class="headerlink" title="删除"></a>删除</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">glDeleteShader ( shader );</div></pre></td></tr></table></figure>
-<p>删除着色器对象的句柄 </p>
-<p>注：如果着色器已经链接到程序对象中的话，这时候直接调用glDeleteShader不会立刻去删除着色器，而是将其标注，等到着色器不在连接到任何程序对象时，其就会被删除 </p>
-<h4 id="提供着色器源代码"><a href="#提供着色器源代码" class="headerlink" title="提供着色器源代码"></a>提供着色器源代码</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">void glShaderSource(GLuint shader, //指向着色器的句柄 </div><div class="line">GLsizei count, //着色器源字符串的数量，虽然每个着色器可以有多个源字符串组成，但是每个着色器只有一个main函数 </div><div class="line">const GLchar *const*string, //指向保存数量为count的着色器源字符串的数组指针 </div><div class="line">const GLint *length //指向保存了每个着色器字符串大小且元素大小为count的整数数组指针 </div><div class="line">) </div><div class="line"> </div><div class="line">char vShaderStr[] =</div><div class="line">#version 300 es                          </div><div class="line">layout(location = 0) in vec4 vPosition;  </div><div class="line">void main()                              </div><div class="line">&#123;                                        </div><div class="line">  gl_Position = vPosition;              </div><div class="line">&#125;                                         </div><div class="line">     </div><div class="line">glShaderSource (shader, 1, &amp;shaderSrc, NULL );</div></pre></td></tr></table></figure>
-<h4 id="编译着色器"><a href="#编译着色器" class="headerlink" title="编译着色器"></a>编译着色器</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">// Compile the shader</div><div class="line">glCompileShader ( shader );</div></pre></td></tr></table></figure>
-<p>调用glCompileShader将编译已经保存在着色器对象的着色器源代码。和常规的语言编译器一样，编译之后你想知道的第一件事情是有没有错误。你可以使用glGetShaderiv查询查询这一信息和其他有关着色器对象的信息。</p>
-<h4 id="检测着色器是否成功编译"><a href="#检测着色器是否成功编译" class="headerlink" title="检测着色器是否成功编译"></a>检测着色器是否成功编译</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">// Check the compile status</div><div class="line">glGetShaderiv ( shader, GL_COMPILE_STATUS, &amp;compiled );</div><div class="line"></div><div class="line">if ( !compiled )</div><div class="line">&#123;</div><div class="line">   GLint infoLen = 0;</div><div class="line"></div><div class="line">   glGetShaderiv ( shader, GL_INFO_LOG_LENGTH, &amp;infoLen );</div><div class="line"></div><div class="line">   if ( infoLen &gt; 1 )</div><div class="line">   &#123;</div><div class="line">      char *infoLog = malloc ( sizeof ( char ) * infoLen );</div><div class="line"></div><div class="line">      glGetShaderInfoLog ( shader, infoLen, NULL, infoLog );</div><div class="line">      esLogMessage ( &quot;Error compiling shader:\n%s\n&quot;, infoLog );</div><div class="line"></div><div class="line">      free ( infoLog );</div><div class="line">   &#125;</div><div class="line"></div><div class="line">   glDeleteShader ( shader );</div><div class="line">   return 0;</div><div class="line">&#125;</div><div class="line"></div><div class="line">return shader;</div></pre></td></tr></table></figure>
-<h3 id="创建和链接程序"><a href="#创建和链接程序" class="headerlink" title="创建和链接程序"></a>创建和链接程序</h3><h4 id="创建程序"><a href="#创建程序" class="headerlink" title="创建程序"></a>创建程序</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">GLuint programObject;</div><div class="line"></div><div class="line">// Create the program object</div><div class="line">programObject = glCreateProgram ( );</div></pre></td></tr></table></figure>
-<h4 id="删除程序"><a href="#删除程序" class="headerlink" title="删除程序"></a>删除程序</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">glDeleteProgram ( programObject );</div></pre></td></tr></table></figure>
-<h4 id="关联着色器和程序"><a href="#关联着色器和程序" class="headerlink" title="关联着色器和程序"></a>关联着色器和程序</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">glAttachShader ( programObject, vertexShader );</div><div class="line">glAttachShader ( programObject, fragmentShader );</div></pre></td></tr></table></figure>
-<p>注：对于程序对象和着色器对象的连接没有具体的时间要求，但是没有程序对象只能有一个顶点着色器和片段着色器与之连接</p>
-<h4 id="断开着色器和程序"><a href="#断开着色器和程序" class="headerlink" title="断开着色器和程序"></a>断开着色器和程序</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">void glDetachShader(GLuint program, GLuint shader)</div></pre></td></tr></table></figure>
-<h4 id="链接着色器和程序"><a href="#链接着色器和程序" class="headerlink" title="链接着色器和程序"></a>链接着色器和程序</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">// Link the program</div><div class="line">glLinkProgram ( programObject );</div></pre></td></tr></table></figure>
-<p>上述的工作都已经完成了之后需要链接程序的对象了。连接操作负责生成最终的可执行程序。在连接的时候将检查各种对象的数量，确保可以链接成功。</p>
-<h4 id="检测链接是否成功"><a href="#检测链接是否成功" class="headerlink" title="检测链接是否成功"></a>检测链接是否成功</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">// Check the link status</div><div class="line">  glGetProgramiv ( programObject, GL_LINK_STATUS, &amp;linked );</div><div class="line"></div><div class="line">  if ( !linked )</div><div class="line">  &#123;</div><div class="line">     GLint infoLen = 0;</div><div class="line"></div><div class="line">     glGetProgramiv ( programObject, GL_INFO_LOG_LENGTH, &amp;infoLen );</div><div class="line"></div><div class="line">     if ( infoLen &gt; 1 )</div><div class="line">     &#123;</div><div class="line">        char *infoLog = malloc ( sizeof ( char ) * infoLen );</div><div class="line"></div><div class="line">        glGetProgramInfoLog ( programObject, infoLen, NULL, infoLog );</div><div class="line">        esLogMessage ( &quot;Error linking program:\n%s\n&quot;, infoLog );</div><div class="line"></div><div class="line">        free ( infoLog );</div><div class="line">     &#125;</div><div class="line"></div><div class="line">     glDeleteProgram ( programObject );</div><div class="line">     return FALSE;</div><div class="line">  &#125;</div></pre></td></tr></table></figure>
-<h4 id="设置程序对象为活动对象"><a href="#设置程序对象为活动对象" class="headerlink" title="设置程序对象为活动对象"></a>设置程序对象为活动对象</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">void Draw ( ESContext *esContext )</div><div class="line">&#123;</div><div class="line">   UserData *userData = esContext-&gt;userData;</div><div class="line">   GLfloat vVertices[] = &#123;  0.0f,  0.5f, 0.0f,</div><div class="line">                            -0.5f, -0.5f, 0.0f,</div><div class="line">                            0.5f, -0.5f, 0.0f</div><div class="line">                         &#125;;</div><div class="line"></div><div class="line">   // Set the viewport</div><div class="line">   glViewport ( 0, 0, esContext-&gt;width, esContext-&gt;height );</div><div class="line"></div><div class="line">   // Clear the color buffer</div><div class="line">   glClear ( GL_COLOR_BUFFER_BIT );</div><div class="line"></div><div class="line">   // Use the program object</div><div class="line">   glUseProgram ( userData-&gt;programObject );</div><div class="line"></div><div class="line">   // Load the vertex data</div><div class="line">   glVertexAttribPointer ( 0, 3, GL_FLOAT, GL_FALSE, 0, vVertices );</div><div class="line">   glEnableVertexAttribArray ( 0 );</div><div class="line"></div><div class="line">   glDrawArrays ( GL_TRIANGLES, 0, 3 );</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/03/24/RTMP推流流程详解/" itemprop="url">
-                  RTMP推流流程详解
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-03-24T11:14:49+08:00" content="2017-03-24">
-              2017-03-24
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2017/03/24/RTMP推流流程详解/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/03/24/RTMP推流流程详解/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><img src="http://ofy1hyquv.bkt.clouddn.com/rtmppush.png" alt=""></p>
-<p>通过抓取主播端的rtmp数据包，我们能清晰的看到整个从握手到推流的过程，然后我们来分析一下每一个包的内容吧。</p>
-<h3 id="三次握手"><a href="#三次握手" class="headerlink" title="三次握手"></a>三次握手</h3><h4 id="handshake-c0-c1"><a href="#handshake-c0-c1" class="headerlink" title="handshake c0+c1"></a>handshake c0+c1</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/handshakec0c1.png" alt=""></p>
-<p>具体数据格式可以参考我的<a href="http://llyblog.com/2017/03/20/RTMP协议学习笔记/" target="_blank" rel="noopener">这一片博客</a></p>
-<p>具体代码实现如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">//c0</div><div class="line">  char c0Byte = 0x03;//rtmp版本号</div><div class="line">  NSData *c0 = [NSData dataWithBytes:&amp;c0Byte length:1];</div><div class="line">  [self writeData:c0];</div><div class="line">  </div><div class="line">  //c1</div><div class="line">  uint8_t *c1Bytes = (uint8_t *)malloc(kRtmpSignatureSize);</div><div class="line">  memset(c1Bytes, 0, 4 + 4);</div><div class="line">  NSData *c1 = [NSData dataWithBytes:c1Bytes length:kRtmpSignatureSize];</div><div class="line">  free(c1Bytes);</div><div class="line">  [self writeData:c1];</div></pre></td></tr></table></figure>
-<h4 id="handshake-c2"><a href="#handshake-c2" class="headerlink" title="handshake c2"></a>handshake c2</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/handshakec2.png" alt=""></p>
-<p>代码实现：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">NSData *s1 = [self.handShake subdataWithRange:NSMakeRange(0, kRtmpSignatureSize)];</div><div class="line">   //c2</div><div class="line">   uint8_t *s1Bytes = (uint8_t *)s1.bytes;</div><div class="line">   memset(s1Bytes + 4, 0, 4);</div><div class="line">   NSData *c2 = [NSData dataWithBytes:s1Bytes length:s1.length];</div><div class="line">   [self writeData:c2];</div></pre></td></tr></table></figure>
-<h4 id="handshake-s0s1s2"><a href="#handshake-s0s1s2" class="headerlink" title="handshake s0s1s2"></a>handshake s0s1s2</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/handshakes0s1s2.png" alt=""></p>
-<p>这个数据是服务器那边发送过来的 需要我们本地保存一份。</p>
-<h3 id="协议消息"><a href="#协议消息" class="headerlink" title="协议消息"></a>协议消息</h3><p>流程如下</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/controlmessageflow.png" alt=""></p>
-<h4 id="connect"><a href="#connect" class="headerlink" title="connect"></a>connect</h4><p>当客户端检测到收到s2的消息后，就可以发送‘connect’了。</p>
-<p>看看connect里面的具体数据</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/controlmessageconnect.png" alt=""></p>
-<p>代码实现：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line">- (void)sendConnectPacket&#123;</div><div class="line">    NSLog(@&quot;sendConnectPacket&quot;);</div><div class="line">    //    AMF格式</div><div class="line">    RTMPChunk_0 metadata = &#123;0&#125;;</div><div class="line">    metadata.msg_stream_id = LLYStreamIDInvoke;</div><div class="line">    metadata.msg_type_id = LLYMSGTypeID_INVOKE;</div><div class="line">    </div><div class="line">    NSString *url;</div><div class="line">    NSMutableData *buff = [NSMutableData data];</div><div class="line">    if (_url.port &gt; 0) &#123;</div><div class="line">        url = [NSString stringWithFormat:@&quot;%@://%@:%zd/%@&quot;,_url.scheme,_url.host,_url.port,_url.app];</div><div class="line">    &#125;else&#123;</div><div class="line">        url = [NSString stringWithFormat:@&quot;%@://%@/%@&quot;,_url.scheme,_url.host,_url.app];</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    [buff appendString:@&quot;connect&quot;];</div><div class="line">    [buff appendDouble:++_numOfInvokes];</div><div class="line">    self.trackedCommands[@(_numOfInvokes)] = @&quot;connect&quot;;</div><div class="line">    [buff appendByte:kAMFObject];</div><div class="line">    [buff putKey:@&quot;app&quot; stringValue:_url.app];</div><div class="line">    [buff putKey:@&quot;type&quot; stringValue:@&quot;nonprivate&quot;];</div><div class="line">    [buff putKey:@&quot;tcUrl&quot; stringValue:url];</div><div class="line">    [buff putKey:@&quot;fpad&quot; boolValue:NO];//是否使用代理</div><div class="line">    [buff putKey:@&quot;capabilities&quot; doubleValue:15.];</div><div class="line">    [buff putKey:@&quot;audioCodecs&quot; doubleValue:10.];</div><div class="line">    [buff putKey:@&quot;videoCodecs&quot; doubleValue:7.];</div><div class="line">    [buff putKey:@&quot;videoFunction&quot; doubleValue:1.];</div><div class="line">    [buff appendByte16:0];</div><div class="line">    [buff appendByte:kAMFObjectEnd];</div><div class="line">    </div><div class="line">    metadata.msg_length.data = (int)buff.length;</div><div class="line">    [self sendPacket:buff :metadata];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h4 id="Window-Acknowledgment-size"><a href="#Window-Acknowledgment-size" class="headerlink" title="Window Acknowledgment size"></a>Window Acknowledgment size</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/controlmwssageAcknowledgement.png" alt=""></p>
-<p>发送端在接收到接受端返回的两个ACK间最多可以发送的字节数</p>
-<h4 id="Set-Peer-Bandwidth-amp-amp-Set-Chunk-Size-amp-amp-AFM0-Command-result"><a href="#Set-Peer-Bandwidth-amp-amp-Set-Chunk-Size-amp-amp-AFM0-Command-result" class="headerlink" title="Set Peer Bandwidth &amp;&amp; Set Chunk Size &amp;&amp; AFM0 Command _result"></a>Set Peer Bandwidth &amp;&amp; Set Chunk Size &amp;&amp; AFM0 Command _result</h4><h5 id="Set-Peer-Bandwidth"><a href="#Set-Peer-Bandwidth" class="headerlink" title="Set Peer Bandwidth"></a>Set Peer Bandwidth</h5><p><img src="http://ofy1hyquv.bkt.clouddn.com/controlmessagepeerandchunksize.png" alt=""></p>
-<p>限制对端的输出带宽。接受端接收到该消息后会通过设置消息中的Window ACK Size来限制已发送但未接受到反馈的消息的大小来限制发送端的发送带宽。如果消息中的Window ACK Size与上一次发送给发送端的size不同的话要回馈一个Window Acknowledgement Size的控制消息。</p>
-<h5 id="Set-Chunk-Size"><a href="#Set-Chunk-Size" class="headerlink" title="Set Chunk Size"></a>Set Chunk Size</h5><p>这里为默认值128个字节。</p>
-<h5 id="AFM0-Command-result-‘NetConnection-Connect-Success’"><a href="#AFM0-Command-result-‘NetConnection-Connect-Success’" class="headerlink" title="AFM0 Command _result(‘NetConnection.Connect.Success’)"></a>AFM0 Command _result(‘NetConnection.Connect.Success’)</h5><p><img src="http://ofy1hyquv.bkt.clouddn.com/controlmessageconnectresult.png" alt=""></p>
-<p>这个是上面发送的connect消息的回应消息，消息类型为AFM0 0x14，从返回的code和describtion可以看出，connect已经成功。</p>
-<p>接下来客户端需要发送 releaseStream , FCPublish 和 CreateStream 消息</p>
-<h4 id="releaseStream-消息"><a href="#releaseStream-消息" class="headerlink" title="releaseStream 消息"></a>releaseStream 消息</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/releaseStream.png" alt=""></p>
-<p>代码实现</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">	- (void)sendReleaseStream&#123;</div><div class="line">    </div><div class="line">    RTMPChunk_0 metadata = &#123;0&#125;;</div><div class="line">    metadata.msg_stream_id = LLYStreamIDInvoke;</div><div class="line">    metadata.msg_type_id = LLYMSGTypeID_NOTIFY;</div><div class="line">    </div><div class="line">    NSMutableData *buff = [NSMutableData data];</div><div class="line">    [buff appendString:@&quot;releaseStream&quot;];</div><div class="line">    [buff appendDouble:++_numOfInvokes];</div><div class="line">    </div><div class="line">    self.trackedCommands[@(_numOfInvokes)] = @&quot;releaseStream&quot;;</div><div class="line">    [buff appendByte:kAMFNull];</div><div class="line">    [buff appendString:_url.playPath];</div><div class="line">    </div><div class="line">    metadata.msg_length.data = (int)buff.length;</div><div class="line">    [self sendPacket:buff :metadata];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h4 id="CFPublish消息"><a href="#CFPublish消息" class="headerlink" title="CFPublish消息"></a>CFPublish消息</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/cfstream.png" alt=""></p>
-<p>代码实现</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">- (void)sendFCPublish&#123;</div><div class="line">    RTMPChunk_0 metadata = &#123;0&#125;;</div><div class="line">    metadata.msg_stream_id = LLYStreamIDInvoke;</div><div class="line">    metadata.msg_type_id = LLYMSGTypeID_NOTIFY;</div><div class="line">    </div><div class="line">    NSMutableData *buff = [NSMutableData data];</div><div class="line">    [buff appendString:@&quot;FCPublish&quot;];</div><div class="line">    [buff appendDouble:(++_numOfInvokes)];</div><div class="line">    self.trackedCommands[@(_numOfInvokes)] = @&quot;FCPublish&quot;;</div><div class="line">    [buff appendByte:kAMFNull];</div><div class="line">    [buff appendString:_url.playPath];</div><div class="line">    metadata.msg_length.data = (int)buff.length;</div><div class="line">    </div><div class="line">    [self sendPacket:buff :metadata];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h4 id="createStream消息"><a href="#createStream消息" class="headerlink" title="createStream消息"></a>createStream消息</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/createStream.png" alt=""></p>
-<p>代码实现</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">- (void)sendCreateStream&#123;</div><div class="line">    RTMPChunk_0 metadata = &#123;0&#125;;</div><div class="line">    metadata.msg_stream_id = LLYStreamIDInvoke;</div><div class="line">    metadata.msg_type_id = LLYMSGTypeID_INVOKE;</div><div class="line">    </div><div class="line">    NSMutableData *buff = [NSMutableData data];</div><div class="line">    [buff appendString:@&quot;createStream&quot;];</div><div class="line">    self.trackedCommands[@(++_numOfInvokes)] = @&quot;createStream&quot;;</div><div class="line">    [buff appendDouble:_numOfInvokes];</div><div class="line">    [buff appendByte:kAMFNull];</div><div class="line">    </div><div class="line">    metadata.msg_length.data = (int)buff.length;</div><div class="line">    [self sendPacket:buff :metadata];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>之后客户端会收到startStream的回应消息。</p>
-<h4 id="startStream-result"><a href="#startStream-result" class="headerlink" title="startStream result"></a>startStream result</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/startStreamResult.png" alt=""></p>
-<p>在收到这个消息后，就可以准备推流了。此时 客户端需要发送一个publish消息。</p>
-<h4 id="publish"><a href="#publish" class="headerlink" title="publish"></a>publish</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/publish.png" alt=""></p>
-<p>这个消息告诉服务器，我要准备开始推流了，之后等待服务器给一个可以开始推流的回应。</p>
-<p>代码实现</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">- (void)sendPublish&#123;</div><div class="line">    RTMPChunk_0 metadata = &#123;0&#125;;</div><div class="line">    metadata.msg_stream_id = LLYStreamIDAudio;</div><div class="line">    metadata.msg_type_id = LLYMSGTypeID_INVOKE;</div><div class="line">    </div><div class="line">    NSMutableData *buff = [NSMutableData data];</div><div class="line">    [buff appendString:@&quot;publish&quot;];</div><div class="line">    [buff appendDouble:++_numOfInvokes];</div><div class="line">    self.trackedCommands[@(_numOfInvokes)] = @&quot;publish&quot;;</div><div class="line">    [buff appendByte:kAMFNull];</div><div class="line">    [buff appendString:_url.playPath];</div><div class="line">    [buff appendString:@&quot;live&quot;];</div><div class="line">    </div><div class="line">    metadata.msg_length.data = (int)buff.length;</div><div class="line">    [self sendPacket:buff :metadata];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h4 id="onStatus-‘NetStream-Publish-Start’"><a href="#onStatus-‘NetStream-Publish-Start’" class="headerlink" title="onStatus(‘NetStream.Publish.Start’)"></a>onStatus(‘NetStream.Publish.Start’)</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/publistOnStatus.png" alt=""></p>
-<p>客户端收到这个消息，表示服务器已经准备好接收流数据，客户端可以正式开始推流。</p>
-<p><a href="http://llyblog.com/2017/03/14/iOS视频硬编码/" target="_blank" rel="noopener">参考文章和demo</a></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2061,7 +2100,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">42</span>
+              <span class="site-state-item-count">44</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
