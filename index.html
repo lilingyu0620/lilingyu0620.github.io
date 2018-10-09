@@ -229,6 +229,151 @@
             
               
                 
+                <a class="post-title-link" href="/2018/10/08/iOS性能优化的一些套路/" itemprop="url">
+                  iOS性能优化的一些套路
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-10-08T17:56:56+08:00" content="2018-10-08">
+              2018-10-08
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/10/08/iOS性能优化的一些套路/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/10/08/iOS性能优化的一些套路/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>那个谁说过一句比较经典的话：过早的优化是万恶之源，至于是否正确那就是见仁见智了。我们实际工作中，在开始一个项目时，应该也不会太多去考虑性能优化的问题。不过随着项目版本的不断迭代，模块和代码量不断增加，研发团队人员变动，以及其他各种原因，难免会出现一些实现不太友好的代码和方案，影响到app的用户体验，这个时候就需要相应的优化来提升app的性能。</p>
+<p>iOS的性能优化是一个比较有挑战的工作，有一定的难度，需要着手优化的人有一定的姿势积累，能够分析出各方面可能出现的性能问题。所以一般也是进阶必须掌握的技能。当然，优化的过程和可优化的一些点也是有套路的，综合网上的方案和自身的一些经验，这里做一下简单的总结：</p>
+<h3 id="启动优化"><a href="#启动优化" class="headerlink" title="启动优化"></a>启动优化</h3><p>启动优化可以分为2部分来分别优化，具体如下：</p>
+<h4 id="main函数之前"><a href="#main函数之前" class="headerlink" title="main函数之前"></a>main函数之前</h4><p>ipa实际上就是一堆二进制的文件（.o文件），而这堆二进制文件就是xcode编译我们的代码后生产的最终产物，文件头部会给操作系统留下入口（这个入口不是main，而是@start标识）。当应用被启动，系统首先找到程序入口，将二进制文件映射到虚拟内存（mmap），然后加载动态库（image），然后对引用符号的地址进行rebase和bind,到这里二进制文件相关的操作就完成了，之后就是对使用的oc类和分类的注册和初始化。<br>至此，mian函数前的工作做完了。</p>
+<h5 id="优化点"><a href="#优化点" class="headerlink" title="优化点"></a>优化点</h5><ul>
+<li>动态库的使用，移除不必要的动态库。</li>
+<li>合并或者删除无用的oc类和分类</li>
+<li>删除没有被调用的方法,减少非唯一selector的个数</li>
+<li>将不必须的初始化方法从+load移到+initialize</li>
+</ul>
+<h4 id="main函数之后"><a href="#main函数之后" class="headerlink" title="main函数之后"></a>main函数之后</h4><p>这部分内容就是业务相关的东西了，根据各自app的需求会有不同的优化方案，不像上面的部分具有通用性。启动优化的最终目的肯定都是最快的展示首页内容，这里列举一些常用的优化套路。</p>
+<ul>
+<li>能延迟执行的就延迟执行。比如SDK的初始化，界面的创建。</li>
+<li>不能延迟执行的，尽量放到后台执行。比如数据读取，原始JSON数据转对象，日志发送。</li>
+</ul>
+<p>具体细节可参考<a href="https://techblog.toutiao.com/2018/05/29/untitled-24/" target="_blank" rel="noopener">今日头条这篇优化文章</a></p>
+<h3 id="内存优化"><a href="#内存优化" class="headerlink" title="内存优化"></a>内存优化</h3><h4 id="创建"><a href="#创建" class="headerlink" title="创建"></a>创建</h4><ul>
+<li>尽量使用懒加载的方式创建对象，避免无用和重复创建，减少不必要的内存开销</li>
+<li>合理利用自动释放池，避免内存暴涨。</li>
+</ul>
+<h4 id="缓存和复用"><a href="#缓存和复用" class="headerlink" title="缓存和复用"></a>缓存和复用</h4><ul>
+<li>合理使用缓存减轻CPU的计算压力（cell高度缓存）</li>
+<li>复用对象内存，通过绑定和更新model显示新的视图</li>
+<li>合理使用缓存数据结构（NSCache VS NSMapTable VS NSDictionary）</li>
+</ul>
+<h4 id="回收"><a href="#回收" class="headerlink" title="回收"></a>回收</h4><ul>
+<li>保证使用的内存能够被正确的回收掉，避免内存泄露（timer,delegate,block）</li>
+<li>使用适当的工具对内存的回收进行检测，发生内存泄露及时抛出提示。</li>
+<li>处理系统的内存警告</li>
+</ul>
+<h3 id="UI优化"><a href="#UI优化" class="headerlink" title="UI优化"></a>UI优化</h3><p>先说一下iOS中UI展示的过程。iOS中的视图容器是CALayer,所有的显示在屏幕上的内容最终都是被渲染到CALayer上。CPU计算好需要渲染的内容放入渲染缓冲区，GPU从渲染缓冲区拿到数据，经过一系列的处理，将处理好的数据（bitmap）丢到帧缓冲区，CALayer从帧缓冲拿数据更新界面。</p>
+<p>从上面展示的流程可以看到，UI的展示分为2个部分，CPU处理部分和GPU处理部分。如果某一部分的处理被阻塞的话，UI显示就会出现卡顿。所以，可以从这2部分着手优化。</p>
+<h4 id="CPU优化"><a href="#CPU优化" class="headerlink" title="CPU优化"></a>CPU优化</h4><ul>
+<li>懒加载方式创建UI对象，使用CALayer替换UIView,</li>
+<li>减少视图相关属性的修改，避免视图层级的调整，尽量不要动态添加和移除视图</li>
+<li>text的异步计算和渲染</li>
+<li>尽量提前计算好视图布局并缓存，避免动态计算和更新布局。</li>
+<li>异步解码图片和绘制视图。</li>
+</ul>
+<h4 id="GPU优化"><a href="#GPU优化" class="headerlink" title="GPU优化"></a>GPU优化</h4><ul>
+<li>将多个小图合并为一张大图显示，控制图片尺寸不要大于GPU处理上限。</li>
+<li>避免带透明度的视图重叠显示，会产生像素的混合</li>
+<li>避免出现离屏渲染</li>
+</ul>
+<p>具体细节参考<a href="https://blog.ibireme.com/2015/11/12/smooth_user_interfaces_for_ios/" target="_blank" rel="noopener">YY的这篇文章</a></p>
+<h3 id="ipa包大小优化"><a href="#ipa包大小优化" class="headerlink" title="ipa包大小优化"></a>ipa包大小优化</h3><h3 id="其他优化"><a href="#其他优化" class="headerlink" title="其他优化"></a>其他优化</h3>
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/09/10/Runloop源码解析和实践/" itemprop="url">
                   Runloop源码解析和实践
                 </a>
@@ -1772,197 +1917,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/05/07/FFMPEG学习笔记/" itemprop="url">
-                  FFMPEG学习笔记
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-05-07T17:52:01+08:00" content="2018-05-07">
-              2018-05-07
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2018/05/07/FFMPEG学习笔记/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/05/07/FFMPEG学习笔记/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>想要从事音视频相关的工作，FFMPEG是绕不开的一道坎，就像吉他里面的大横按，既然我能给征服大横按，相信我也能征服你，FFMPEG！！！</p>
-<p>自学音视频相关的内容也有一段时间啦，比如之前的H264,RTMP,FLV,还有最近的AudioUint和AudioQueue，通过这段时间的学习，我总结出来的方法就是，先将他们的数据结构分析清楚，了解主要的api，然后从简单的api开始实践。</p>
-<p>所以我们先来看一下FFMPEG的主要数据结构和api…</p>
-<h3 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h3><h4 id="文件读取相关"><a href="#文件读取相关" class="headerlink" title="文件读取相关"></a>文件读取相关</h4><h5 id="AVIOContext"><a href="#AVIOContext" class="headerlink" title="AVIOContext"></a>AVIOContext</h5><p>AVIOContext是FFMPEG管理输入输出数据的结构体</p>
-<p>比较重要的属性：</p>
-<ul>
-<li><p>unsigned char *buffer：缓存读取的数据</p>
-</li>
-<li><p>int buffer_size：缓存大小（默认32768）</p>
-</li>
-<li><p>unsigned char *buf_ptr：当前指针读取到的位置</p>
-</li>
-<li><p>unsigned char *buf_end：缓存结束的位置</p>
-</li>
-<li><p>void *opaque：URLContext结构体</p>
-</li>
-</ul>
-<h4 id="协议相关"><a href="#协议相关" class="headerlink" title="协议相关"></a>协议相关</h4><h5 id="URLContext、URLProtocol"><a href="#URLContext、URLProtocol" class="headerlink" title="URLContext、URLProtocol"></a>URLContext、URLProtocol</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line">typedef struct URLContext &#123;  </div><div class="line">    const AVClass *av_class; ///&lt; information for av_log(). Set by url_open().  </div><div class="line">    struct URLProtocol *prot;  </div><div class="line">    int flags;  </div><div class="line">    int is_streamed;  /**&lt; true if streamed (no seek possible), default = false */  </div><div class="line">    int max_packet_size;  /**&lt; if non zero, the stream is packetized with this max packet size */  </div><div class="line">    void *priv_data;  </div><div class="line">    char *filename; /**&lt; specified URL */  </div><div class="line">    int is_connected;  </div><div class="line">    AVIOInterruptCB interrupt_callback;  </div><div class="line">&#125; URLContext;  </div><div class="line"></div><div class="line">typedef struct URLProtocol &#123;  </div><div class="line">    const char *name;  </div><div class="line">    int (*url_open)(URLContext *h, const char *url, int flags);  </div><div class="line">    int (*url_read)(URLContext *h, unsigned char *buf, int size);  </div><div class="line">    int (*url_write)(URLContext *h, const unsigned char *buf, int size);  </div><div class="line">    int64_t (*url_seek)(URLContext *h, int64_t pos, int whence);  </div><div class="line">    int (*url_close)(URLContext *h);  </div><div class="line">    struct URLProtocol *next;  </div><div class="line">    int (*url_read_pause)(URLContext *h, int pause);  </div><div class="line">    int64_t (*url_read_seek)(URLContext *h, int stream_index,  </div><div class="line">        int64_t timestamp, int flags);  </div><div class="line">    int (*url_get_file_handle)(URLContext *h);  </div><div class="line">    int priv_data_size;  </div><div class="line">    const AVClass *priv_data_class;  </div><div class="line">    int flags;  </div><div class="line">    int (*url_check)(URLContext *h, int mask);  </div><div class="line">&#125; URLProtocol;</div></pre></td></tr></table></figure>
-<p>URLContext结构体中还有一个结构体URLProtocol,每种协议（rtp，rtmp，file等）对应一个URLProtocol。</p>
-<h4 id="封装格式相关"><a href="#封装格式相关" class="headerlink" title="封装格式相关"></a>封装格式相关</h4><h5 id="AVFormatContext"><a href="#AVFormatContext" class="headerlink" title="AVFormatContext"></a>AVFormatContext</h5><p>这个结构体描述了一个媒体文件或媒体流的构成和基本信息</p>
-<p>在使用FFMPEG进行开发的时候，AVFormatContext是一个贯穿始终的数据结构，很多函数都要用到它作为参数。</p>
-<p>看几个主要变量的作用:</p>
-<ul>
-<li><p>struct AVInputFormat *iformat：输入数据的封装格式</p>
-</li>
-<li><p>AVIOContext *pb：输入数据的缓存</p>
-</li>
-<li><p>unsigned int nb_streams：视音频流的个数</p>
-</li>
-<li><p>AVStream **streams：音视频流</p>
-</li>
-<li><p>char filename[1024]：文件名</p>
-</li>
-<li><p>int64_t duration：时长（单位：微秒us，转换为秒需要除以1000000）</p>
-</li>
-<li><p>int bit_rate：比特率（单位bps，转换为kbps需要除以1000）</p>
-</li>
-<li><p>AVDictionary *metadata：元数据</p>
-</li>
-</ul>
-<h5 id="AVInputFormat"><a href="#AVInputFormat" class="headerlink" title="AVInputFormat"></a>AVInputFormat</h5><p>作为输入容器，包含了输入文件的音视频流信息,程序从输入容器从读出音视频包进行解码处理</p>
-<h5 id="AVOutputFormat"><a href="#AVOutputFormat" class="headerlink" title="AVOutputFormat"></a>AVOutputFormat</h5><p>作为输出容器，程序把编码好的音视频包写入到输出容器中</p>
-<h4 id="编解码相关"><a href="#编解码相关" class="headerlink" title="编解码相关"></a>编解码相关</h4><h5 id="AVCodecContext"><a href="#AVCodecContext" class="headerlink" title="AVCodecContext"></a>AVCodecContext</h5><p>这是一个描述编解码器上下文的数据结构，包含了众多编解码器需要的参数信息</p>
-<p>看一下关键属性：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">enum AVMediaType codec_type：编解码器的类型（视频，音频...）</div><div class="line"></div><div class="line">struct AVCodec  *codec：采用的解码器AVCodec（H.264,MPEG2...）</div><div class="line"></div><div class="line">int bit_rate：平均比特率</div><div class="line"></div><div class="line">uint8_t *extradata; int extradata_size：针对特定编码器包含的附加信息（例如对于H.264解码器来说，存储SPS，PPS等）</div><div class="line"></div><div class="line">AVRational time_base：根据该参数，可以把PTS转化为实际的时间（单位为秒s）</div><div class="line"></div><div class="line">int width, height：如果是视频的话，代表宽和高</div><div class="line"></div><div class="line">int refs：运动估计参考帧的个数（H.264的话会有多帧，MPEG2这类的一般就没有了）</div><div class="line"></div><div class="line">int sample_rate：采样率（音频）</div><div class="line"></div><div class="line">int channels：声道数（音频）</div><div class="line"></div><div class="line">enum AVSampleFormat sample_fmt：采样格式</div><div class="line"></div><div class="line">int profile：型（H.264里面就有，其他编码标准应该也有）</div><div class="line"></div><div class="line">int level：级（和profile差不太多）</div></pre></td></tr></table></figure>
-<h5 id="AVCodec"><a href="#AVCodec" class="headerlink" title="AVCodec"></a>AVCodec</h5><p>AVCodec是存储编解码器信息的结构体，每一个编解码器对应一个该结构体。</p>
-<p>下面说一下最主要的几个变量：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">const char *name：编解码器的名字，比较短</div><div class="line"></div><div class="line">const char *long_name：编解码器的名字，全称，比较长</div><div class="line"></div><div class="line">enum AVMediaType type：指明了类型，是视频，音频，还是字幕</div><div class="line"></div><div class="line">enum AVCodecID id：ID，不重复</div><div class="line"></div><div class="line">const AVRational *supported_framerates：支持的帧率（仅视频）</div><div class="line"></div><div class="line">const enum AVPixelFormat *pix_fmts：支持的像素格式（仅视频）</div><div class="line"></div><div class="line">const int *supported_samplerates：支持的采样率（仅音频）</div><div class="line"></div><div class="line">const enum AVSampleFormat *sample_fmts：支持的采样格式（仅音频）</div><div class="line"></div><div class="line">const uint64_t *channel_layouts：支持的声道数（仅音频）</div><div class="line"></div><div class="line">int priv_data_size：私有数据的大小</div></pre></td></tr></table></figure>
-<h5 id="AVStream"><a href="#AVStream" class="headerlink" title="AVStream"></a>AVStream</h5><p>AVStream是存储每一个视频/音频流信息的结构体</p>
-<p>AVStream重要的变量如下所示：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">int index：标识该视频/音频流</div><div class="line"></div><div class="line">AVCodecContext *codec：指向该视频/音频流的AVCodecContext（它们是一一对应的关系）</div><div class="line"></div><div class="line">AVRational time_base：时基。通过该值可以把PTS，DTS转化为真正的时间。FFMPEG其他结构体中也有这个字段，但是根据我的经验，只有AVStream中的time_base是可用的。PTS*time_base=真正的时间</div><div class="line"></div><div class="line">int64_t duration：该视频/音频流长度</div><div class="line"></div><div class="line">AVDictionary *metadata：元数据信息</div><div class="line"></div><div class="line">AVRational avg_frame_rate：帧率（注：对视频来说，这个挺重要的）</div><div class="line"></div><div class="line">AVPacket attached_pic：附带的图片。比如说一些MP3，AAC音频文件附带的专辑封面。</div></pre></td></tr></table></figure>
-<h5 id="AVPacket"><a href="#AVPacket" class="headerlink" title="AVPacket"></a>AVPacket</h5><p>AVPacket是存储压缩编码数据相关信息的结构体</p>
-<p>重要的变量有以下几个:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">&lt;!--例如对于H.264来说。1个AVPacket的data通常对应一个NAL。</div><div class="line"></div><div class="line">注意：在这里只是对应，而不是一模一样。他们之间有微小的差别：使用FFMPEG类库分离出多媒体文件中的H.264码流</div><div class="line"></div><div class="line">因此在使用FFMPEG进行视音频处理的时候，常常可以将得到的AVPacket的data数据直接写成文件，从而得到视音频的码流文件。</div><div class="line">--&gt;</div><div class="line"></div><div class="line">uint8_t *data：压缩编码的数据。</div><div class="line"></div><div class="line">int   size：data的大小</div><div class="line"></div><div class="line">int64_t pts：显示时间戳</div><div class="line"></div><div class="line">int64_t dts：解码时间戳</div><div class="line"></div><div class="line">int   stream_index：标识该AVPacket所属的视频/音频流。</div></pre></td></tr></table></figure>
-<h5 id="AVFrame"><a href="#AVFrame" class="headerlink" title="AVFrame"></a>AVFrame</h5><p>AVFrame结构体一般用于存储原始数据（即非压缩数据，例如对视频来说是YUV，RGB，对音频来说是PCM），此外还包含了一些相关的信息。比如说，解码的时候存储了宏块类型表，QP表，运动矢量表等数据。编码的时候也存储了相关的数据。因此在使用FFMPEG进行码流分析的时候，AVFrame是一个很重要的结构体。</p>
-<p>下面看几个主要变量的作用：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">uint8_t *data[AV_NUM_DATA_POINTERS]：解码后原始数据（对视频来说是YUV，RGB，对音频来说是PCM）</div><div class="line"></div><div class="line">int linesize[AV_NUM_DATA_POINTERS]：data中“一行”数据的大小。注意：未必等于图像的宽，一般大于图像的宽。</div><div class="line"></div><div class="line">int width, height：视频帧宽和高（1920x1080,1280x720...）</div><div class="line"></div><div class="line">int nb_samples：音频的一个AVFrame中可能包含多个音频帧，在此标记包含了几个</div><div class="line"></div><div class="line">int format：解码后原始数据类型（YUV420，YUV422，RGB24...）</div><div class="line"></div><div class="line">int key_frame：是否是关键帧</div><div class="line"></div><div class="line">enum AVPictureType pict_type：帧类型（I,B,P...）</div><div class="line"></div><div class="line">AVRational sample_aspect_ratio：宽高比（16:9，4:3...）</div><div class="line"></div><div class="line">int64_t pts：显示时间戳</div><div class="line"></div><div class="line">int coded_picture_number：编码帧序号</div><div class="line"></div><div class="line">int display_picture_number：显示帧序号</div><div class="line"></div><div class="line">int8_t *qscale_table：QP表</div><div class="line"></div><div class="line">uint8_t *mbskip_table：跳过宏块表</div><div class="line"></div><div class="line">int16_t (*motion_val[2])[2]：运动矢量表</div><div class="line"></div><div class="line">uint32_t *mb_type：宏块类型表</div><div class="line"></div><div class="line">short *dct_coeff：DCT系数，这个没有提取过</div><div class="line"></div><div class="line">int8_t *ref_index[2]：运动估计参考帧列表（貌似H.264这种比较新的标准才会涉及到多参考帧）</div><div class="line"></div><div class="line">int interlaced_frame：是否是隔行扫描</div><div class="line"></div><div class="line">uint8_t motion_subsample_log2：一个宏块中的运动矢量采样个数，取log的</div></pre></td></tr></table></figure>
-<p>结构体之间的关系可以参考下图：</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/20130914204051125.jpg" alt=""></p>
-<h3 id="api"><a href="#api" class="headerlink" title="api"></a>api</h3><h4 id="avcodec-init"><a href="#avcodec-init" class="headerlink" title="avcodec_init()"></a>avcodec_init()</h4><p>初始化libavcodec,一般最先调用该函数</p>
-<p>该函数必须在调用libavcodec里的其它函数前调用,一般在程序启动或模块初始化时调用,如果你调用了多次也无所谓,因为后面的调用不会做任何事情.从函数的实现里你可以发现,代码中对多次调用进行了控制.</p>
-<h4 id="av-register-all"><a href="#av-register-all" class="headerlink" title="av_register_all()"></a>av_register_all()</h4><p>初始化 libavformat和注册所有的muxers、demuxers和protocols，</p>
-<p>一般在调用avcodec_init后调用该方法</p>
-<p>其中会调用avcodec_register_all()注册多种音视频格式的编解码器,并注册各种文件的编解复用器</p>
-<h4 id="avformat-alloc-context"><a href="#avformat-alloc-context" class="headerlink" title="avformat_alloc_context()"></a>avformat_alloc_context()</h4><p>分配一个AVFormatContext结构，负责申请一个AVFormatContext结构的内存,并进行简单初始化</p>
-<h4 id="avformat-open-input"><a href="#avformat-open-input" class="headerlink" title="avformat_open_input()"></a>avformat_open_input()</h4><p>打开一个流媒体文件</p>
-<h4 id="avformat-close-input"><a href="#avformat-close-input" class="headerlink" title="avformat_close_input()"></a>avformat_close_input()</h4><p>关闭一个流媒体文件</p>
-<h4 id="avformat-free-context"><a href="#avformat-free-context" class="headerlink" title="avformat_free_context()"></a>avformat_free_context()</h4><p>释放一个AVFormatContext结构</p>
-<p>使用 avformat_alloc_context()分配的结构,采用该函数进行释放,除释放AVFormatContext结构本身内存之外,AVFormatContext中指针所指向的内存也会一并释放</p>
-<h4 id="avio-alloc-context"><a href="#avio-alloc-context" class="headerlink" title="avio_alloc_context()"></a>avio_alloc_context()</h4><p>为I/0缓存申请并初始化一个AVIOContext结构,结束使用时必须使用av_free()进行释放</p>
-<h4 id="av-open-input-file"><a href="#av-open-input-file" class="headerlink" title="av_open_input_file()"></a>av_open_input_file()</h4><p>以输入方式打开一个媒体文件,也即源文件,codecs并没有打开,只读取了文件的头信息.</p>
-<h4 id="av-close-input-file"><a href="#av-close-input-file" class="headerlink" title="av_close_input_file()"></a>av_close_input_file()</h4><p>关闭使用avformat_close_input()打开的输入文件容器,但并不关系它的codecs</p>
-<p>使用 av_close_input_file 关闭后,就不再需要使用avformat_free_context 进行释放了</p>
-<h4 id="av-find-stream-info-AVFormatContext-ic"><a href="#av-find-stream-info-AVFormatContext-ic" class="headerlink" title="av_find_stream_info(AVFormatContext *ic)"></a>av_find_stream_info(AVFormatContext *ic)</h4><p>通过读取媒体文件的中的包来获取媒体文件中的流信息,对于没有头信息的文件如(mpeg)是非常有用的</p>
-<h4 id="AVCodec-avcodec-find-decoder-enum-CodecID-id"><a href="#AVCodec-avcodec-find-decoder-enum-CodecID-id" class="headerlink" title="AVCodec *avcodec_find_decoder(enum CodecID id)"></a>AVCodec *avcodec_find_decoder(enum CodecID id)</h4><p>通过code ID查找一个已经注册的音视频解码器</p>
-<p>查找解码器之前,必须先调用av_register_all注册所有支持的解码器</p>
-<p>音视频解码器保存在一个链表中,查找过程中,函数从头到尾遍历链表,通过比较解码器的ID来查找</p>
-<h4 id="AVCodec-avcodec-find-decoder-by-name-constchar-name"><a href="#AVCodec-avcodec-find-decoder-by-name-constchar-name" class="headerlink" title="AVCodec  avcodec_find_decoder_by_name (constchar  name)"></a>AVCodec <em> avcodec_find_decoder_by_name (constchar </em> name)</h4><p>通过一个指定的名称查找一个已经注册的音视频解码器</p>
-<p>查找解码器之前,必须先调用av_register_all注册所有支持的解码器</p>
-<p>音视频解码器保存在一个链表中,查找过程中,函数从头到尾遍历链表,通过比较解码器的name来查找</p>
-<h4 id="avcodec-find-encoder"><a href="#avcodec-find-encoder" class="headerlink" title="avcodec_find_encoder()"></a>avcodec_find_encoder()</h4><h4 id="avcodec-find-encoder-by-name"><a href="#avcodec-find-encoder-by-name" class="headerlink" title="avcodec_find_encoder_by_name()"></a>avcodec_find_encoder_by_name()</h4><p>同上。。。</p>
-<h4 id="int-avcodec-open-AVCodecContext-avctx-AVCodec-codec-avcodec-open2"><a href="#int-avcodec-open-AVCodecContext-avctx-AVCodec-codec-avcodec-open2" class="headerlink" title="int avcodec_open(AVCodecContext  avctx, AVCodec  codec) / avcodec_open2()"></a>int avcodec_open(AVCodecContext <em> avctx, AVCodec </em> codec) / avcodec_open2()</h4><p>使用给定的AVCodec初始化AVCodecContext</p>
-<h4 id="av-guess-format"><a href="#av-guess-format" class="headerlink" title="av_guess_format()"></a>av_guess_format()</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">AVOutputFormat *av_guess_format(constchar *short_name,</div><div class="line"></div><div class="line">                                constchar *filename,</div><div class="line"></div><div class="line">                                constchar *mime_type);</div></pre></td></tr></table></figure>
-<p>返回一个已经注册的最合适的输出格式</p>
-<h4 id="void-av-init-packet-AVPacket-pkt"><a href="#void-av-init-packet-AVPacket-pkt" class="headerlink" title="void av_init_packet(AVPacket *pkt);"></a>void av_init_packet(AVPacket *pkt);</h4><p>使用默认值初始化AVPacket</p>
-<p>定义AVPacket对象后,请使用av_init_packet进行初始化</p>
-<h4 id="int-av-read-frame-AVFormatContext-s-AVPacket-pkt"><a href="#int-av-read-frame-AVFormatContext-s-AVPacket-pkt" class="headerlink" title="int av_read_frame(AVFormatContext  s, AVPacket  pkt)"></a>int av_read_frame(AVFormatContext <em> s, AVPacket </em> pkt)</h4><p>从输入源文件容器中读取一个AVPacket数据包</p>
-<p>该函数读出的包并不每次都是有效的,对于读出的包我们都应该进行相应的解码(视频解码/音频解码),</p>
-<p>在返回值&gt;=0时,循环调用该函数进行读取,循环调用之前请调用av_free_packet函数清理AVPacket</p>
-<h4 id="avcodec-decode-video2"><a href="#avcodec-decode-video2" class="headerlink" title="avcodec_decode_video2()"></a>avcodec_decode_video2()</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">int avcodec_decode_video2(AVCodecContext *avctx, 										AVFrame *picture,</div><div class="line">                         int *got_picture_ptr,</div><div class="line">                         AVPacket *avpkt);</div><div class="line">                         </div><div class="line">                         </div><div class="line">// 解码视频流AVPacket</div><div class="line">// 使用av_read_frame读取媒体流后需要进行判断,如果为视频流则调用该函数解码</div><div class="line">// 返回结果&lt;0时失败,此时程序应该退出检查原因</div><div class="line">// 返回&gt;=0时正常,假设 读取包为:AVPacket vPacket 返回值为 int vLen; 每次解码正常时,对vPacket做</div><div class="line">// 如下处理:</div><div class="line">//   vPacket.size -= vLen;</div><div class="line">//   vPacket.data += vLen;</div><div class="line">// 如果 vPacket.size==0,则继续读下一流包,否则继续调度该方法进行解码,直到vPacket.size==0</div><div class="line">// 返回 got_picture_ptr &gt; 0 时,表示解码到了AVFrame *picture,其后可以对picture进程处理</div></pre></td></tr></table></figure>
-<h4 id="avcodec-decode-audio3-avcodec-decode-audio4"><a href="#avcodec-decode-audio3-avcodec-decode-audio4" class="headerlink" title="avcodec_decode_audio3()/avcodec_decode_audio4()"></a>avcodec_decode_audio3()/avcodec_decode_audio4()</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">int avcodec_decode_audio3(AVCodecContext *avctx, int16_t *samples,</div><div class="line"></div><div class="line">                         int *frame_size_ptr,</div><div class="line"></div><div class="line">                         AVPacket *avpkt);</div><div class="line">                         </div><div class="line">int avcodec_decode_audio4(AVCodecContext *avctx, AVFrame *frame,</div><div class="line">int *got_frame_ptr, </div><div class="line">const AVPacket *avpkt);</div><div class="line"></div><div class="line"></div><div class="line">// 解码音频流AVPacket</div><div class="line">// 使用av_read_frame读取媒体流后需要进行判断,如果为音频流则调用该函数解码</div><div class="line">// 返回结果&lt;0时失败,此时程序应该退出检查原因</div><div class="line">// 返回&gt;=0时正常,假设 读取包为:AVPacket vPacket 返回值为 int vLen; 每次解码正常时,对vPacket做</div><div class="line">// 如下处理:</div><div class="line">//   vPacket.size -= vLen;</div><div class="line">//   vPacket.data += vLen;</div><div class="line">// 如果 vPacket.size==0,则继续读下一流包,否则继续调度该方法进行解码,直到vPacket.size==0</div></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2008,7 +1962,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">43</span>
+              <span class="site-state-item-count">44</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
