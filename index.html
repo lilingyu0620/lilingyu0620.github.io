@@ -296,9 +296,15 @@
 <li>不能延迟执行的，尽量放到后台执行。比如数据读取，原始JSON数据转对象，日志发送。</li>
 </ul>
 <p>具体细节可参考<a href="https://techblog.toutiao.com/2018/05/29/untitled-24/" target="_blank" rel="noopener">今日头条这篇优化文章</a></p>
-<h3 id="内存优化"><a href="#内存优化" class="headerlink" title="内存优化"></a>内存优化</h3><h4 id="创建"><a href="#创建" class="headerlink" title="创建"></a>创建</h4><ul>
+<h3 id="内存优化"><a href="#内存优化" class="headerlink" title="内存优化"></a>内存优化</h3><p>蒸米大大的<a href="https://mp.weixin.qq.com/s/WQ7rrTJm-cn3Cb6e_zZ4cA" target="_blank" rel="noopener">这一篇文章</a>比较详细的描述了iOS中的虚拟内存和物理内存相关的内容。我们一般说的在程序中分配和回收内存指的都是虚拟内存，程序员一般不直接和物理内存（cpu内存，不包括磁盘）打交道。更多虚拟内存和物理内存的内容可阅读操作系统相关的文章和书籍去学习。</p>
+<h4 id="创建"><a href="#创建" class="headerlink" title="创建"></a>创建</h4><ul>
 <li>尽量使用懒加载的方式创建对象，避免无用和重复创建，减少不必要的内存开销</li>
 <li>合理利用自动释放池，避免内存暴涨。</li>
+<li>weak替换unsafe_unretain，保证指针安全</li>
+<li>weak strong dance保证self的生命周期</li>
+<li><p>在子线程手动申请（maloc）大内存的的时候 ping 一下主线程，因为子线程无法收到内存警告的传递</p>
+  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">	- (void)test &#123;</div><div class="line">    // current on sub Thread</div><div class="line">    // if main thread is memory warning it will blocked</div><div class="line">    dispatch_sync(dispatch_get_main_queue(), ^&#123;</div><div class="line">        [some description]</div><div class="line">    &#125;);</div><div class="line">    malloc(huge memory);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
 </ul>
 <h4 id="缓存和复用"><a href="#缓存和复用" class="headerlink" title="缓存和复用"></a>缓存和复用</h4><ul>
 <li>合理使用缓存减轻CPU的计算压力（cell高度缓存）</li>
