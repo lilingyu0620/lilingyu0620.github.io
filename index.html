@@ -302,7 +302,7 @@
 <li>合理利用自动释放池，避免内存暴涨。</li>
 <li>weak替换unsafe_unretain，保证指针安全</li>
 <li>weak strong dance保证self的生命周期</li>
-<li><p>在子线程手动申请（maloc）大内存的的时候 ping 一下主线程，因为子线程无法收到内存警告的传递</p>
+<li><p>在子线程手动申请（malloc）大内存的的时候 ping 一下主线程，因为子线程无法收到内存警告的传递</p>
   <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">	- (void)test &#123;</div><div class="line">    // current on sub Thread</div><div class="line">    // if main thread is memory warning it will blocked</div><div class="line">    dispatch_sync(dispatch_get_main_queue(), ^&#123;</div><div class="line">        [some description]</div><div class="line">    &#125;);</div><div class="line">    malloc(huge memory);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 </li>
 </ul>
@@ -331,7 +331,20 @@
 <li>避免出现离屏渲染</li>
 </ul>
 <p>具体细节参考<a href="https://blog.ibireme.com/2015/11/12/smooth_user_interfaces_for_ios/" target="_blank" rel="noopener">YY的这篇文章</a></p>
-<h3 id="ipa包大小优化"><a href="#ipa包大小优化" class="headerlink" title="ipa包大小优化"></a>ipa包大小优化</h3><h3 id="其他优化"><a href="#其他优化" class="headerlink" title="其他优化"></a>其他优化</h3>
+<h3 id="ipa包大小优化"><a href="#ipa包大小优化" class="headerlink" title="ipa包大小优化"></a>ipa包大小优化</h3><h4 id="二进制文件的优化"><a href="#二进制文件的优化" class="headerlink" title="二进制文件的优化"></a>二进制文件的优化</h4><p>了解整个编译，链接过程的童靴应该很清楚代码是怎么转化为二进制文件的。然后通过下面的方法可以查看每一个mach.o文件的大小。</p>
+<h5 id="查看mach-o文件的大小"><a href="#查看mach-o文件的大小" class="headerlink" title="查看mach.o文件的大小"></a>查看mach.o文件的大小</h5><p>编译后到编译目录里找到该txt文件，文件名和路径就是上述的Path to Link Map File。<br>~/Library/Developer/Xcode/DerivedData/XXX-eumsvrzbvgfofvbfsoqokmjprvuh/Build/Intermediates/XXX.build/Debug-iphoneos/XXX.build/。 这个LinkMap里展示了整个可执行文件的全貌，列出了编译后的每一个.o目标文件的信息（包括静态链接库.a里的），以及每一个目标文件的代码段，数据段存储详情。</p>
+<p><a href="https://github.com/daheli/iOS-linkmap-tools" target="_blank" rel="noopener">这个工具可以查看每一个mach.o文件的大小</a></p>
+<p>然后进行对应的优化即可。</p>
+<h5 id="编译优化选项"><a href="#编译优化选项" class="headerlink" title="编译优化选项"></a>编译优化选项</h5><ul>
+<li>Optimization Level</li>
+<li>Strip Linked Product 设置为YES</li>
+<li>Symbols Hidden by Default设置为YES</li>
+<li>Make Strings Read-Only 设置为YES</li>
+</ul>
+<h4 id="资源文件的优化"><a href="#资源文件的优化" class="headerlink" title="资源文件的优化"></a>资源文件的优化</h4><p>图片资源在打包过程中压缩比很低，基本是原图copy了。so,减少图片数量和大小可以直接降低ipa的大小。</p>
+<p><a href="https://tinypng.com" target="_blank" rel="noopener">tingpng可以压缩图片大小</a></p>
+<p><a href="https://github.com/tinymind/LSUnusedResource" target="_blank" rel="noopener">这个工具可以检测项目中无用的图片</a></p>
+<h3 id="其他优化"><a href="#其他优化" class="headerlink" title="其他优化"></a>其他优化</h3>
           
         
       
