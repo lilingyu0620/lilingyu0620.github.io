@@ -91,18 +91,18 @@
 <meta property="og:site_name" content="lly&#39;s Blog">
 <meta property="og:description" content="简介相关研究显示 H.264/AVC 与 MPEG-2 及 MPEG-4 相较之下，无论是压缩率或视讯质量皆有大幅的提升，而且H.264/AVC也首次将 视讯编码层(Video Coding Layer，VCL)与网络提取层(Network Abstraction Layer，NAL)的概念涵盖进来，以往视讯标准着重的是压缩效能部分，而H.264/AVC包含一个内建的NAL网络协议适应层，即由NA">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/200504-03-03.gif">
-<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/200504-03-04.gif">
-<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/200504-03-05.gif">
-<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/200504-03-06.gif">
-<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/200504-03-07.gif">
-<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/200504-03-08.gif">
-<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/200504-03-09.gif">
-<meta property="og:updated_time" content="2017-03-18T04:49:33.000Z">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/H.264/200504-03-03.gif">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/H.264/200504-03-04.gif">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/H.264/200504-03-05.gif">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/H.264/200504-03-06.gif">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/H.264/200504-03-07.gif">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/H.264/200504-03-08.gif">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/H.264/200504-03-09.gif">
+<meta property="og:updated_time" content="2019-02-14T03:02:25.265Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="H.264文件结构学习笔记">
 <meta name="twitter:description" content="简介相关研究显示 H.264/AVC 与 MPEG-2 及 MPEG-4 相较之下，无论是压缩率或视讯质量皆有大幅的提升，而且H.264/AVC也首次将 视讯编码层(Video Coding Layer，VCL)与网络提取层(Network Abstraction Layer，NAL)的概念涵盖进来，以往视讯标准着重的是压缩效能部分，而H.264/AVC包含一个内建的NAL网络协议适应层，即由NA">
-<meta name="twitter:image" content="http://ofy1hyquv.bkt.clouddn.com/200504-03-03.gif">
+<meta name="twitter:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/H.264/200504-03-03.gif">
 
 
 
@@ -323,7 +323,7 @@
 <p>帧间（Interframe）压缩的原理是：相邻几帧的数据有很大的相关性，或者说前后两帧信息变化很小的特点。也即连续的视频其相邻帧之间具有冗余信息,根据这一特性，压缩相邻帧之间的冗余量就可以进一步提高压缩量，减小压缩比。帧间压缩也称为时间压缩（Temporal compression），它通过比较时间轴上不同帧之间的数据进行压缩。帧间压缩一般是无损的。帧差值（Frame differencing）算法是一种典型的时间压缩法，它通过比较本帧与相邻帧之间的差异，仅记录本帧与其相邻帧的差值，这样可以大大减少数据量。</p>
 <h3 id="网络提取层（NAL）"><a href="#网络提取层（NAL）" class="headerlink" title="网络提取层（NAL）"></a>网络提取层（NAL）</h3><p>以NAL封包为单位的方式来做为VCL编译码的运算单位，这样传输层拿到NAL封包之后不需要再进行切割，只需附加该传输协议的文件头信息(adding header only)就可以交由底层传送出去。</p>
 <p>如图所示，可以将NAL当成是一个专作封装(packaging)的模块，用来将VCL压缩过的bitstream封装成适当大小的封包单位(NAL-unit)，并在NAL-unit Header中的NAL-unit Type字段记载此封包的型式，每种型式分别对应到VCL中不同的编解碼工具。NAL另外一个重要的功能为当网络发生壅塞而导致封包错误或接收次序错乱(out-of-order)的状况时，传输层协议会在Reference Flag作设定的动作，接收端的VCL在收到这种NAL封包时，就知道要进行所谓的纠错运算(error concealment)，在解压缩的同时也会尝试将错误修正回来</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/200504-03-03.gif" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/H.264/200504-03-03.gif" alt=""></p>
 <p>一个完整的H.264/AVC bitstream是由多个NAL-units所组成的，所以此bitstream也称之为NAL unit stream，一个NAL unit stream内可以包含多个压缩视讯序列(coded video sequence)，一个单独的压缩视讯序列代表一部视讯影片，而压缩视讯序列又是由多个access units所组成，当接收端收到一个access unit后，可以完整地译码成单张的画面，而每个压缩视讯序列的第一个access unit必须为Instantaneous Decoding Refresh (IDR) access unit，IDRaccess unit的内容全是采用intra-prediction编码，所以自己本身即可完全译码，不用参考其他access unit的数据。access unit亦是由多个NAL-units所组成，标准中总共规范12种的NAL-unit型式，这些可以进一步分类成VCL NAL-unit及non-VCL NAL-unit，所谓的VCL NAL-unit纯粹是压缩影像的内容，而所谓的non-VCL NAL-unit则有两种：Parameter Sets与Supplemental Enhancement Information (SEI)，SEI可以存放影片简介、版权宣告、用户自行定义的数据…等；Parameter Sets主要是描述整个压缩视讯序列的参数，例如：长宽比例、影像显现的时间点(timestamp)、相关译码所需的参数…等，这些信息非常重要，万一在传送的过程中发生错误，会导致整段影片无法译码，以往像MPEG-2/-4都把这些信息放在一般的packet header，所以很容易随着packet loss而消失，现在H.264/AVC将这些信息独立出来成为特殊的parameter set，可以采用所谓的out-of-band的方式来传送，以便将out-of-band channel用最高层级的信道编码(channel coding)保护机制，来保证传输的正确性。</p>
 <p>总结：</p>
 <p>第一层是多个序列帧（多个GOP）。</p>
@@ -353,21 +353,21 @@
 <p>24 – 31：未规定 </p>
 <h3 id="视讯编码层-VCL"><a href="#视讯编码层-VCL" class="headerlink" title="视讯编码层(VCL)"></a>视讯编码层(VCL)</h3><p>视频压缩的原理是利用影像在时间与空间上存有相似性，这些相似的数据经过压缩算法处理之后，可以将人眼无法感知的部分抽离出来，这些称为视觉冗余(visual redundancy)的部分在去除之后，就可以达到视频压缩的目的。如图1所示，H.264/AVC的视讯编码机制是以图块(block-based)为基础单元，也就是说先将整张影像分割成许多矩形的小区域，称之为巨图块(macroblock，MB)，再将这些巨图块进行编码，先使用画面内预测(intra-prediction)与画面间预测(inter-prediction)技术，以去除影像之间的相似性来得到所谓的差余影像(residual)，再将差余影像施以空间转换(transform)与量化(quantize)来去除视觉冗余，最后视讯编码层会输出编码过的比特流(bitstream)，之后再包装成网络提取层的单元封包(NAL-unit)，经由网络传送到远程或储存在储存媒体中。</p>
 <h4 id="H-264-AVC影像格式阶层架构"><a href="#H-264-AVC影像格式阶层架构" class="headerlink" title="H.264/AVC影像格式阶层架构"></a>H.264/AVC影像格式阶层架构</h4><p>H.264/AVC的阶层架构由小到大依序是sub-block、block、macroblock、slice、slicegroup、frame/field-picture、sequence。对一个采用4:2:0取样的MB而言，它是由16x16点的Luma与相对应的2个8x8点Chroma来组成，而在H.264/AVC的规范中，MB可再分割成多个16x8、8x16、8x8、8x4、4x8、4x4格式的sub-blocks。所谓的slice是许多MB的集合，而一张影像是由许多slice所组成(图3)，slice为H.264/AVC格式中的最小可译码单位(self-decodable unit)，也就是说一个slice单靠本身的压缩数据就能译码，而不必依靠其他slice，这样的好处是当传送到远程时，每接收完一笔slice的压缩数据就能马上译码，不用等待整张的数据接收完后才能开始，而且万一传送的过程中发生数据遗失或错误，也只是影响该笔slice，不会对其他slice有所影响，但跟MPEG-2的slice不同处在于它允许slice的范围可以超过一行MB，也就是说H.264/AVC允许整张影像只由单一个slice组成。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/200504-03-04.gif" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/H.264/200504-03-04.gif" alt=""></p>
 <h4 id="Slice的编码模式-IPB帧"><a href="#Slice的编码模式-IPB帧" class="headerlink" title="Slice的编码模式(IPB帧)"></a>Slice的编码模式(IPB帧)</h4><p>H.264/AVC的slice依照编码的类型可以分成下列种类：(1)I-slice: slice的全部MB都采用intra-prediction的方式来编码；(2) P-slice: slice中的MB使用intra-prediction和inter-prediction的方式来编码，但每一个inter-prediction block最多只能使用一个移动向量；(3) B-slice:与P-slice类似，但每一个inter-prediction block可以使用二个移动向量。比较特别的是B-slice的‘B’是指Bi-predictive，与MPEG-2/-4 B-frame的Bi-directional概念有很大的不同，MPEG-2/-4 B-frame被限定只能由前一张和后一张的I(或P)-frame来做inter- prediction，但是H.264/AVC B-slice除了可由前一张和后一张影像的I(或P、B)-slice外，也能从前二张不同影像的I(或P、B)-slice来做inter- prediction，</p>
 <p>而H.264/AVC另外增加两种特殊slice类型：</p>
 <p>(1) SP-slice:即所谓的Switching P slice，为P-slice的一种特殊类型，用来串接两个不同bitrate的bitstream；</p>
 <p>(2) SI-slice: 即所谓的Switching I slice，为I-slice的一种特殊类型，除了用来串接两个不同content的bitstream外，也可用来执行随机存取(random access)来达到网络VCR的功能。</p>
 <p>这两种特殊的slice主要是考虑当进行Video-On-Demand streaming的应用时，对同一个视讯内容的影片来说，server会预先存放不同bitrate的压缩影片，而当带宽改变时，server就会送出适合当时带宽比特率的影片，传统的做法是需要等到适当的时间点来传送新的I-slice (容量较P-slice大上许多)，但因为带宽变小导致需要较多的时间来传送I-slice，如此会让client端的影像有所延迟，为了让相同content但不同bitrate的bitstream可以较平顺地串接，使用SP-slice会很容易来达成(图4)，不仅可以直接送出新的bitstream，也因为传送的P-slice的容量较小，所以不会有时间延迟的情形出现</p>
 <p>SP-slice</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/200504-03-05.gif" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/H.264/200504-03-05.gif" alt=""></p>
 <p>SI-slice</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/200504-03-06.gif" alt=""></p>
-<h4 id="画面内预测技术-Intra-frame-Prediction-帧内压缩"><a href="#画面内预测技术-Intra-frame-Prediction-帧内压缩" class="headerlink" title="画面内预测技术(Intra-frame Prediction)-帧内压缩"></a>画面内预测技术(Intra-frame Prediction)-帧内压缩</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/200504-03-07.gif" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/H.264/200504-03-06.gif" alt=""></p>
+<h4 id="画面内预测技术-Intra-frame-Prediction-帧内压缩"><a href="#画面内预测技术-Intra-frame-Prediction-帧内压缩" class="headerlink" title="画面内预测技术(Intra-frame Prediction)-帧内压缩"></a>画面内预测技术(Intra-frame Prediction)-帧内压缩</h4><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/H.264/200504-03-07.gif" alt=""></p>
 <p>以往的压缩标准在进行intra-prediction时，多半只是将转换系数做差值编码，而H.264/AVC在空间领域(spatial domain)来进行像点之间的预测，而不是用转换过的系数，它提供两种intra-prediction的型式：intra_4x4及intra_16x16，所谓的intra_4x4是以Luma 4x4 sub-block为单位，找出它的参考对象(predictor)后，再将其与参考对象相减后所产生的差余影像(residual)送入转换算法，而寻找参考对象的模式共有9种预测的方向(上图)，以mode 0 (vertical)为例，{a,e,i,m}、{b,f,j,n}、{c,g,k,o}、{d,h,l,p}的参考对象分别为A、B、C、D；Luma intra_16x16与Chroma的模式跟Luma intra_4x4类似</p>
-<h4 id="画面间预测技术-Inter-frame-Prediction-帧间压缩"><a href="#画面间预测技术-Inter-frame-Prediction-帧间压缩" class="headerlink" title="画面间预测技术(Inter-frame Prediction)-帧间压缩"></a>画面间预测技术(Inter-frame Prediction)-帧间压缩</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/200504-03-08.gif" alt=""></p>
+<h4 id="画面间预测技术-Inter-frame-Prediction-帧间压缩"><a href="#画面间预测技术-Inter-frame-Prediction-帧间压缩" class="headerlink" title="画面间预测技术(Inter-frame Prediction)-帧间压缩"></a>画面间预测技术(Inter-frame Prediction)-帧间压缩</h4><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/H.264/200504-03-08.gif" alt=""></p>
 <p>至于横跨每张画面之间的预测技术，H.264/AVC提供了更丰富的编码模式，计有下述几种区块分割(partition)的方法：16x16、16x8、8x16、8x8、8x4、4x8、4x4，多样的分割方式可以让移动向量的预测更准确，如上图所示，画面中有些移动的区域并不是正方形，使用长方形或较小的4x4分割来做预测的区域，可以大幅降低差余影像的数值来增加了压缩比，但也因此P-slice中的MB最多可有16个移动向量(motion vector)，而B-slice中的MB最多可拥有32个移动向量，虽然这些会增加移动向量档头(header)的容量，但整体来说对压缩比仍有正面的益处。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/200504-03-09.gif" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/H.264/200504-03-09.gif" alt=""></p>
 <p>以往的压缩标准所使用的动态估测(motion estimation)，只有使用前一张图像来作为预测的对象，H.264/AVC提供了多重参考图像(multiple reference frames)的概念，使得移动向量不再只限于前后相邻的影像，而是可以跨过多张影像，如上图所示，在时间点t的图块，可以使用t-1到t-2图像中的图块来作为预测的对象，当影片有周期重复性的内容时，例如：背景影像周期性的出现或被遮盖、对象有来回跳动的行为、形状忽大忽小，或是摄影机在拍摄时，因为有多处的取景点，并且摄影画面在取景点之间来回移动，这种情形在球类比赛转播时常出现，这些状况都能得到较好的动态预测结果，因而提高了压缩的效能。</p>
 
       
@@ -527,7 +527,7 @@
         <div class="copyright" >
   
   &copy; 
-  <span itemprop="copyrightYear">2018</span>
+  <span itemprop="copyrightYear">2019</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
