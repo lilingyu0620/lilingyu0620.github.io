@@ -1288,7 +1288,7 @@
         
           
             <p>Socket是基于传输层TCP、UDP协议封装的一套API接口，它本身并不是一种协议。</p>
-<h3 id="网络通信模型"><a href="#网络通信模型" class="headerlink" title="网络通信模型"></a>网络通信模型</h3><p><img src="http://ofy1hyquv.bkt.clouddn.com/networkmodel.png" alt=""></p>
+<h3 id="网络通信模型"><a href="#网络通信模型" class="headerlink" title="网络通信模型"></a>网络通信模型</h3><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Socket/networkmodel.png" alt=""></p>
 <h3 id="传输层中的协议"><a href="#传输层中的协议" class="headerlink" title="传输层中的协议"></a>传输层中的协议</h3><h4 id="传输控制协议-TCP"><a href="#传输控制协议-TCP" class="headerlink" title="传输控制协议 (TCP)"></a>传输控制协议 (TCP)</h4><p>TCP全称是Transmission Control Protocol，中文名为传输控制协议，它可以提供可靠的、面向连接的网络数据传递服务。</p>
 <h5 id="传输控制协议主要包含下列任务和功能："><a href="#传输控制协议主要包含下列任务和功能：" class="headerlink" title="传输控制协议主要包含下列任务和功能："></a>传输控制协议主要包含下列任务和功能：</h5><ul>
 <li><p>确保IP数据报的成功传递</p>
@@ -1302,11 +1302,11 @@
 <li><p>根据数据是否接收成功发送肯定消息。通过使用选择性确认，也对没有收到的数据发送否定确认</p>
 </li>
 </ul>
-<h5 id="TCP工作流程"><a href="#TCP工作流程" class="headerlink" title="TCP工作流程"></a>TCP工作流程</h5><p><img src="http://ofy1hyquv.bkt.clouddn.com/socketflow.png" alt=""></p>
+<h5 id="TCP工作流程"><a href="#TCP工作流程" class="headerlink" title="TCP工作流程"></a>TCP工作流程</h5><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Socket/socketflow.png" alt=""></p>
 <p>TCP的连接建立过程又称为TCP三次握手</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/tcpconnect.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Socket/tcpconnect.png" alt=""></p>
 <p>一旦初始的三次握手完成，client和server就可以相互发送信息。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/tcpdisconnect.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Socket/tcpdisconnect.png" alt=""></p>
 <p>而断开连接时，就不分client和server了，先请求断开的即为主动方，主动方会先发送断开请求，被动发在收到断开请求后会先给主动方一个确认，然后待被动方处理完所有的传输事务后，再给主动方一个断开连接的请求，<br>主动方收到被动方的断开请求，给被动方一个断开确认。至此断开成功。</p>
 <p>TCP工作过程比较复杂，包括的内容如下:</p>
 <ul>
@@ -1323,7 +1323,7 @@
 <li><p>TCP数据保护（校验）：TCP是可靠传输的协议，它提供校验和计算来实现数据在传输过程中的完整性。</p>
 </li>
 </ul>
-<h4 id="tcp报文格式"><a href="#tcp报文格式" class="headerlink" title="tcp报文格式"></a>tcp报文格式</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/tcpformat.jpeg" alt=""></p>
+<h4 id="tcp报文格式"><a href="#tcp报文格式" class="headerlink" title="tcp报文格式"></a>tcp报文格式</h4><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Socket/tcpformat.jpeg" alt=""></p>
 <ul>
 <li><p>源端口、目标端口：计算机上的进程要和其他进程通信是要通过计算机端口的，而一个计算机端口某个时刻只能被一个进程占用，所以通过指定源端口和目标端口，就可以知道是哪两个进程需要通信。源端口、目标端口是用16位表示的，可推算计算机的端口个数为2^16个。</p>
 </li>
@@ -1368,7 +1368,7 @@
 </ul>
 <h4 id="用户数据报协议（UDP）"><a href="#用户数据报协议（UDP）" class="headerlink" title="用户数据报协议（UDP）"></a>用户数据报协议（UDP）</h4><p>UDP全称是User Datagram Protocol，中文名为用户数据报协议。UDP 提供无连接的网络服务，该服务对消息中传输的数据提供不可靠的、最大努力传送。这意味着它不保证数据报的到达，也不保证所传送数据包的顺序是否正确。</p>
 <p>虽然TCP中植入了各种安全保障功能，但是在实际执行的过程中会占用大量的系统开销，无疑使速度受到严重的影响。反观UDP由于排除了信息可靠传递机制，将安全和排序等功能移交给上层应用来完成，极大地降低了执行时间，使速度得到了保证。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/udpflow.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Socket/udpflow.png" alt=""></p>
 <h3 id="Socket编程-Client"><a href="#Socket编程-Client" class="headerlink" title="Socket编程-Client"></a>Socket编程-Client</h3><p>iOS中实现Socekt编程有下面几种方式：</p>
 <ul>
 <li>BSDSocket iOS系统基于unix，所以支持底层的BSD Socket。</li>
@@ -1400,7 +1400,7 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">void writeStream (CFWriteStreamRef stream, CFStreamEventType eventType, void *clientCallBackInfo)</div><div class="line">&#123;</div><div class="line">    outputStream = stream;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>保存当前写数据的实例。</p>
 <h4 id="发送数据-1"><a href="#发送数据-1" class="headerlink" title="发送数据"></a>发送数据</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">- (IBAction)sendMessage:(id)sender &#123;</div><div class="line">    </div><div class="line">    const char *str = [self.sendTextField.stringValue UTF8String];</div><div class="line">    uint8_t *sendS = (uint8_t *)str;</div><div class="line">    if (outputStream != NULL) &#123;</div><div class="line">        CFWriteStreamWrite(outputStream, sendS, strlen(str) + 1);</div><div class="line">    &#125;</div><div class="line">    else&#123;</div><div class="line">        NSLog(@&quot;send failed&quot;);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>通信过程如下图：<br><img src="http://ofy1hyquv.bkt.clouddn.com/socketclient&amp;server.png" alt=""></p>
+<p>通信过程如下图：<br><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Socket/socketclient%26server.png" alt=""></p>
 <p><a href="https://github.com/lilingyu0620/LLYSocketDemo.git" target="_blank" rel="noopener">iOS Socket Demo</a></p>
 
           
