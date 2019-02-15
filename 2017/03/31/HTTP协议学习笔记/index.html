@@ -91,15 +91,15 @@
 <meta property="og:site_name" content="lly&#39;s Blog">
 <meta property="og:description" content="什么是HTTP协议协议是指计算机通信网络中两台计算机之间进行通信所必须共同遵守的规定或规则，超文本传输协议(HTTP)是一种通信协议，它允许将超文本标记语言(HTML)文档从Web服务器传送到客户端的浏览器 客户端和服务器如何通信呢当我们打开浏览器，在地址栏中输入URL，然后我们就看到了网页。 原理是怎样的呢？ 实际上我们输入URL后，我们的浏览器给Web服务器发送了一个Request, Web服">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/httprequest.png">
-<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/httpresponse.png">
-<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/getheader.png">
-<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/postheader.png">
-<meta property="og:updated_time" content="2017-03-31T08:11:07.000Z">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/http/httprequest.png">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/http/httpresponse.png">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/http/getheader.png">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/http/postheader.png">
+<meta property="og:updated_time" content="2019-02-15T03:17:14.951Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="HTTP协议学习笔记">
 <meta name="twitter:description" content="什么是HTTP协议协议是指计算机通信网络中两台计算机之间进行通信所必须共同遵守的规定或规则，超文本传输协议(HTTP)是一种通信协议，它允许将超文本标记语言(HTML)文档从Web服务器传送到客户端的浏览器 客户端和服务器如何通信呢当我们打开浏览器，在地址栏中输入URL，然后我们就看到了网页。 原理是怎样的呢？ 实际上我们输入URL后，我们的浏览器给Web服务器发送了一个Request, Web服">
-<meta name="twitter:image" content="http://ofy1hyquv.bkt.clouddn.com/httprequest.png">
+<meta name="twitter:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/http/httprequest.png">
 
 
 
@@ -312,10 +312,10 @@
 <li><p>等所有的文件都下载成功后。 网页就被显示出来了。</p>
 </li>
 </ol>
-<h3 id="HTTP消息的结构"><a href="#HTTP消息的结构" class="headerlink" title="HTTP消息的结构"></a>HTTP消息的结构</h3><h4 id="Request消息的结构"><a href="#Request消息的结构" class="headerlink" title="Request消息的结构"></a>Request消息的结构</h4><p> Request 消息分为3部分，第一部分叫Request line, 第二部分叫Request header, 第三部分是body. header和body之间有个空行， 结构如下图<br> <img src="http://ofy1hyquv.bkt.clouddn.com/httprequest.png" alt=""></p>
+<h3 id="HTTP消息的结构"><a href="#HTTP消息的结构" class="headerlink" title="HTTP消息的结构"></a>HTTP消息的结构</h3><h4 id="Request消息的结构"><a href="#Request消息的结构" class="headerlink" title="Request消息的结构"></a>Request消息的结构</h4><p> Request 消息分为3部分，第一部分叫Request line, 第二部分叫Request header, 第三部分是body. header和body之间有个空行， 结构如下图<br> <img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/http/httprequest.png" alt=""></p>
 <p> 第一行中的Method表示请求方法,比如”POST”,”GET”,  Path-to-resoure表示请求的资源， Http/version-number 表示HTTP协议的版本号</p>
 <p>当使用的是”GET” 方法的时候， body是为空的.</p>
-<h4 id="Response消息结构"><a href="#Response消息结构" class="headerlink" title="Response消息结构"></a>Response消息结构</h4><p>和Request消息的结构基本一样。 同样也分为三部分,第一部分叫Response line, 第二部分叫Response header，第三部分是body. header和body之间也有个空行,  结构如下图<br><img src="http://ofy1hyquv.bkt.clouddn.com/httpresponse.png" alt=""></p>
+<h4 id="Response消息结构"><a href="#Response消息结构" class="headerlink" title="Response消息结构"></a>Response消息结构</h4><p>和Request消息的结构基本一样。 同样也分为三部分,第一部分叫Response line, 第二部分叫Response header，第三部分是body. header和body之间也有个空行,  结构如下图<br><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/http/httpresponse.png" alt=""></p>
 <p>HTTP/version-number表示HTTP协议的版本号，  status-code 和message 请看下节[状态代码]的详细解释.</p>
 <h3 id="Get和Post方法的区别"><a href="#Get和Post方法的区别" class="headerlink" title="Get和Post方法的区别"></a>Get和Post方法的区别</h3><p>Http协议定义了很多与服务器交互的方法，最基本的有4种，分别是GET,POST,PUT,DELETE. 一个URL地址用于描述一个网络上的资源，而HTTP中的GET, POST, PUT, DELETE就对应着对这个资源的查，改，增，删4个操作。 我们最常见的就是GET和POST了。</p>
 <p>GET一般用于获取/查询资源信息，而POST一般用于更新资源信息.</p>
@@ -347,9 +347,9 @@
 <h5 id="500-Internal-Server-Error"><a href="#500-Internal-Server-Error" class="headerlink" title="500 Internal Server Error"></a>500 Internal Server Error</h5><p>服务器发生了不可预期的错误</p>
 <h5 id="503-Server-Unavailable"><a href="#503-Server-Unavailable" class="headerlink" title="503 Server Unavailable"></a>503 Server Unavailable</h5><p>服务器当前不能处理客户端的请求，一段时间后可能恢复正常</p>
 <h3 id="HTTP-Request-header"><a href="#HTTP-Request-header" class="headerlink" title="HTTP Request header"></a>HTTP Request header</h3><p>get请求：</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/getheader.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/http/getheader.png" alt=""></p>
 <p>post请求:</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/postheader.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/http/postheader.png" alt=""></p>
 <h4 id="Cache-头域"><a href="#Cache-头域" class="headerlink" title="Cache 头域"></a>Cache 头域</h4><p>这个好像只在web中使用</p>
 <h5 id="If-Modified-Since"><a href="#If-Modified-Since" class="headerlink" title="If-Modified-Since"></a>If-Modified-Since</h5><p>作用： 把浏览器端缓存页面的最后修改时间发送到服务器去，服务器会把这个时间与服务器上实际文件的最后修改时间进行对比。如果时间一致，那么返回304，客户端就直接使用本地缓存文件。如果时间不一致，就会返回200和新的文件内容。客户端接到之后，会丢弃旧文件，把新文件缓存起来，并显示在浏览器中.</p>
 <h5 id="If-None-Match"><a href="#If-None-Match" class="headerlink" title="If-None-Match"></a>If-None-Match</h5><p>作用: If-None-Match和ETag一起工作，工作原理是在HTTP Response中添加ETag信息。 当用户再次请求该资源时，将在HTTP Request 中加入If-None-Match信息(ETag的值)。如果服务器验证资源的ETag没有改变（该资源没有更新），将返回一个304状态告诉客户端使用本地缓存文件。否则将返回200状态和新的资源和Etag.  使用这样的机制将提高网站的性能</p>
