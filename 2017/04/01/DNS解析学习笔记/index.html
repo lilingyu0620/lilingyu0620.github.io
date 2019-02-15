@@ -91,13 +91,13 @@
 <meta property="og:site_name" content="lly&#39;s Blog">
 <meta property="og:description" content="什么是域名解析Internet上的计算机是通过IP地址来定位的，给出一个IP地址，就可以找到Internet上的某台主机。而因为IP地址难于记忆，又发明了域名来代替IP地址。但通过域名并不能直接找到要访问的主机，中间要加一个从域名查找IP地址的过程，这个过程就是域名解析。 负责将域名解析成为IP地址的服务器，叫做域名解析服务器，英文简称是DNS。Internet上所有的DNS通过域的层次关系连接在">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/dnsflow.jpg">
-<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/dnssearchflow.jpg">
-<meta property="og:updated_time" content="2017-04-02T11:01:55.000Z">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/dns/dnsflow.jpg">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/dns/dnssearchflow.jpg">
+<meta property="og:updated_time" content="2019-02-15T08:56:00.272Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="DNS解析学习笔记">
 <meta name="twitter:description" content="什么是域名解析Internet上的计算机是通过IP地址来定位的，给出一个IP地址，就可以找到Internet上的某台主机。而因为IP地址难于记忆，又发明了域名来代替IP地址。但通过域名并不能直接找到要访问的主机，中间要加一个从域名查找IP地址的过程，这个过程就是域名解析。 负责将域名解析成为IP地址的服务器，叫做域名解析服务器，英文简称是DNS。Internet上所有的DNS通过域的层次关系连接在">
-<meta name="twitter:image" content="http://ofy1hyquv.bkt.clouddn.com/dnsflow.jpg">
+<meta name="twitter:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/dns/dnsflow.jpg">
 
 
 
@@ -293,8 +293,8 @@
 <p>A记录是什么意思呢，就是记录一个IP地址和一个主机名字，比如我这个域名服务器所在的域test.google.com，我们知道这是一个二级的域名，然后我在里面有一条A记录,记录了主机为lly的IP，查到了就返回给你了。</p>
 <p>如果我现在要想google.com这个域名服务器查询lly.test.google.com，那么这个顶级域名服务器就会发现你请求的这个网址在test.google.com这个域中，我这里记录了这个二级域的域名服务器test.google.com的NS的IP。我返回给你这个地址你再去查主机名为lly的主机。</p>
 <h3 id="DNS解析原理"><a href="#DNS解析原理" class="headerlink" title="DNS解析原理"></a>DNS解析原理</h3><p>DNS解析主要有递归查询，就是在某个DNS服务器缓存中查找不到相应的域名与IP地址对应关系时，自动跳转到到下一步骤通过下一个DNS服务器进行查找。具体可见如下两图：</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/dnsflow.jpg" alt=""></p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/dnssearchflow.jpg" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/dns/dnsflow.jpg" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/dns/dnssearchflow.jpg" alt=""></p>
 <h3 id="DNS解析过程"><a href="#DNS解析过程" class="headerlink" title="DNS解析过程"></a>DNS解析过程</h3><p>以下步骤中，当DNS缓存中存在域名对应IP时则DNS解析成功，用户计算机将直接访问服务器，若DNS服务器缓存中不存在域名对应IP，则自动进入下一步。</p>
 <ul>
 <li>浏览器缓存</li>
