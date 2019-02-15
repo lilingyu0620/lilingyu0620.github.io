@@ -91,12 +91,12 @@
 <meta property="og:site_name" content="lly&#39;s Blog">
 <meta property="og:description" content="动态消息解析你可以动态地提供一个方法的实现。例如我们可以用@dynamic关键字在类的实现文件中修饰一个属性： 1@dynamic propertyName; 这表明我们会为这个属性动态提供存取方法，也就是说编译器不会再默认为我们生成setPropertyName:和propertyName方法，而需要我们自己实现或者动态提供。 我们可以通过分别重载resolveInstanceMethod:和r">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/runtimemessageforward.jpg">
-<meta property="og:updated_time" content="2017-04-01T06:54:30.000Z">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/runtime/runtimemessageforward.jpg">
+<meta property="og:updated_time" content="2019-02-15T06:22:50.231Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="iOS Runtime-动态消息解析和消息转发机制">
 <meta name="twitter:description" content="动态消息解析你可以动态地提供一个方法的实现。例如我们可以用@dynamic关键字在类的实现文件中修饰一个属性： 1@dynamic propertyName; 这表明我们会为这个属性动态提供存取方法，也就是说编译器不会再默认为我们生成setPropertyName:和propertyName方法，而需要我们自己实现或者动态提供。 我们可以通过分别重载resolveInstanceMethod:和r">
-<meta name="twitter:image" content="http://ofy1hyquv.bkt.clouddn.com/runtimemessageforward.jpg">
+<meta name="twitter:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/runtime/runtimemessageforward.jpg">
 
 
 
@@ -295,7 +295,7 @@
 <li><p>当 self 为类对象时，[self class] 返回值为自身，还是 self。object_getClass(self) 与 object_getClass([self class]) 等价。</p>
 </li>
 </ul>
-<h3 id="消息转发"><a href="#消息转发" class="headerlink" title="消息转发"></a>消息转发</h3><p><img src="http://ofy1hyquv.bkt.clouddn.com/runtimemessageforward.jpg" alt=""></p>
+<h3 id="消息转发"><a href="#消息转发" class="headerlink" title="消息转发"></a>消息转发</h3><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/runtime/runtimemessageforward.jpg" alt=""></p>
 <h4 id="重定向"><a href="#重定向" class="headerlink" title="重定向"></a>重定向</h4><p>在消息转发机制执行前，Runtime 系统会再给我们一次偷梁换柱的机会，即通过重载- (id)forwardingTargetForSelector:(SEL)aSelector方法替换消息的接受者为其他对象：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">- (id)forwardingTargetForSelector:(SEL)aSelector</div><div class="line">&#123;</div><div class="line">    //如果代理对象能处理，则转接给代理对象</div><div class="line">    if ([proxyObj respondsToSelector:aSelector]) &#123;</div><div class="line">        return proxyObj;</div><div class="line">    &#125;</div><div class="line">    //不能处理进入转发流程</div><div class="line">    return nil;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>毕竟消息转发要耗费更多时间，抓住这次机会将消息重定向给别人是个不错的选择。 如果此方法返回nil或self,则会进入消息转发机制(forwardInvocation:);否则将向返回的对象重新发送消息。</p>
