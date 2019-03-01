@@ -782,7 +782,7 @@
 <li>如何自定义</li>
 </ul>
 <h3 id="庖丁解🐂"><a href="#庖丁解🐂" class="headerlink" title="庖丁解🐂"></a>庖丁解🐂</h3><p>一个Runloop接收2中不同类型的sources.<strong>Input source</strong> 发送异步事件，一般是来自其他线程或者是其他应用的；<strong>Timer source</strong>发送同步事件，会在预设好的时间或者重复间隔内触发。这2种source都会通过特殊的处理程序处理事件。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/runloop002.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Runloop/runloop001.png" alt=""></p>
 <p>Input source发送异步事件，这种source runloop在处理的时候会调用runUnitlDate：方法开启一个runloop,并且在运行date时间后退出。Timer source则不会使runloop退出。</p>
 <p>在处理input source时，runloops 也会生成相关的通知，你可以注册成为观察者在当前线程来处理其他时间。</p>
 <p>#####（补充） runloop 的运行方式</p>
@@ -798,7 +798,7 @@
 <h4 id="Modes"><a href="#Modes" class="headerlink" title="Modes"></a>Modes</h4><p>一个runloop mode是input source和timer sources的集合，同时包含一个runloop观察者的合集。每次运行一个runloop时，需要指定一个特别的mode。在runloop 运行的过程中，只有和这个mode相关联source才能发送事件（同样，只有和这个mode关联的观察者才能收到通知）。关联了其他mode的source会被暂停一切新事件的发送直到runloop运行在该mode上。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">struct __CFRunLoopMode &#123;</div><div class="line">    CFStringRef _name;            // Mode Name, 例如 @&quot;kCFRunLoopDefaultMode&quot;</div><div class="line">    CFMutableSetRef _sources0;    // Set</div><div class="line">    CFMutableSetRef _sources1;    // Set</div><div class="line">    CFMutableArrayRef _observers; // Array</div><div class="line">    CFMutableArrayRef _timers;    // Array</div><div class="line">    ...</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
 <p>modes通过name来区分，可用通过指定mode的name来自定义一个mode,虽然name在自定义的时候可以任意指定，但是其他内容却不行，当你自定义一个mode的时候，必须添加一个或者多个source(input source 或 timer source) ,或者观察者。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/runloop003.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Runloop/runloop003.png" alt=""></p>
 <h4 id="Input-Sources"><a href="#Input-Sources" class="headerlink" title="Input Sources"></a>Input Sources</h4><p>Input sources 给线程发送异步事件，事件的类型和input source的类型相关。一般有2种:<strong>Port-based input sources 用来监控Mach ports</strong>和<strong>自定义 input sources 用来监控自定义事件</strong>。2者的唯一不同在于如何发送信号：Port-based input sources是kernel内核自动发送信号；自定义 input sources是从其他线程手动发送信号。</p>
 <h5 id="Port-Based-Sources"><a href="#Port-Based-Sources" class="headerlink" title="Port-Based Sources"></a>Port-Based Sources</h5><ul>
 <li>NSMachPort</li>
@@ -813,10 +813,10 @@
 <li>一个处理程序例程来执行任何客户端的发送请求</li>
 <li>取消程序</li>
 </ul>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/runloop004.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Runloop/runloop004.png" alt=""></p>
 <h5 id="Cocoa-Perform-Selector-Sources"><a href="#Cocoa-Perform-Selector-Sources" class="headerlink" title="Cocoa Perform Selector Sources"></a>Cocoa Perform Selector Sources</h5><p>Perform Selector Sources 在执行完以后会从runloop的mode中移除。</p>
 <p>当调用这个方法时，target线程必须包含一个活跃的runloop，runloop会在一次loop中处理所有的排队Perform事件而不是只处理一个。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/runloop005.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Runloop/runloop005.png" alt=""></p>
 <h4 id="Timer-Sources"><a href="#Timer-Sources" class="headerlink" title="Timer Sources"></a>Timer Sources</h4><p>timer需要关联一个mode，如果timer不在当前活动的mode上，则不会被触发。如果timer所在的mode执行过程中被切换，则该timer也不会暂停直到mode重新切换回来，这就决定了NSTimer的触发并不是十分可靠的。</p>
 <h4 id="Run-Loop-Observers"><a href="#Run-Loop-Observers" class="headerlink" title="Run Loop Observers"></a>Run Loop Observers</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"> /* Run Loop Observer Activities */</div><div class="line">typedef CF_OPTIONS(CFOptionFlags, CFRunLoopActivity) &#123;</div><div class="line">    kCFRunLoopEntry = (1UL &lt;&lt; 0),// 即将进入Loop  0x1</div><div class="line">    kCFRunLoopBeforeTimers = (1UL &lt;&lt; 1),// 即将处理 Timer </div><div class="line">    kCFRunLoopBeforeSources = (1UL &lt;&lt; 2),// 即将处理 Source </div><div class="line">    kCFRunLoopBeforeWaiting = (1UL &lt;&lt; 5),// 即将进入休眠 0x20</div><div class="line">    kCFRunLoopAfterWaiting = (1UL &lt;&lt; 6),// 刚从休眠中唤醒 </div><div class="line">    </div><div class="line">    kCFRunLoopExit = (1UL &lt;&lt; 7),// 即将退出Loop </div><div class="line">    </div><div class="line">    kCFRunLoopAllActivities = 0x0FFFFFFFU</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
 <h4 id="Runloop使用场景"><a href="#Runloop使用场景" class="headerlink" title="Runloop使用场景"></a>Runloop使用场景</h4><ul>
@@ -998,34 +998,34 @@
       
         
           
-            <h3 id="h-256与h-264的对比"><a href="#h-256与h-264的对比" class="headerlink" title="h.256与h.264的对比"></a>h.256与h.264的对比</h3><h4 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/h265001.png" alt=""></p>
-<h4 id="h-264的技术局限在哪里？"><a href="#h-264的技术局限在哪里？" class="headerlink" title="h.264的技术局限在哪里？"></a>h.264的技术局限在哪里？</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/h265002.png" alt=""></p>
-<h4 id="h-265的优势在哪里"><a href="#h-265的优势在哪里" class="headerlink" title="h.265的优势在哪里"></a>h.265的优势在哪里</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/h265003.png" alt=""></p>
-<h4 id="h-265关键技术"><a href="#h-265关键技术" class="headerlink" title="h.265关键技术"></a>h.265关键技术</h4><h5 id="四叉树编码结构"><a href="#四叉树编码结构" class="headerlink" title="四叉树编码结构"></a>四叉树编码结构</h5><p><img src="http://ofy1hyquv.bkt.clouddn.com/h265004.png" alt=""></p>
+            <h3 id="h-256与h-264的对比"><a href="#h-256与h-264的对比" class="headerlink" title="h.256与h.264的对比"></a>h.256与h.264的对比</h3><h4 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h4><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/h-256与h-264的对比/h265001.png" alt=""></p>
+<h4 id="h-264的技术局限在哪里？"><a href="#h-264的技术局限在哪里？" class="headerlink" title="h.264的技术局限在哪里？"></a>h.264的技术局限在哪里？</h4><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/h-256与h-264的对比/h265002.png" alt=""></p>
+<h4 id="h-265的优势在哪里"><a href="#h-265的优势在哪里" class="headerlink" title="h.265的优势在哪里"></a>h.265的优势在哪里</h4><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/h-256与h-264的对比/h265003.png" alt=""></p>
+<h4 id="h-265关键技术"><a href="#h-265关键技术" class="headerlink" title="h.265关键技术"></a>h.265关键技术</h4><h5 id="四叉树编码结构"><a href="#四叉树编码结构" class="headerlink" title="四叉树编码结构"></a>四叉树编码结构</h5><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/h-256与h-264的对比/h265004.png" alt=""></p>
 <ul>
 <li>宏块的划分方式：</li>
 </ul>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/h265005.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/h-256与h-264的对比/h265005.png" alt=""></p>
 <ul>
 <li>四叉树结构</li>
 </ul>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/h265006.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/h-256与h-264的对比/h265006.png" alt=""></p>
 <ul>
 <li>实例</li>
 </ul>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/h265007.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/h-256与h-264的对比/h265007.png" alt=""></p>
 <h5 id="帧内和帧间预测"><a href="#帧内和帧间预测" class="headerlink" title="帧内和帧间预测"></a>帧内和帧间预测</h5><ul>
 <li>帧内预测</li>
 </ul>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/h265008.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/h-256与h-264的对比/h265008.png" alt=""></p>
 <ul>
 <li>帧间预测</li>
 </ul>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/h265009.png" alt=""></p>
-<h5 id="环路滤波"><a href="#环路滤波" class="headerlink" title="环路滤波"></a>环路滤波</h5><p><img src="http://ofy1hyquv.bkt.clouddn.com/h265010.png" alt=""></p>
-<h5 id="熵编码"><a href="#熵编码" class="headerlink" title="熵编码"></a>熵编码</h5><p><img src="http://ofy1hyquv.bkt.clouddn.com/h265011.png" alt=""></p>
-<h5 id="细粒度slice分块边界"><a href="#细粒度slice分块边界" class="headerlink" title="细粒度slice分块边界"></a>细粒度slice分块边界</h5><p><img src="http://ofy1hyquv.bkt.clouddn.com/h265012.png" alt=""></p>
-<h4 id="h-264与h-265数据比对"><a href="#h-264与h-265数据比对" class="headerlink" title="h.264与h.265数据比对"></a>h.264与h.265数据比对</h4><p><img src="http://ofy1hyquv.bkt.clouddn.com/h265013.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/h-256与h-264的对比/h265009.png" alt=""></p>
+<h5 id="环路滤波"><a href="#环路滤波" class="headerlink" title="环路滤波"></a>环路滤波</h5><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/h-256与h-264的对比/h265010.png" alt=""></p>
+<h5 id="熵编码"><a href="#熵编码" class="headerlink" title="熵编码"></a>熵编码</h5><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/h-256与h-264的对比/h265011.png" alt=""></p>
+<h5 id="细粒度slice分块边界"><a href="#细粒度slice分块边界" class="headerlink" title="细粒度slice分块边界"></a>细粒度slice分块边界</h5><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/h-256与h-264的对比/h265012.png" alt=""></p>
+<h4 id="h-264与h-265数据比对"><a href="#h-264与h-265数据比对" class="headerlink" title="h.264与h.265数据比对"></a>h.264与h.265数据比对</h4><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/h-256与h-264的对比/h265013.png" alt=""></p>
 
           
         
@@ -1133,7 +1133,7 @@
 </li>
 <li><p>使用 HTTP 协议网络兼容性好， HTTP 数据包也可以方便地通过防火墙或者代理服务器，CDN 支持良好。</p>
 </li>
-<li><p>自带多码率自适应，Apple 在提出 HLS 时，就已经考虑了码流自适应的问题。</p>
+<li><p>自带多码率自适应，Apple 在提出 HLS 时，就已经考虑了码率自适应的问题。</p>
 </li>
 </ul>
 <h4 id="HLS-的劣势"><a href="#HLS-的劣势" class="headerlink" title="HLS 的劣势"></a>HLS 的劣势</h4><ul>
@@ -1142,12 +1142,12 @@
 <li><p>对于点播服务来说，由于 TS 切片通常较小，海量碎片在文件分发、一致性缓存、存储等方面都有较大挑战。</p>
 </li>
 </ul>
-<h3 id="协议详解"><a href="#协议详解" class="headerlink" title="协议详解"></a>协议详解</h3><p><img src="http://ofy1hyquv.bkt.clouddn.com/hls01.png" alt=""></p>
+<h3 id="协议详解"><a href="#协议详解" class="headerlink" title="协议详解"></a>协议详解</h3><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/hls01.png" alt=""></p>
 <p>上图可以看出，HLS总共有三个部分: Serve、CDN、Client。HLS 协议的主要内容是关于 M3U8 这个文本协议，其实生成与解析都非常简单，示例如下：</p>
 <p>简单的Media Playlist:</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/hls02.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/hls02.png" alt=""></p>
 <p>包含多种比特率的 Master Playlist:</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/hls03.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/hls03.png" alt=""></p>
 <ul>
 <li>HLS 通过 URI(RFC3986) 指向的一个 Playlist 来表示一个媒体流.</li>
 <li>一个 Playlist 可以是一个 Media Playlist 或者 Master Playlist, 使用 UTF-8 编码的文本文件, 包含一些 URI 跟描述性的 tags.</li>
@@ -1270,24 +1270,24 @@
 <li>pes(PacketElementalStream)在音视频数据（ts）上加了时间戳等数据说明信息</li>
 <li>es(ElementaryStream)在（pes）上加入数据流的识别和传输必须信息</li>
 </ul>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/hlsts.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/hlsts.png" alt=""></p>
 <p>下面来分析一下每一层具体的格式。</p>
 <h4 id="ts-TransportStream"><a href="#ts-TransportStream" class="headerlink" title="ts(TransportStream)"></a>ts(TransportStream)</h4><p>ts数据大小固定为188个字节，ts又分为三个组成部分，分别是 <strong>ts header</strong>,<strong>adaptation field</strong>和<strong>payload</strong>.<br>其中ts header固定为4个字节，adaptation field可能存在也可能不存在，主要作用是给不足188字节的数据做填充，payload是pes数据。</p>
 <h5 id="ts-header"><a href="#ts-header" class="headerlink" title="ts header"></a>ts header</h5><p>ts header中包含一下字段：</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/hlstsheader.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/hlstsheader.png" alt=""></p>
 <p>ts层的内容是通过<strong>pid</strong>值来标识的，主要内容包括：PAT表、PMT表、音频流、视频流。解析ts流要先找到PAT表，只要找到PAT就可以找到PMT，然后就可以找到音视频流了。<strong>PAT表的pid值固定为0</strong>。PAT表和PMT表需要定期插入ts流，因为用户随时可能加入ts流，这个间隔比较小，通常每隔几个视频帧就要加入PAT和PMT。PAT和PMT表是必须的，还可以加入其它表如SDT（业务描述表）等，不过hls流只要有PAT和PMT就可以播放了。</p>
-<h5 id="adaptation-field"><a href="#adaptation-field" class="headerlink" title="adaptation field"></a>adaptation field</h5><p><img src="http://ofy1hyquv.bkt.clouddn.com/tsadaptation.png" alt=""></p>
+<h5 id="adaptation-field"><a href="#adaptation-field" class="headerlink" title="adaptation field"></a>adaptation field</h5><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/tsadaptation.png" alt=""></p>
 <p>自适应区的长度要包含传输错误指示符标识的一个字节。pcr是节目时钟参考，pcr、dts、pts都是对同一个系统时钟的采样值，pcr是递增的，因此可以将其设置为dts值，音频数据不需要pcr。如果没有字段，ipad是可以播放的，但vlc无法播放。打包ts流时PAT和PMT表是没有adaptation field的，不够的长度直接补0xff即可。视频流和音频流都需要加adaptation field，通常加在一个帧的第一个ts包和最后一个ts包里，中间的ts包不加。</p>
 <h5 id="PAT-amp-PMT"><a href="#PAT-amp-PMT" class="headerlink" title="PAT &amp; PMT"></a>PAT &amp; PMT</h5><p>这2个类型都是ts的一种，通过pid来区分。</p>
 <p><strong>PAT主要的作用就是指明了PMT表的pid值</strong>，下图是PAT包含的字段：</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/tspat.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/tspat.png" alt=""></p>
 <p><strong>PMT主要的作用就是指明了音视频流的pid值</strong>，下图是PMT包含的字段：</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/tspmt.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/tspmt.png" alt=""></p>
 <h4 id="pes-PacketElementalStream"><a href="#pes-PacketElementalStream" class="headerlink" title="pes(PacketElementalStream)"></a>pes(PacketElementalStream)</h4><p>pes层是在每一个视频/音频帧上加入了时间戳等信息，pes包内容很多，我们只留下最常用的字段，如下：</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/hlspes.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/hlspes.png" alt=""></p>
 <p><strong>pts是显示时间戳</strong>、<strong>dts是解码时间戳</strong>，视频数据两种时间戳都需要，音频数据的pts和dts相同，所以只需要pts。<strong>有pts和dts两种时间戳是B帧引起的</strong>，I帧和P帧的pts等于dts。如果一个视频没有B帧，则pts永远和dts相同。从文件中顺序读取视频帧，取出的帧顺序和dts顺序相同。dts算法比较简单，初始值 + 增量即可，pts计算比较复杂，需要在dts的基础上加偏移量。</p>
 <p>音频的pes中只有pts（同dts），视频的I、P帧两种时间戳都要有，视频B帧只要pts（同dts）。打包pts和dts就需要知道视频帧类型，但是通过容器格式我们是无法判断帧类型的，必须解析h.264内容才可以获取帧类型。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/ptsdts.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/ptsdts.png" alt=""></p>
 <p>点播视频dts算法：</p>
 <p>dts = 初始值 + 90000 / video_frame_rate，初始值可以随便指定，但是最好不要取0，video_frame_rate就是帧率，比如23、30。</p>
 <p>pts和dts是以timescale为单位的，1s = 90000 time scale , 一帧就应该是90000/video_frame_rate 个timescale。</p>

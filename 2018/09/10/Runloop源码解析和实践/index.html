@@ -91,17 +91,17 @@
 <meta property="og:site_name" content="lly&#39;s Blog">
 <meta property="og:description" content="RunLoop是干啥的官翻： Run loops是与线程相关的基础设施的一部分，一个Runloop就是一个事件处理的循环。Runloop的目标是让线程在有事情做的时候保持忙碌、没有事情做的时候保持睡眠。 疑问？？？ Runloop的运行机制 Runloop是如何唤醒和睡眠线程的，与线程到底是什么关系 Runloop的Source、Timer、Observer和Mode与Runloop到底是什么关系">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/runloop002.png">
-<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/runloop003.png">
-<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/runloop004.png">
-<meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/runloop005.png">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Runloop/runloop001.png">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Runloop/runloop003.png">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Runloop/runloop004.png">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Runloop/runloop005.png">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/runloop007.png">
 <meta property="og:image" content="http://ofy1hyquv.bkt.clouddn.com/runloop008.png">
-<meta property="og:updated_time" content="2018-09-14T03:15:13.406Z">
+<meta property="og:updated_time" content="2019-03-01T08:18:59.065Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Runloop源码解析和实践">
 <meta name="twitter:description" content="RunLoop是干啥的官翻： Run loops是与线程相关的基础设施的一部分，一个Runloop就是一个事件处理的循环。Runloop的目标是让线程在有事情做的时候保持忙碌、没有事情做的时候保持睡眠。 疑问？？？ Runloop的运行机制 Runloop是如何唤醒和睡眠线程的，与线程到底是什么关系 Runloop的Source、Timer、Observer和Mode与Runloop到底是什么关系">
-<meta name="twitter:image" content="http://ofy1hyquv.bkt.clouddn.com/runloop002.png">
+<meta name="twitter:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Runloop/runloop001.png">
 
 
 
@@ -290,7 +290,7 @@
 <li>如何自定义</li>
 </ul>
 <h3 id="庖丁解🐂"><a href="#庖丁解🐂" class="headerlink" title="庖丁解🐂"></a>庖丁解🐂</h3><p>一个Runloop接收2中不同类型的sources.<strong>Input source</strong> 发送异步事件，一般是来自其他线程或者是其他应用的；<strong>Timer source</strong>发送同步事件，会在预设好的时间或者重复间隔内触发。这2种source都会通过特殊的处理程序处理事件。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/runloop002.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Runloop/runloop001.png" alt=""></p>
 <p>Input source发送异步事件，这种source runloop在处理的时候会调用runUnitlDate：方法开启一个runloop,并且在运行date时间后退出。Timer source则不会使runloop退出。</p>
 <p>在处理input source时，runloops 也会生成相关的通知，你可以注册成为观察者在当前线程来处理其他时间。</p>
 <p>#####（补充） runloop 的运行方式</p>
@@ -306,7 +306,7 @@
 <h4 id="Modes"><a href="#Modes" class="headerlink" title="Modes"></a>Modes</h4><p>一个runloop mode是input source和timer sources的集合，同时包含一个runloop观察者的合集。每次运行一个runloop时，需要指定一个特别的mode。在runloop 运行的过程中，只有和这个mode相关联source才能发送事件（同样，只有和这个mode关联的观察者才能收到通知）。关联了其他mode的source会被暂停一切新事件的发送直到runloop运行在该mode上。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">struct __CFRunLoopMode &#123;</div><div class="line">    CFStringRef _name;            // Mode Name, 例如 @&quot;kCFRunLoopDefaultMode&quot;</div><div class="line">    CFMutableSetRef _sources0;    // Set</div><div class="line">    CFMutableSetRef _sources1;    // Set</div><div class="line">    CFMutableArrayRef _observers; // Array</div><div class="line">    CFMutableArrayRef _timers;    // Array</div><div class="line">    ...</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
 <p>modes通过name来区分，可用通过指定mode的name来自定义一个mode,虽然name在自定义的时候可以任意指定，但是其他内容却不行，当你自定义一个mode的时候，必须添加一个或者多个source(input source 或 timer source) ,或者观察者。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/runloop003.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Runloop/runloop003.png" alt=""></p>
 <h4 id="Input-Sources"><a href="#Input-Sources" class="headerlink" title="Input Sources"></a>Input Sources</h4><p>Input sources 给线程发送异步事件，事件的类型和input source的类型相关。一般有2种:<strong>Port-based input sources 用来监控Mach ports</strong>和<strong>自定义 input sources 用来监控自定义事件</strong>。2者的唯一不同在于如何发送信号：Port-based input sources是kernel内核自动发送信号；自定义 input sources是从其他线程手动发送信号。</p>
 <h5 id="Port-Based-Sources"><a href="#Port-Based-Sources" class="headerlink" title="Port-Based Sources"></a>Port-Based Sources</h5><ul>
 <li>NSMachPort</li>
@@ -321,10 +321,10 @@
 <li>一个处理程序例程来执行任何客户端的发送请求</li>
 <li>取消程序</li>
 </ul>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/runloop004.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Runloop/runloop004.png" alt=""></p>
 <h5 id="Cocoa-Perform-Selector-Sources"><a href="#Cocoa-Perform-Selector-Sources" class="headerlink" title="Cocoa Perform Selector Sources"></a>Cocoa Perform Selector Sources</h5><p>Perform Selector Sources 在执行完以后会从runloop的mode中移除。</p>
 <p>当调用这个方法时，target线程必须包含一个活跃的runloop，runloop会在一次loop中处理所有的排队Perform事件而不是只处理一个。</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/runloop005.png" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Runloop/runloop005.png" alt=""></p>
 <h4 id="Timer-Sources"><a href="#Timer-Sources" class="headerlink" title="Timer Sources"></a>Timer Sources</h4><p>timer需要关联一个mode，如果timer不在当前活动的mode上，则不会被触发。如果timer所在的mode执行过程中被切换，则该timer也不会暂停直到mode重新切换回来，这就决定了NSTimer的触发并不是十分可靠的。</p>
 <h4 id="Run-Loop-Observers"><a href="#Run-Loop-Observers" class="headerlink" title="Run Loop Observers"></a>Run Loop Observers</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"> /* Run Loop Observer Activities */</div><div class="line">typedef CF_OPTIONS(CFOptionFlags, CFRunLoopActivity) &#123;</div><div class="line">    kCFRunLoopEntry = (1UL &lt;&lt; 0),// 即将进入Loop  0x1</div><div class="line">    kCFRunLoopBeforeTimers = (1UL &lt;&lt; 1),// 即将处理 Timer </div><div class="line">    kCFRunLoopBeforeSources = (1UL &lt;&lt; 2),// 即将处理 Source </div><div class="line">    kCFRunLoopBeforeWaiting = (1UL &lt;&lt; 5),// 即将进入休眠 0x20</div><div class="line">    kCFRunLoopAfterWaiting = (1UL &lt;&lt; 6),// 刚从休眠中唤醒 </div><div class="line">    </div><div class="line">    kCFRunLoopExit = (1UL &lt;&lt; 7),// 即将退出Loop </div><div class="line">    </div><div class="line">    kCFRunLoopAllActivities = 0x0FFFFFFFU</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
 <h4 id="Runloop使用场景"><a href="#Runloop使用场景" class="headerlink" title="Runloop使用场景"></a>Runloop使用场景</h4><ul>
