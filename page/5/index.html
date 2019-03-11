@@ -229,6 +229,175 @@
             
               
                 
+                <a class="post-title-link" href="/2016/12/08/iOS并发编程指南/" itemprop="url">
+                  iOS并发编程指南
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-12-08T10:04:02+08:00" content="2016-12-08">
+              2016-12-08
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/12/08/iOS并发编程指南/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/12/08/iOS并发编程指南/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>最近又看了下官方关于并发编程的文档，简单做一下总结。</p>
+<h2 id="并发和程序设计"><a href="#并发和程序设计" class="headerlink" title="并发和程序设计"></a>并发和程序设计</h2><h3 id="并发编程的几个概念："><a href="#并发编程的几个概念：" class="headerlink" title="并发编程的几个概念："></a>并发编程的几个概念：</h3><p>-</p>
+<p>并发：并发表示同时发生多件事情的概念</p>
+<p>并行：并行是多个任务同时发生并且同时运行直到结束</p>
+<p>-</p>
+<p>同步：同步指函数运行时会阻塞当前线程一直运行结束</p>
+<p>异步：异步指函数运行时不会阻塞当前线程</p>
+<p>-</p>
+<p>串行：当前队列中的任务是顺序执行的</p>
+<p>并行: 当前队列中的任务是并发执行的，没有特定的顺序</p>
+<p>-</p>
+<h3 id="并发的优点和缺点"><a href="#并发的优点和缺点" class="headerlink" title="并发的优点和缺点"></a>并发的优点和缺点</h3><p>优点：</p>
+<pre><code>•    充分发挥多核处理器优势，将不同线程任务分配给不同的处理器，真正进入“并行运算”状态
+•    将耗时的任务分配到其他线程执行，由主线程负责统一更新界面会使应用程序更加流畅，用户体验更好
+•    当硬件处理器的数量增加，程序会运行更快，而程序无需做任何调整
+</code></pre><p>缺点：</p>
+<pre><code>增加了开销，并增加了整体的代码的复杂性，使得代码更难编写和调试
+</code></pre><p>使用并发编程之前，你应该分解出可执行的工作单元，并确定你需要的队列。</p>
+<h2 id="Operation-Queues"><a href="#Operation-Queues" class="headerlink" title="Operation Queues"></a>Operation Queues</h2><p>NSOperation是一个面向对象的方式来封装要异步执行的工作，被设计成结合操作队列(NSOperationQueue)使用，也可以自己单独使用</p>
+<p>子类：</p>
+<p>Target/Action 方式初始化</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">NSInvocationOperation *invocationOperation = [[NSInvocationOperation alloc] initWithTarget:self selector:@selector(doSomethingWithObj:) object:nil];</div></pre></td></tr></table></figure>
+<p>Block方式初始化</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">NSBlockOperation *blockOperation = [NSBlockOperation blockOperationWithBlock:^&#123;</div><div class="line">        //Do something here.</div><div class="line">    &#125;];</div></pre></td></tr></table></figure>
+<p>所有的NSOperation对象支持以下特性:</p>
+<p>1.设置依赖关系</p>
+<p>2.设置完成块</p>
+<p>3.使用KVO通知监听你的Operations执行状态改变</p>
+<p>4.设置优先级</p>
+<p>5.取消操作</p>
+<h3 id="自定义Operation（默认start为非并发）"><a href="#自定义Operation（默认start为非并发）" class="headerlink" title="自定义Operation（默认start为非并发）"></a>自定义Operation（默认start为非并发）</h3><p>1.继承NSOperation基类</p>
+<p>2.至少实现下面两个方法：</p>
+<p>initialization</p>
+<p>main</p>
+<p>3.其他可添加的方法</p>
+<p>自定义的在主函数调用的方法</p>
+<p>数据的存取方法</p>
+<p>NSCoding协议的方法</p>
+<h3 id="并发执行的配置操作"><a href="#并发执行的配置操作" class="headerlink" title="并发执行的配置操作"></a>并发执行的配置操作</h3><p>1.重写isConcurrent函数并返回YES</p>
+<p>2.重写start函数</p>
+<p>3.重写isExecuting和isFinished函数</p>
+<h3 id="NSOperation属性列表"><a href="#NSOperation属性列表" class="headerlink" title="NSOperation属性列表"></a>NSOperation属性列表</h3><p>isCancelled 是否取消</p>
+<p>isConcurrent 是否并发</p>
+<p>isExecuting 是否正在执行</p>
+<p>isFinished 是否已经完成</p>
+<p>isReady 是否准备好要执行</p>
+<p>dependencies(array) 依赖关系数组</p>
+<p>queuePriority 优先级</p>
+<p>completionBlock 完成块</p>
+<p>优先级:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">typedef NS_ENUM(NSInteger, NSOperationQueuePriority) &#123;</div><div class="line">	NSOperationQueuePriorityVeryLow = -8L,</div><div class="line">	NSOperationQueuePriorityLow = -4L,</div><div class="line">	NSOperationQueuePriorityNormal = 0,</div><div class="line">	NSOperationQueuePriorityHigh = 4,</div><div class="line">	NSOperationQueuePriorityVeryHigh = 8</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<h2 id="Dispatch-Queues"><a href="#Dispatch-Queues" class="headerlink" title="Dispatch Queues"></a>Dispatch Queues</h2><h3 id="串行队列-创建一个线程"><a href="#串行队列-创建一个线程" class="headerlink" title="串行队列(创建一个线程)"></a>串行队列(创建一个线程)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">dispatch_queue_t sQueue = dispatch_queue_create(&quot;这是串行队列&quot;, NULL);</div></pre></td></tr></table></figure>
+<h3 id="并发队列-创建多个线程"><a href="#并发队列-创建多个线程" class="headerlink" title="并发队列(创建多个线程)"></a>并发队列(创建多个线程)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">dispatch_queue_t cQueue = dispatch_queue_create(&quot;这是并发队列&quot;, DISPATCH_QUEUE_CONCURRENT);</div></pre></td></tr></table></figure>
+<h3 id="主队列"><a href="#主队列" class="headerlink" title="主队列"></a>主队列</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">dispatch_queue_t mQueue = dispatch_get_main_queue();</div></pre></td></tr></table></figure>
+<h3 id="后台队列"><a href="#后台队列" class="headerlink" title="后台队列"></a>后台队列</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">dispatch_queue_t gQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);</div><div class="line"></div><div class="line">#define DISPATCH_QUEUE_PRIORITY_HIGH 2</div><div class="line">#define DISPATCH_QUEUE_PRIORITY_DEFAULT 0</div><div class="line">#define DISPATCH_QUEUE_PRIORITY_LOW (-2)</div><div class="line">#define DISPATCH_QUEUE_PRIORITY_BACKGROUND INT16_MIN</div></pre></td></tr></table></figure>
+<h3 id="异步执行"><a href="#异步执行" class="headerlink" title="异步执行"></a>异步执行</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">dispatch_async(dispatch_queue_t queue, dispatch_block_t block);</div></pre></td></tr></table></figure>
+<h3 id="同步执行-不会开辟新的线程"><a href="#同步执行-不会开辟新的线程" class="headerlink" title="同步执行(不会开辟新的线程)"></a>同步执行(不会开辟新的线程)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">dispatch_sync(dispatch_queue_t queue, DISPATCH_NOESCAPE dispatch_block_t block);</div></pre></td></tr></table></figure>
+<p>以上可能有四种组合方式：</p>
+<p>dispatch_sync + 串行队列 （串行执行）</p>
+<p>dispatch_sync + 并发队列 （串行执行）</p>
+<p>dispatch_async + 串行队列 （串行执行）</p>
+<p>dispatch_async + 并发队列 （并行执行）</p>
+<h3 id="Dispatch-Group"><a href="#Dispatch-Group" class="headerlink" title="Dispatch Group"></a>Dispatch Group</h3><p>将多个任务放到这个组里面，可以在所有的任务都结束后得到一个回调。</p>
+<h3 id="dispatch-barrier-async-dispatch-queue-create"><a href="#dispatch-barrier-async-dispatch-queue-create" class="headerlink" title="dispatch_barrier_async + dispatch_queue_create()"></a>dispatch_barrier_async + dispatch_queue_create()</h3><p>使用时需要自己创建并发队列，不能使用后台队列。</p>
+<h3 id="dispatch-apply"><a href="#dispatch-apply" class="headerlink" title="dispatch_apply"></a>dispatch_apply</h3><p>和dispatch_sync一样，是同步运行的，会阻塞当前线程。</p>
+<h3 id="Dispatch-Semaphore"><a href="#Dispatch-Semaphore" class="headerlink" title="Dispatch Semaphore"></a>Dispatch Semaphore</h3><p>可以根据自己需要创建需要的signal数量，如果只创建一个则为串行执行。</p>
+<h2 id="注意"><a href="#注意" class="headerlink" title="注意"></a>注意</h2><p>循环引用</p>
+<p>死锁</p>
+<p>相关<a href="https://github.com/lilingyu0620/Concurrency-Programming-Guide.git" target="_blank" rel="noopener">demo</a></p>
+<h2 id="END"><a href="#END" class="headerlink" title="- END -"></a>- END -</h2>
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/11/28/App-Programming-Guide-for-iOS/" itemprop="url">
                   App Programming Guide for iOS
                 </a>
@@ -876,7 +1045,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">45</span>
+              <span class="site-state-item-count">46</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
