@@ -229,6 +229,130 @@
             
               
                 
+                <a class="post-title-link" href="/2019/04/04/一个网络请求的流程/" itemprop="url">
+                  一个网络请求的流程
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-04-04T17:36:44+08:00" content="2019-04-04">
+              2019-04-04
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2019/04/04/一个网络请求的流程/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2019/04/04/一个网络请求的流程/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>最新在看《计算机网络–自顶向下方法》，把从应用层到链路层的所有网络协议都重新学习了一遍。这里借用这个标题，来梳理一下相关协议的工作原理和流程，以及各层的协议之间是如何协同工作的。</p>
+<h3 id="首先-你得连上Internet吧"><a href="#首先-你得连上Internet吧" class="headerlink" title="首先 你得连上Internet吧"></a>首先 你得连上Internet吧</h3><p>当我们连接上一个路由器后，会得到一个ip地址，如果此时你的路由器已经连接到了ISP,那么恭喜你可以开始在网上🏄了。那么这个ip地址到底是咋分配到我们的机器的呢？！！！</p>
+<h4 id="DHCP-dynamic-host-configuration-protocol"><a href="#DHCP-dynamic-host-configuration-protocol" class="headerlink" title="DHCP(dynamic host configuration protocol)"></a>DHCP(dynamic host configuration protocol)</h4><p>动态主机配置协议，运行在网卡，路由器和交换机等网络设备上，主要用来分配ip地址。和其他协议类似，也是以报文的形式进行通信。</p>
+<p>当我们的主机发起一个网络连接请求时，DHCP协议会生成一个DHCP报文，并使用UDP传输协议进行传输，该UDP报文会包含一个组播ip(255.255.255.255)的目标地址,组播ip意味着该网段内所有设备都会收到这条UDP报文。此时因为本机还没有分配ip,所以源ip会是0.0.0.0。</p>
+<p>上面的UDP报文会被包在以太网帧中进行传输，该以太网帧的目的地址也是一个组播mac地址（FF.FF.FF.FF.FF.FF）,所以该帧会被网段内所有设备接收。而该帧的原地址即为本机的mac地址（比如 28:cf:e9:14:d1:0f 这是我的设备的mac地址）。</p>
+<p>路由器收到该以太网帧，一层层解析出DHCP报文，然后路由器决定分配一个ip地址给主机（10.236.142.22）,于是通过路由器上的DHCP服务器包装一个DHCP的响应报文，把包括了DNS服务器ip,路由器ip,子网掩码和分配给主机的ip一起发送给该主机。因为路由器已经知道了主机的mac地址，所以该报文会顺利的到达。</p>
+<p>主机网卡在收到DHCP ACK报文后，解析出相关的ip并配置好网络组件。至此，主机连接Internet成功。</p>
+<h3 id="只有域名是不可以的"><a href="#只有域名是不可以的" class="headerlink" title="只有域名是不可以的"></a>只有域名是不可以的</h3><p>连上Internet后，我们就可以上google了。于是我们在浏览器上输入www.google.com，也就是google的域名，不包括前面的www(www是一个网络应用，中文名叫万维网)。而google的主页应该是放在服务器上的，通过域名是如何访问到服务器上的google主页的呢?!!!</p>
+<h4 id="DNS-domain-name-system"><a href="#DNS-domain-name-system" class="headerlink" title="DNS(domain name system)"></a>DNS(domain name system)</h4><p>DNS主要用来查询域名对应的ip地址。和DHCP一样，DNS报文使用UDP进行传输。DNS报文将www.google.com放入报文段，然后组装成UDP报文，在上面的DHCP ACK中，已经拿到了DNS的ip,所以在组装ip报文的时候目的ip直接使用dns的ip,源ip则为主机的ip。</p>
+<p>之后，ip报文会被放到以太网帧中进行传输，想要将dns报文发送到dns服务器，首先第一个难题就是如何传送到所在网络的网关路由器，在上面的DHCP ACK报文中，已经拿到了网关路由器的ip了，但是ip只是作用在网络层，如果没有mac地址，链路层上是无法传输的。</p>
+<h4 id="ARP-address-resolution-protocol"><a href="#ARP-address-resolution-protocol" class="headerlink" title="ARP(address resolution protocol)"></a>ARP(address resolution protocol)</h4><p>地址解析协议，通过一个ip地址获取mac地址。ARP使用网关路由器的ip地址生成一个ARP查询报文，然后将该报文放到目标地址为(FF.FF.FF.FF.FF.FF)的以太网帧上，因为是广播地址，所以网关路由器顺利收到该帧，并生成一个ARP的回答报文，报文中带上了网关路由器的mac地址。然后将回答报文放到目的地址为主机mac地址的以太网帧中，这样，我们就顺利的拿到了网关路由器的mac地址。</p>
+<p>通过ARP,dns查询报文顺利的发送到了网关路由器。之后，又该何去何从？！！！</p>
+<h4 id="BGP-broder-gateway-protocol"><a href="#BGP-broder-gateway-protocol" class="headerlink" title="BGP(broder gateway protocol)"></a>BGP(broder gateway protocol)</h4><p>边界网关协议，AS(自治系统)之间的路由选择协议，BGP极其复杂，许多专著致力于研究该主题，它的基本工作流程是：</p>
+<ul>
+<li>从相邻AS处获取子网可达性信息</li>
+<li>向本AS内部的所有路由器传播这些可达性信息</li>
+<li>基于可达性信息和AS策略，决定到达子网的最优路由</li>
+</ul>
+<p>我们还得回到最上面的DHCP ACK中去，因为DNS的ip地址是这个报文给返回的，那么它又是如何生成该ip的呢。其实这个ip并不是它生成的，是ISP提供的。当路由器连接上ISP以后，对应的路由转发表会进行更新，所以dns的ip对应的转发接口已经存在于路由转发表中（根据BGP边界网关协议），至此，dns查询报文被发送到对应的dns服务器上。</p>
+<p>dns服务器接收到查询报文后，开始根据域名在缓存中查找对应的ip,如果缓存中没有找到，会去到ISP的权威dns服务器上查找，如何还找不到，会去到.com对应顶级dns服务器上查找，如果还是没有找到，会到跟域名服务器上查找，如果根域名上也没有找到，则返回查询失败。如果在其他dns服务器上成功找到对应的ip,该服务器会先缓存到本地，然后生成一个UDP的DNS回答报名，发送到对应的主机上，至此，我们终于拿到了google.com对应的ip地址。接下来我们要开始发送http的get请求了。</p>
+<h3 id="顺理成章的http请求"><a href="#顺理成章的http请求" class="headerlink" title="顺理成章的http请求"></a>顺理成章的http请求</h3><p>拿到ip后，http客户端会生成一个get请求，然后封装到tcp的报文中。tcp在进行数据传输前，会有一个三次握手的过程，握手成功后，get请求的报文成功被google的服务器接收，然后服务器通过url找到对应的资源，生成一个http的响应报文并封装在tcp的报文中，然后发送给客户端。</p>
+<p>因为已经建立了连接，所以响应报文不在需要握手的流程，客户端顺利收到响应报文，并解析出资源数据，将数据丢给浏览器进行显示（浏览器如何解析数据并渲染的流程不在这篇文章的讨论范围之内）。。。</p>
+<p>因为http并不是长链接（1.1以后才支持），所以在一个http请求结束后，客户端还是发起一个断开链接的操作，也称四次挥手的过程。至于断开连接为啥会比建立连接多一次握手过程，就留给读者自己去比较和分析吧。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>至此 一个完整的网络请求就总结完毕了，当然，这只是一个大概的流程总结，重点介绍和DHCP和链路层相关的几个协议，tcp和ip协议因为之前已经总结过所以这里只是一笔带过。如果想要了解得更为深入的话，当然推荐大家看一下《TCP/IP详解》系列书籍和我正在看的这本《计算机网络–自顶向下方法》书了。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2019/03/11/《架构整洁之道》学习笔记/" itemprop="url">
                   《架构整洁之道》学习笔记
                 </a>
@@ -2367,118 +2491,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/06/14/使用AudioQueue实现一个音频播放-二-边播边缓存/" itemprop="url">
-                  使用AudioQueue实现一个音频播放(二)--边播边缓存
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-06-14T16:01:06+08:00" content="2018-06-14">
-              2018-06-14
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2018/06/14/使用AudioQueue实现一个音频播放-二-边播边缓存/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/06/14/使用AudioQueue实现一个音频播放-二-边播边缓存/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><a href="http://llyblog.com/2018/05/07/使用AudioQueue实现一个音频播放器/" target="_blank" rel="noopener">前一篇文章</a>中介绍了使用AuidoQueue实现一个音频播放器的功能,最近我又把这个项目完善了一下，做了一个边播边缓存的功能。</p>
-<p>因为播放部分的逻辑我们已经完成，这里主要是怎么缓存数据的问题，实现之前我想到了2种方案。</p>
-<h3 id="方案一-在didReceiveDataBlock中缓存文件"><a href="#方案一-在didReceiveDataBlock中缓存文件" class="headerlink" title="方案一 在didReceiveDataBlock中缓存文件"></a>方案一 在didReceiveDataBlock中缓存文件</h3><p>直接在拿到音频数据进行播放的同时就将数据写入文件，这种方案的优点是实时性，播放过的音频数据都会被缓存起来，缺点就是缓存的文件可能并不是一个完整的音频，比如播了1分钟后seek到2分钟的地方继续播，中间1分钟的数据可能就没有收到，这就导致缓存的文件是有问题的，如果下次直接播这个本地文件可能就凉凉了。。。</p>
-<h3 id="方案二-在success的回调中缓存数据"><a href="#方案二-在success的回调中缓存数据" class="headerlink" title="方案二 在success的回调中缓存数据"></a>方案二 在success的回调中缓存数据</h3><p>在success中回调回来的数据就是完整的音频数据，缓存这个数据不会出现数据不完整的情况，但是这个回调并不是实时返回的，会在整个音频的数据都获取到以后才会返回，有一个延迟，如果网络不太好，可能直到音频播放完了才会返回。</p>
-<p>考虑到方案的可行性和数据的可用性，这里我选择了方案二，毕竟完整的数据比缓存的实时性更重要一些。当然，这个方案一我觉得还是有优化的空间，如果能够优化到保证了数据的完整性，会比方案二更优。</p>
-<h3 id="增加的模块"><a href="#增加的模块" class="headerlink" title="增加的模块"></a>增加的模块</h3><p>这里我增加了2个模块，一个是文件的操作模块，还有一个是网络模块。</p>
-<h4 id="LLYFileManager"><a href="#LLYFileManager" class="headerlink" title="LLYFileManager"></a>LLYFileManager</h4><p>文件操作模块是对音频数据的存储相关操作。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">@interface LLYFileManager : NSObject</div><div class="line"></div><div class="line">//网络地址转本地地址</div><div class="line">+ (NSString *)pathWithUrl:(NSString *)fileUrl;</div><div class="line">//将数据保存到本地目录下</div><div class="line">+ (BOOL)saveFileWithPath:(NSString *)path fileObject:(id)fileObject;</div><div class="line">//判断当前url对应的文件是否已经缓存</div><div class="line">+ (BOOL)isFileExit:(NSString *)url;</div><div class="line">//获取文件大小</div><div class="line">+ (unsigned long long)fileSizeWithFilePath:(NSString *)filePath;</div><div class="line"></div><div class="line">@end</div></pre></td></tr></table></figure>
-<h4 id="LLYHttpSessionManager"><a href="#LLYHttpSessionManager" class="headerlink" title="LLYHttpSessionManager"></a>LLYHttpSessionManager</h4><p>网络模块是基于AFNetworking做的一个二次封装<a href="http://llyblog.com/2018/06/14/AFNetworking学习笔记与实践/" target="_blank" rel="noopener">(参考这篇文章)</a>，主要就是请求音频数据。</p>
-<h3 id="播放优化"><a href="#播放优化" class="headerlink" title="播放优化"></a>播放优化</h3><p>在播放前，我们需判断一下当前url对应的文件是否已经下载到本地了，如果已经下载就直接播本地的文件，否则还是走网络播放的逻辑。</p>
-<p>这个判断逻辑我是这样处理的，先发送一个http head请求，拿到对应url文件的countOfBytesExpectedToReceive，然后将countOfBytesExpectedToReceive和本地文件大小（fileSize）进行比较，如果fileSize &gt;= contentExceptLength，则说明本地文件是完整的音频文件，可以直接播放，否则的话还是走网络播放的逻辑，并在success回调中覆盖之前的不完整文件。</p>
-<p><a href="https://github.com/lilingyu0620/LLYAudioPlayer.git" target="_blank" rel="noopener">我的demo</a></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2524,7 +2536,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">46</span>
+              <span class="site-state-item-count">47</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

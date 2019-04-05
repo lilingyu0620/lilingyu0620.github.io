@@ -1,0 +1,588 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="最新在看《计算机网络–自顶向下方法》，把从应用层到链路层的所有网络协议都重新学习了一遍。这里借用这个标题，来梳理一下相关协议的工作原理和流程，以及各层的协议之间是如何协同工作的。 首先 你得连上Internet吧当我们连接上一个路由器后，会得到一个ip地址，如果此时你的路由器已经连接到了ISP,那么恭喜你可以开始在网上🏄了。那么这个ip地址到底是咋分配到我们的机器的呢？！！！ DHCP(dyna">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一个网络请求的流程">
+<meta property="og:url" content="http://yoursite.com/2019/04/04/一个网络请求的流程/index.html">
+<meta property="og:site_name" content="lly&#39;s Blog">
+<meta property="og:description" content="最新在看《计算机网络–自顶向下方法》，把从应用层到链路层的所有网络协议都重新学习了一遍。这里借用这个标题，来梳理一下相关协议的工作原理和流程，以及各层的协议之间是如何协同工作的。 首先 你得连上Internet吧当我们连接上一个路由器后，会得到一个ip地址，如果此时你的路由器已经连接到了ISP,那么恭喜你可以开始在网上🏄了。那么这个ip地址到底是咋分配到我们的机器的呢？！！！ DHCP(dyna">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-04-05T04:22:34.261Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="一个网络请求的流程">
+<meta name="twitter:description" content="最新在看《计算机网络–自顶向下方法》，把从应用层到链路层的所有网络协议都重新学习了一遍。这里借用这个标题，来梳理一下相关协议的工作原理和流程，以及各层的协议之间是如何协同工作的。 首先 你得连上Internet吧当我们连接上一个路由器后，会得到一个ip地址，如果此时你的路由器已经连接到了ISP,那么恭喜你可以开始在网上🏄了。那么这个ip地址到底是咋分配到我们的机器的呢？！！！ DHCP(dyna">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/04/04/一个网络请求的流程/"/>
+
+  <title> 一个网络请求的流程 | lly's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">lly's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">用心记录点滴</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                一个网络请求的流程
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-04-04T17:36:44+08:00" content="2019-04-04">
+              2019-04-04
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2019/04/04/一个网络请求的流程/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2019/04/04/一个网络请求的流程/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>最新在看《计算机网络–自顶向下方法》，把从应用层到链路层的所有网络协议都重新学习了一遍。这里借用这个标题，来梳理一下相关协议的工作原理和流程，以及各层的协议之间是如何协同工作的。</p>
+<h3 id="首先-你得连上Internet吧"><a href="#首先-你得连上Internet吧" class="headerlink" title="首先 你得连上Internet吧"></a>首先 你得连上Internet吧</h3><p>当我们连接上一个路由器后，会得到一个ip地址，如果此时你的路由器已经连接到了ISP,那么恭喜你可以开始在网上🏄了。那么这个ip地址到底是咋分配到我们的机器的呢？！！！</p>
+<h4 id="DHCP-dynamic-host-configuration-protocol"><a href="#DHCP-dynamic-host-configuration-protocol" class="headerlink" title="DHCP(dynamic host configuration protocol)"></a>DHCP(dynamic host configuration protocol)</h4><p>动态主机配置协议，运行在网卡，路由器和交换机等网络设备上，主要用来分配ip地址。和其他协议类似，也是以报文的形式进行通信。</p>
+<p>当我们的主机发起一个网络连接请求时，DHCP协议会生成一个DHCP报文，并使用UDP传输协议进行传输，该UDP报文会包含一个组播ip(255.255.255.255)的目标地址,组播ip意味着该网段内所有设备都会收到这条UDP报文。此时因为本机还没有分配ip,所以源ip会是0.0.0.0。</p>
+<p>上面的UDP报文会被包在以太网帧中进行传输，该以太网帧的目的地址也是一个组播mac地址（FF.FF.FF.FF.FF.FF）,所以该帧会被网段内所有设备接收。而该帧的原地址即为本机的mac地址（比如 28:cf:e9:14:d1:0f 这是我的设备的mac地址）。</p>
+<p>路由器收到该以太网帧，一层层解析出DHCP报文，然后路由器决定分配一个ip地址给主机（10.236.142.22）,于是通过路由器上的DHCP服务器包装一个DHCP的响应报文，把包括了DNS服务器ip,路由器ip,子网掩码和分配给主机的ip一起发送给该主机。因为路由器已经知道了主机的mac地址，所以该报文会顺利的到达。</p>
+<p>主机网卡在收到DHCP ACK报文后，解析出相关的ip并配置好网络组件。至此，主机连接Internet成功。</p>
+<h3 id="只有域名是不可以的"><a href="#只有域名是不可以的" class="headerlink" title="只有域名是不可以的"></a>只有域名是不可以的</h3><p>连上Internet后，我们就可以上google了。于是我们在浏览器上输入www.google.com，也就是google的域名，不包括前面的www(www是一个网络应用，中文名叫万维网)。而google的主页应该是放在服务器上的，通过域名是如何访问到服务器上的google主页的呢?!!!</p>
+<h4 id="DNS-domain-name-system"><a href="#DNS-domain-name-system" class="headerlink" title="DNS(domain name system)"></a>DNS(domain name system)</h4><p>DNS主要用来查询域名对应的ip地址。和DHCP一样，DNS报文使用UDP进行传输。DNS报文将www.google.com放入报文段，然后组装成UDP报文，在上面的DHCP ACK中，已经拿到了DNS的ip,所以在组装ip报文的时候目的ip直接使用dns的ip,源ip则为主机的ip。</p>
+<p>之后，ip报文会被放到以太网帧中进行传输，想要将dns报文发送到dns服务器，首先第一个难题就是如何传送到所在网络的网关路由器，在上面的DHCP ACK报文中，已经拿到了网关路由器的ip了，但是ip只是作用在网络层，如果没有mac地址，链路层上是无法传输的。</p>
+<h4 id="ARP-address-resolution-protocol"><a href="#ARP-address-resolution-protocol" class="headerlink" title="ARP(address resolution protocol)"></a>ARP(address resolution protocol)</h4><p>地址解析协议，通过一个ip地址获取mac地址。ARP使用网关路由器的ip地址生成一个ARP查询报文，然后将该报文放到目标地址为(FF.FF.FF.FF.FF.FF)的以太网帧上，因为是广播地址，所以网关路由器顺利收到该帧，并生成一个ARP的回答报文，报文中带上了网关路由器的mac地址。然后将回答报文放到目的地址为主机mac地址的以太网帧中，这样，我们就顺利的拿到了网关路由器的mac地址。</p>
+<p>通过ARP,dns查询报文顺利的发送到了网关路由器。之后，又该何去何从？！！！</p>
+<h4 id="BGP-broder-gateway-protocol"><a href="#BGP-broder-gateway-protocol" class="headerlink" title="BGP(broder gateway protocol)"></a>BGP(broder gateway protocol)</h4><p>边界网关协议，AS(自治系统)之间的路由选择协议，BGP极其复杂，许多专著致力于研究该主题，它的基本工作流程是：</p>
+<ul>
+<li>从相邻AS处获取子网可达性信息</li>
+<li>向本AS内部的所有路由器传播这些可达性信息</li>
+<li>基于可达性信息和AS策略，决定到达子网的最优路由</li>
+</ul>
+<p>我们还得回到最上面的DHCP ACK中去，因为DNS的ip地址是这个报文给返回的，那么它又是如何生成该ip的呢。其实这个ip并不是它生成的，是ISP提供的。当路由器连接上ISP以后，对应的路由转发表会进行更新，所以dns的ip对应的转发接口已经存在于路由转发表中（根据BGP边界网关协议），至此，dns查询报文被发送到对应的dns服务器上。</p>
+<p>dns服务器接收到查询报文后，开始根据域名在缓存中查找对应的ip,如果缓存中没有找到，会去到ISP的权威dns服务器上查找，如何还找不到，会去到.com对应顶级dns服务器上查找，如果还是没有找到，会到跟域名服务器上查找，如果根域名上也没有找到，则返回查询失败。如果在其他dns服务器上成功找到对应的ip,该服务器会先缓存到本地，然后生成一个UDP的DNS回答报名，发送到对应的主机上，至此，我们终于拿到了google.com对应的ip地址。接下来我们要开始发送http的get请求了。</p>
+<h3 id="顺理成章的http请求"><a href="#顺理成章的http请求" class="headerlink" title="顺理成章的http请求"></a>顺理成章的http请求</h3><p>拿到ip后，http客户端会生成一个get请求，然后封装到tcp的报文中。tcp在进行数据传输前，会有一个三次握手的过程，握手成功后，get请求的报文成功被google的服务器接收，然后服务器通过url找到对应的资源，生成一个http的响应报文并封装在tcp的报文中，然后发送给客户端。</p>
+<p>因为已经建立了连接，所以响应报文不在需要握手的流程，客户端顺利收到响应报文，并解析出资源数据，将数据丢给浏览器进行显示（浏览器如何解析数据并渲染的流程不在这篇文章的讨论范围之内）。。。</p>
+<p>因为http并不是长链接（1.1以后才支持），所以在一个http请求结束后，客户端还是发起一个断开链接的操作，也称四次挥手的过程。至于断开连接为啥会比建立连接多一次握手过程，就留给读者自己去比较和分析吧。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>至此 一个完整的网络请求就总结完毕了，当然，这只是一个大概的流程总结，重点介绍和DHCP和链路层相关的几个协议，tcp和ip协议因为之前已经总结过所以这里只是一笔带过。如果想要了解得更为深入的话，当然推荐大家看一下《TCP/IP详解》系列书籍和我正在看的这本《计算机网络–自顶向下方法》书了。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/03/11/《架构整洁之道》学习笔记/" rel="next" title="《架构整洁之道》学习笔记">
+                <i class="fa fa-chevron-left"></i> 《架构整洁之道》学习笔记
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2019/04/04/一个网络请求的流程/"
+           data-title="一个网络请求的流程" data-url="http://yoursite.com/2019/04/04/一个网络请求的流程/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/head.png"
+               alt="lly" />
+          <p class="site-author-name" itemprop="name">lly</p>
+          <p class="site-description motion-element" itemprop="description">耿直的一Boy</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">47</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#首先-你得连上Internet吧"><span class="nav-number">1.</span> <span class="nav-text">首先 你得连上Internet吧</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#DHCP-dynamic-host-configuration-protocol"><span class="nav-number">1.1.</span> <span class="nav-text">DHCP(dynamic host configuration protocol)</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#只有域名是不可以的"><span class="nav-number">2.</span> <span class="nav-text">只有域名是不可以的</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#DNS-domain-name-system"><span class="nav-number">2.1.</span> <span class="nav-text">DNS(domain name system)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ARP-address-resolution-protocol"><span class="nav-number">2.2.</span> <span class="nav-text">ARP(address resolution protocol)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#BGP-broder-gateway-protocol"><span class="nav-number">2.3.</span> <span class="nav-text">BGP(broder gateway protocol)</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#顺理成章的http请求"><span class="nav-number">3.</span> <span class="nav-text">顺理成章的http请求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lly</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"llyblog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
