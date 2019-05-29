@@ -229,6 +229,524 @@
             
               
                 
+                <a class="post-title-link" href="/2017/04/26/RTMP拉流播放详解/" itemprop="url">
+                  RTMP拉流播放详解
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-04-26T17:05:12+08:00" content="2017-04-26">
+              2017-04-26
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/04/26/RTMP拉流播放详解/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/04/26/RTMP拉流播放详解/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>前面已经介绍了RTMP推流的整个流程，今天我们再来梳理一下拉流端以及播放的整个过程。</p>
+<p>我们先来看一下拉流端整个流程的抓包数据，然后分析一下每一个数据包的具体内容。</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/rtmp拉流/rtmppull.png" alt=""></p>
+<p>从上面的抓包数据可以看出，和推流端的整个流程基本上是一致的，只是在connect结束之后有一点不一样的操作，推流端是发送publish命令，而拉流端发送的是play命令。</p>
+<h3 id="play"><a href="#play" class="headerlink" title="play"></a>play</h3><p>既然如此，那其他的数据包我在这里就不再一一分析，可以参考我之前写的<a href="http://llyblog.com/2017/03/24/RTMP推流流程详解/" target="_blank" rel="noopener">推流详解</a>这篇博客，现在我主要来解析一样play这个命令。</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/rtmp拉流/rtmpplay.png" alt=""></p>
+<p>结合下面的代码来说明一下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">//play</div><div class="line">- (void)sendPlay&#123;</div><div class="line"></div><div class="line">    RTMPChunk_0 metadata = &#123;0&#125;;</div><div class="line">    metadata.msg_stream_id = LLYStreamIDPlay;</div><div class="line">    metadata.msg_type_id = LLYMSGTypeID_INVOKE;</div><div class="line">    </div><div class="line">    NSMutableData *buff = [NSMutableData data];</div><div class="line">    [buff appendString:@&quot;play&quot;];</div><div class="line">    [buff appendDouble:(++_numOfInvokes)];</div><div class="line">    self.trackedCommands[@(_numOfInvokes)] = @&quot;play&quot;;</div><div class="line">    [buff appendByte:kAMFNull];</div><div class="line">    [buff appendString:_url.playPath];</div><div class="line">    </div><div class="line">    metadata.msg_length.data = (int)buff.length;</div><div class="line">    [self sendPacket:buff :metadata];</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>其实和publish命令差不多的 ，只是将关键字改为 play.</p>
+<h3 id="SetBufferTime"><a href="#SetBufferTime" class="headerlink" title="SetBufferTime"></a>SetBufferTime</h3><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/rtmp拉流/playsettime.png" alt=""></p>
+<p>代码如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">- (void)sendSetBufferTime:(int)milliseconds&#123;</div><div class="line">    dispatch_sync(_packageQueue, ^&#123;</div><div class="line">        int streamId = 0;</div><div class="line">        </div><div class="line">        NSMutableData *data = [NSMutableData data];</div><div class="line">        [data appendByte:2];</div><div class="line">        [data appendByte24:0];</div><div class="line">        [data appendByte24:10];</div><div class="line">        [data appendByte:LLYMSGTypeID_PING];</div><div class="line">        [data appendBytes:(uint8_t*)&amp;streamId length:sizeof(int32_t)];</div><div class="line">        </div><div class="line">        [data appendByte16:3];</div><div class="line">        [data appendByte32:_streamID];</div><div class="line">        [data appendByte32:milliseconds];</div><div class="line">        </div><div class="line">        [self writeData:data];</div><div class="line">    &#125;);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在收到play的回调消息，我们还需要设置一下发送时间，这一句很重要哦，设置不成功或者不设置的话服务器是不会给你推音视频的数据的。</p>
+<h3 id="视频流的解析"><a href="#视频流的解析" class="headerlink" title="视频流的解析"></a>视频流的解析</h3><p>ok 现在我们开始收到源源不断的视频流数据，那么我们怎么把他们解析成原始的数据格式播放出来呢，下面来分析一下这个过程。</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/rtmp拉流/rtmpvideo.png" alt=""></p>
+<p>如上图，我们先来看一下一帧视频流数据长啥样吧。</p>
+<p>首先是头部信息，在rtmp格式中已经详细的分析了，这里不再介绍。</p>
+<p>重点来看一下Body中的数据：</p>
+<h4 id="Control-0x17-keyframe-H-264"><a href="#Control-0x17-keyframe-H-264" class="headerlink" title="Control : 0x17(keyframe H.264)"></a>Control : 0x17(keyframe H.264)</h4><p>这个0X17是个啥呢，如果还记得推流时我们怎么封装数据的应该对这个有印象</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">body[index++] = 0x17;//RTMP Body Control FrameType:1表示key frame  CodecID:7: AVC</div></pre></td></tr></table></figure>
+<p>就是这行代码所表示的数据了。</p>
+<p>通过这个数据，我们就能分析当前帧是不是关键帧，需不需要解析里面的SPS和PPS信息。</p>
+<h4 id="video-data"><a href="#video-data" class="headerlink" title="video data"></a>video data</h4><p>这个里面就是我们想要的视频数据了，但是又并不全是我们想要的视频数据，因为我们在推流封装的时候，是根据AVC格式来，所以其实这个body data里面还有一部分AVC的数据，我们需要把这一部分的数据剔除掉，剩下的才是我们需要的原始的视频流数据（好复杂的感觉有木有）。</p>
+<p>先把代码贴上来</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div></pre></td><td class="code"><pre><div class="line">- (void)updateFrame&#123;</div><div class="line"></div><div class="line">    dispatch_sync(mDecodeQueue, ^&#123;</div><div class="line">        if(packetBuffer == NULL) &#123;</div><div class="line">            return ;</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        uint8_t avcType = packetBuffer[0];</div><div class="line">        long totalLength = packetSize;</div><div class="line">        </div><div class="line">        while (avcType == 0x17 || avcType == 0x27) &#123;</div><div class="line">            </div><div class="line">            uint8_t type = packetBuffer[1];</div><div class="line">            if (type == 0) &#123;</div><div class="line">                </div><div class="line">                //获取sps</div><div class="line">//                int spsnum = packetBuffer[10]&amp;0x1f;</div><div class="line">                int number_sps = 11;</div><div class="line">                int count_sps = 1;</div><div class="line">                int spsTotalLen = 0;</div><div class="line">                uint8_t *spsTmp;</div><div class="line">                </div><div class="line">//                if (count_sps &lt;= spsnum)</div><div class="line">                &#123;</div><div class="line">                    int spslen =(packetBuffer[number_sps]&amp;0x000000FF)&lt;&lt;8 | (packetBuffer[number_sps+1]&amp;0x000000FF);</div><div class="line">                    number_sps += 2;</div><div class="line">                    </div><div class="line">                    spsTmp = malloc(spslen + 4);</div><div class="line">                    memcpy(spsTmp, lyStartCode, 4);</div><div class="line">                    spsTotalLen += 4;</div><div class="line">                    </div><div class="line">                    memcpy(spsTmp+4,packetBuffer + number_sps , spslen);</div><div class="line">                    spsTotalLen += spslen;</div><div class="line">                    </div><div class="line">                    number_sps += spslen;</div><div class="line">                    </div><div class="line">                    totalLength -= number_sps;</div><div class="line">                    count_sps ++;</div><div class="line">                &#125;</div><div class="line">                [self decodeNalu:spsTmp withSize:spsTotalLen];</div><div class="line">                </div><div class="line">                packetBuffer += number_sps+1;</div><div class="line">                //获取pps</div><div class="line">//                int ppsnum = packetBuffer[number_sps]&amp;0x1f;</div><div class="line">                int number_pps = 0;</div><div class="line">                int count_pps = 1;</div><div class="line">                int ppsTotalLen = 0;</div><div class="line">                uint8_t *ppsTmp;</div><div class="line">//                if (count_pps &lt;= ppsnum)</div><div class="line">                &#123;</div><div class="line">                    int ppslen =(packetBuffer[number_pps]&amp;0x000000FF)&lt;&lt;8 | (packetBuffer[number_pps+1]&amp;0x000000FF);</div><div class="line">                    number_pps += 2;</div><div class="line">                    </div><div class="line">                    ppsTmp = malloc(ppslen + 4);</div><div class="line">                    memcpy(ppsTmp, lyStartCode, 4);</div><div class="line">                    ppsTotalLen += 4;</div><div class="line">                    memcpy(ppsTmp +  4,packetBuffer + number_pps,ppslen);</div><div class="line">                    ppsTotalLen += ppslen;</div><div class="line">                    number_pps += ppslen;</div><div class="line">                    </div><div class="line">                    totalLength -= number_pps;</div><div class="line">                    count_pps ++;</div><div class="line">                &#125;</div><div class="line">                [self decodeNalu:ppsTmp withSize:ppsTotalLen];</div><div class="line">                </div><div class="line">                packetBuffer += number_pps;</div><div class="line">                avcType = packetBuffer[0];</div><div class="line">            &#125;</div><div class="line">            else if(type == 1)&#123;</div><div class="line">                </div><div class="line">                BOOL isNalu = YES;</div><div class="line">                </div><div class="line">                //获取avc nalu</div><div class="line">                int len =0;</div><div class="line">                int num =5;</div><div class="line">                int naluTotalLen = 0;</div><div class="line">                </div><div class="line">                while (isNalu)</div><div class="line">                &#123;</div><div class="line">                    </div><div class="line">                    len = (packetBuffer[num]&amp;0x000000FF)&lt;&lt;24 | (packetBuffer[num+1]&amp;0x000000FF)&lt;&lt;16</div><div class="line">                    | (packetBuffer[num+2]&amp;0x000000FF)&lt;&lt;8 | (packetBuffer[num+3]&amp;0x000000FF);</div><div class="line">                    </div><div class="line">                    naluBuffer = malloc(len + 4);</div><div class="line">                    naluTotalLen += 4;</div><div class="line">                    naluTotalLen += len;</div><div class="line"></div><div class="line">                    memcpy(naluBuffer,packetBuffer + num,len + 4);</div><div class="line">                    </div><div class="line">                    num = num + len + 4;</div><div class="line">                    totalLength -= num;</div><div class="line">                    </div><div class="line">                    [self decodeNalu:naluBuffer withSize:naluTotalLen];</div><div class="line">                    packetBuffer += num;</div><div class="line">                    num = 0;</div><div class="line">                    naluTotalLen = 0;</div><div class="line">                    free(naluBuffer);</div><div class="line">                    </div><div class="line">                    //可能存在下一个NALU</div><div class="line">                    if (totalLength &gt; 4) &#123;</div><div class="line">                        avcType = packetBuffer[0];</div><div class="line">                        if (avcType == 0x17 || avcType == 0x27) &#123;</div><div class="line">                            isNalu = NO;</div><div class="line">                        &#125;</div><div class="line">                        else&#123;</div><div class="line">                            len = (packetBuffer[num]&amp;0x000000FF)&lt;&lt;24 | (packetBuffer[num+1]&amp;0x000000FF)&lt;&lt;16</div><div class="line">                            | (packetBuffer[num+2]&amp;0x000000FF)&lt;&lt;8 | (packetBuffer[num+3]&amp;0x000000FF);</div><div class="line">                            </div><div class="line">                            if (len &gt;= (totalLength - 4)) &#123;</div><div class="line">                                return;</div><div class="line">                            &#125;</div><div class="line">                        &#125;</div><div class="line">                    &#125;</div><div class="line">                    else&#123;</div><div class="line">                        return;</div><div class="line">                    &#125;</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">            </div><div class="line">        &#125;</div><div class="line">    &#125;);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>从最上面开始分析</p>
+<p>packetBuffer 即为上图中的RTMP Body数据，注意这里是剔除了RTMP Head的哦。</p>
+<p>怎么剔除Head可以参考我的demo中下面这个方法。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">- (void)parseData:(NSData *)data</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">//RTMP Body Control FrameType:1表示key frame  CodecID:7: AVC</div><div class="line">uint8_t avcType = packetBuffer[0];</div></pre></td></tr></table></figure>
+<p>然后我们取出Control信息 它可能包括0x17或者是0x27,其中17是关键帧，27不是关键帧。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">//    IF AVCPacketType ==0 AVCDecoderConfigurationRecord（AVC sequence header）</div><div class="line">//    IF AVCPacketType == 1 One or more NALUs (Full frames are required)</div><div class="line"></div><div class="line">uint8_t type = packetBuffer[1];</div></pre></td></tr></table></figure>
+<p>然后是AVCType字段。</p>
+<p>如果Type = 0 ，我们需要取出的是SPS和PPS信息，如果没有这部分信息是无法将H.264文件解码的。</p>
+<p>当Type = 1，我们获取当前avc的NALU单元信息，这个数据就是我们需要显示的视频数据了。</p>
+<p>然后我把取到的数据用下面方法解码为CVPixelBufferRef数据进行显示(播放)。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div></pre></td><td class="code"><pre><div class="line">-(void) decodeNalu:(uint8_t *)frame withSize:(uint32_t)frameSize</div><div class="line">&#123;</div><div class="line">    //    NSLog(@&quot;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;开始解码&quot;);</div><div class="line">    int nalu_type = (frame[4] &amp; 0x1F);</div><div class="line">    CVPixelBufferRef pixelBuffer = NULL;</div><div class="line">    </div><div class="line">//    uint32_t nalSize = (uint32_t)(frameSize - 4);</div><div class="line">//    uint8_t *pNalSize = (uint8_t*)(&amp;nalSize);</div><div class="line">//    frame[0] = *(pNalSize + 3);</div><div class="line">//    frame[1] = *(pNalSize + 2);</div><div class="line">//    frame[2] = *(pNalSize + 1);</div><div class="line">//    frame[3] = *(pNalSize);</div><div class="line">    //传输的时候。关键帧不能丢数据 否则绿屏   B/P可以丢  这样会卡顿</div><div class="line">    switch (nalu_type)</div><div class="line">    &#123;</div><div class="line">        case 0x05:</div><div class="line">            //NSLog(@&quot;nalu_type:%d Nal type is IDR frame&quot;,nalu_type);  //关键帧</div><div class="line">            &#123;</div><div class="line">                uint32_t dataLength32 = htonl (frameSize - 4);</div><div class="line">                memcpy (frame, &amp;dataLength32, sizeof (uint32_t));</div><div class="line">                </div><div class="line">                [self initVideoToolBox];</div><div class="line">                pixelBuffer = [self decode:frame withSize:frameSize];</div><div class="line">                [self displayDecodedFrame:pixelBuffer];</div><div class="line">            &#125;</div><div class="line">            break;</div><div class="line">        case 0x07:</div><div class="line">            //NSLog(@&quot;nalu_type:%d Nal type is SPS&quot;,nalu_type);   //sps</div><div class="line">            mSPSSize = frameSize - 4;</div><div class="line">            mSPS = malloc(mSPSSize);</div><div class="line">            memcpy(mSPS, frame + 4, mSPSSize);</div><div class="line">            break;</div><div class="line">        case 0x08:</div><div class="line">        &#123;</div><div class="line">            //NSLog(@&quot;nalu_type:%d Nal type is PPS&quot;,nalu_type);   //pps</div><div class="line">            mPPSSize = frameSize - 4;</div><div class="line">            mPPS = malloc(mPPSSize);</div><div class="line">            memcpy(mPPS, frame + 4, mPPSSize);</div><div class="line">            break;</div><div class="line">        &#125;</div><div class="line">        default:</div><div class="line">        &#123;</div><div class="line">            //NSLog(@&quot;Nal type is B/P frame&quot;);//其他帧</div><div class="line">            &#123;</div><div class="line">                uint32_t dataLength32 = htonl (frameSize - 4);</div><div class="line">                memcpy (frame, &amp;dataLength32, sizeof (uint32_t));</div><div class="line">                </div><div class="line">                [self initVideoToolBox];</div><div class="line">                pixelBuffer = [self decode:frame withSize:frameSize];</div><div class="line">                [self displayDecodedFrame:pixelBuffer];</div><div class="line"></div><div class="line">            &#125;</div><div class="line">            break;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">//    if(pixelBuffer)</div><div class="line">//    &#123;</div><div class="line">//        dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">//            [self.mOpenGLView displayPixelBuffer:pixelBuffer];</div><div class="line">//            CVPixelBufferRelease(pixelBuffer);</div><div class="line">//        &#125;);</div><div class="line">//    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="播放"><a href="#播放" class="headerlink" title="播放"></a>播放</h4><p>这里我用的是苹果官网给的一个类AAPLEAGLLayer。</p>
+<p><a href="https://github.com/lilingyu0620/LLYRtmpDemo" target="_blank" rel="noopener">我是demo</a></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/04/03/iOS-Socket编程学习笔记/" itemprop="url">
+                  iOS Socket编程学习笔记
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-04-03T23:06:10+08:00" content="2017-04-03">
+              2017-04-03
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/04/03/iOS-Socket编程学习笔记/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/04/03/iOS-Socket编程学习笔记/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>Socket是基于传输层TCP、UDP协议封装的一套API接口，它本身并不是一种协议。</p>
+<h3 id="网络通信模型"><a href="#网络通信模型" class="headerlink" title="网络通信模型"></a>网络通信模型</h3><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Socket/networkmodel.png" alt=""></p>
+<h3 id="传输层中的协议"><a href="#传输层中的协议" class="headerlink" title="传输层中的协议"></a>传输层中的协议</h3><h4 id="传输控制协议-TCP"><a href="#传输控制协议-TCP" class="headerlink" title="传输控制协议 (TCP)"></a>传输控制协议 (TCP)</h4><p>TCP全称是Transmission Control Protocol，中文名为传输控制协议，它可以提供可靠的、面向连接的网络数据传递服务。</p>
+<h5 id="传输控制协议主要包含下列任务和功能："><a href="#传输控制协议主要包含下列任务和功能：" class="headerlink" title="传输控制协议主要包含下列任务和功能："></a>传输控制协议主要包含下列任务和功能：</h5><ul>
+<li><p>确保IP数据报的成功传递</p>
+</li>
+<li><p>对程序发送的大块数据进行分段和重组</p>
+</li>
+<li><p>确保正确排序及按顺序传递分段的数据</p>
+</li>
+<li><p>通过计算校验和，进行传输数据的完整性检查</p>
+</li>
+<li><p>根据数据是否接收成功发送肯定消息。通过使用选择性确认，也对没有收到的数据发送否定确认</p>
+</li>
+</ul>
+<h5 id="TCP工作流程"><a href="#TCP工作流程" class="headerlink" title="TCP工作流程"></a>TCP工作流程</h5><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Socket/socketflow.png" alt=""></p>
+<p>TCP的连接建立过程又称为TCP三次握手</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Socket/tcpconnect.png" alt=""></p>
+<p>一旦初始的三次握手完成，client和server就可以相互发送信息。</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Socket/tcpdisconnect.png" alt=""></p>
+<p>而断开连接时，就不分client和server了，先请求断开的即为主动方，主动方会先发送断开请求，被动发在收到断开请求后会先给主动方一个确认，然后待被动方处理完所有的传输事务后，再给主动方一个断开连接的请求，<br>主动方收到被动方的断开请求，给被动方一个断开确认。至此断开成功。</p>
+<p>TCP工作过程比较复杂，包括的内容如下:</p>
+<ul>
+<li><p>TCP连接关闭：发送方主机和目的主机建立TCP连接并完成数据传输后，会发送一个将结束标记置1的数据包，以关闭这个TCP连接，并同时释放该连接占用的缓冲区空间。</p>
+</li>
+<li><p>TCP重置：TCP允许在传输的过程中突然中断连接。</p>
+</li>
+<li><p>TCP数据排序和确认*：在传输的过程中使用序列号和确认号来跟踪数据的接收情况。</p>
+</li>
+<li><p>TCP重传：在TCP的传输过程中，如果在重传超时时间内没有收到接收方主机对某数据包的确认回复，发送方主机就认为此数据包丢失，并再次发送这个数据包给接收方。</p>
+</li>
+<li><p>TCP延迟确认：TCP并不总是在接收到数据后立即对其进行确认，它允许主机在接收数据的同时发送自己的确认信息给对方。</p>
+</li>
+<li><p>TCP数据保护（校验）：TCP是可靠传输的协议，它提供校验和计算来实现数据在传输过程中的完整性。</p>
+</li>
+</ul>
+<h4 id="tcp报文格式"><a href="#tcp报文格式" class="headerlink" title="tcp报文格式"></a>tcp报文格式</h4><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Socket/tcpformat.jpeg" alt=""></p>
+<ul>
+<li><p>源端口、目标端口：计算机上的进程要和其他进程通信是要通过计算机端口的，而一个计算机端口某个时刻只能被一个进程占用，所以通过指定源端口和目标端口，就可以知道是哪两个进程需要通信。源端口、目标端口是用16位表示的，可推算计算机的端口个数为2^16个。</p>
+</li>
+<li><p>序列号：表示本报文段所发送数据的第一个字节的编号。在TCP连接中所传送的字节流的每一个字节都会按顺序编号。由于序列号由32位表示，所以每2^32个字节，就会出现序列号回绕，再次从 0 开始。那如何区分两个相同序列号的不同TCP报文段就是一个问题了，后面会有答案，暂时可以不管。</p>
+</li>
+<li><p>确认号：表示接收方期望收到发送方下一个报文段的第一个字节数据的编号。也就是告诉发送发：我希望你（指发送方）下次发送的数据的第一个字节数据的编号是这个确认号。也就是告诉发送方：我希望你（指发送方）下次发送给我的TCP报文段的序列号字段的值是这个确认号。</p>
+</li>
+<li><p>TCP首部长度：由于TCP首部包含一个长度可变的选项部分，所以需要这么一个值来指定这个TCP报文段到底有多长。或者可以这么理解：就是表示TCP报文段中数据部分在整个TCP报文段中的位置。该字段的单位是32位字，即：4个字节。</p>
+</li>
+<li><p>URG：表示本报文段中发送的数据是否包含紧急数据。URG=1，表示有紧急数据。后面的紧急指针字段只有当URG=1时才有效。</p>
+</li>
+<li><p>ACK：表示是否前面的确认号字段是否有效。ACK=1，表示有效。只有当ACK=1时，前面的确认号字段才有效。TCP规定，连接建立后，ACK必须为1。</p>
+</li>
+<li><p>PSH：告诉对方收到该报文段后是否应该立即把数据推送给上层。如果为1，则表示对方应当立即把数据提交给上层，而不是缓存起来。</p>
+</li>
+<li><p>RST：只有当RST=1时才有用。如果你收到一个RST=1的报文，说明你与主机的连接出现了严重错误（如主机崩溃），必须释放连接，然后再重新建立连接。或者说明你上次发送给主机的数据有问题，主机拒绝响应。</p>
+</li>
+<li><p>SYN：在建立连接时使用，用来同步序号。当SYN=1，ACK=0时，表示这是一个请求建立连接的报文段；当SYN=1，ACK=1时，表示对方同意建立连接。SYN=1，说明这是一个请求建立连接或同意建立连接的报文。只有在前两次握手中SYN才置为1。</p>
+</li>
+<li><p>FIN：标记数据是否发送完毕。如果FIN=1，就相当于告诉对方：“我的数据已经发送完毕，你可以释放连接了”</p>
+</li>
+<li><p>窗口大小：表示现在运行对方发送的数据量。也就是告诉对方，从本报文段的确认号开始允许对方发送的数据量。</p>
+</li>
+<li><p>校验和：提供额外的可靠性。具体如何校验，参考其他资料。</p>
+</li>
+<li><p>紧急指针：标记紧急数据在数据字段中的位置。</p>
+</li>
+<li><p>选项部分：其最大长度可根据TCP首部长度进行推算。TCP首部长度用4位表示，那么选项部分最长为：(2^4-1)*4-20=40字节。</p>
+</li>
+</ul>
+<h5 id="选项部分的应用："><a href="#选项部分的应用：" class="headerlink" title="选项部分的应用："></a>选项部分的应用：</h5><ul>
+<li><p>MSS最大报文段长度(Maxium Segment Size)：指明数据字段的最大长度，数据字段的长度加上TCP首部的长度才等于整个TCP报文段的长度。MSS值指示自己期望对方发送TCP报文段时那个数据字段的长度。通信双方可以有不同的MSS值。如果未填写，默认采用536字节。MSS只出现在SYN报文中。即：MSS出现在SYN=1的报文段中。</p>
+</li>
+<li><p>窗口扩大选项(Windows Scaling)：由于TCP首部的窗口大小字段长度是16位，所以其表示的最大数是65535。但是随着时延和带宽比较大的通信产生（如卫星通信），需要更大的窗口来满足性能和吞吐率，所以产生了这个窗口扩大选项。</p>
+</li>
+<li><p>SACK选择确认项(Selective Acknowledgements)：用来确保只重传缺少的报文段，而不是重传所有报文段。比如主机A发送报文段1、2、3，而主机B仅收到报文段1、3。那么此时就需要使用SACK选项来告诉发送方只发送丢失的数据。那么又如何指明丢失了哪些报文段呢？使用SACK需要两个功能字节。一个表示要使用SACK选项，另一个指明这个选项占用多少字节。描述丢失的报文段2，是通过描述它的左右边界报文段1、3来完成的。而这个1、3实际上是表示序列号，所以描述一个丢失的报文段需要64位即8个字节的空间。那么可以推算整个选项字段最多描述(40-2)/8=4个丢失的报文段。</p>
+</li>
+<li><p>时间戳选项（Timestamps）：可以用来计算RTT(往返时间)，发送方发送TCP报文时，把当前的时间值放入时间戳字段，接收方收到后发送确认报文时，把这个时间戳字段的值复制到确认报文中，当发送方收到确认报文后即可计算出RTT。也可以用来防止回绕序号PAWS，也可以说可以用来区分相同序列号的不同报文。因为序列号用32为表示，每2^32个序列号就会产生回绕，那么使用时间戳字段就很容易区分相同序列号的不同报文。</p>
+</li>
+<li><p>NOP(NO-Operation)：它要求选项部分中的每种选项长度必须是4字节的倍数，不足的则用NOP填充。同时也可以用来分割不同的选项字段。如窗口扩大选项和SACK之间用NOP隔开。</p>
+</li>
+</ul>
+<h4 id="用户数据报协议（UDP）"><a href="#用户数据报协议（UDP）" class="headerlink" title="用户数据报协议（UDP）"></a>用户数据报协议（UDP）</h4><p>UDP全称是User Datagram Protocol，中文名为用户数据报协议。UDP 提供无连接的网络服务，该服务对消息中传输的数据提供不可靠的、最大努力传送。这意味着它不保证数据报的到达，也不保证所传送数据包的顺序是否正确。</p>
+<p>虽然TCP中植入了各种安全保障功能，但是在实际执行的过程中会占用大量的系统开销，无疑使速度受到严重的影响。反观UDP由于排除了信息可靠传递机制，将安全和排序等功能移交给上层应用来完成，极大地降低了执行时间，使速度得到了保证。</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Socket/udpflow.png" alt=""></p>
+<h3 id="Socket编程-Client"><a href="#Socket编程-Client" class="headerlink" title="Socket编程-Client"></a>Socket编程-Client</h3><p>iOS中实现Socekt编程有下面几种方式：</p>
+<ul>
+<li>BSDSocket iOS系统基于unix，所以支持底层的BSD Socket。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">//相关api位于下面这个文件中</div><div class="line">#import &lt;sys/socket.h&gt;</div></pre></td></tr></table></figure>
+<ul>
+<li>CFSocket 对底层BSD Socket进行轻量级的封装</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">//相关api位于下面这个文件中</div><div class="line">#import &lt;CoreFoundation/CFSocket.h&gt;</div></pre></td></tr></table></figure>
+<ul>
+<li>CocoaAsyncSocket 使用OC封装的一个socket框架（支持TCP和UDP）<br><a href="https://github.com/robbiehanson/CocoaAsyncSocket" target="_blank" rel="noopener">github</a></li>
+</ul>
+<p>这里使用的是CFSocket结合BSDSocket</p>
+<h4 id="创建socket对象并连接服务器"><a href="#创建socket对象并连接服务器" class="headerlink" title="创建socket对象并连接服务器"></a>创建socket对象并连接服务器</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div></pre></td><td class="code"><pre><div class="line">- (void)connectServerWithServerIP:(NSString *)serverIP&#123;</div><div class="line"></div><div class="line">    CFSocketContext socketContext = &#123;</div><div class="line">        0,//结构体的版本，必须为0</div><div class="line">        (__bridge void *)(self),</div><div class="line">        NULL,</div><div class="line">        NULL,</div><div class="line">        NULL,</div><div class="line">    &#125;;</div><div class="line">    </div><div class="line">    _mSocket = CFSocketCreate(kCFAllocatorDefault,//为新对象分配内存，可以为nil</div><div class="line">                              PF_INET,//协议族，如果为0或者负数，则默认为PF_INET</div><div class="line">                              SOCK_STREAM,//套接字类型，如果协议族为PF_INET,则它会默认为SOCK_STREAM</div><div class="line">                              IPPROTO_TCP,//套接字协议，如果协议族是PF_INET且协议是0或者负数，它会默认为IPPROTO_TCP</div><div class="line">                              kCFSocketConnectCallBack,//触发回调函数的socket消息类型，具体见Callback Types</div><div class="line">                              socketMessageCallBack,//上面情况下触发的回调函数</div><div class="line">                              &amp;socketContext);//一个持有CFSocket结构信息的对象，可以为nil</div><div class="line">    if (_mSocket != NULL) &#123;</div><div class="line">        struct sockaddr_in addr4;//IPV4</div><div class="line">        memset(&amp;addr4, 0, sizeof(addr4));</div><div class="line">        addr4.sin_len = sizeof(addr4);</div><div class="line">        addr4.sin_family = AF_INET;</div><div class="line">        addr4.sin_port = htons(8888);</div><div class="line">        addr4.sin_addr.s_addr = inet_addr([serverIP UTF8String]);//把字符串的地址转换为机器可识别的网络地址</div><div class="line"></div><div class="line">        //把sockaddr_in结构体中的地址转换为Data</div><div class="line">        CFDataRef address = CFDataCreate(kCFAllocatorDefault,</div><div class="line">                                         (UInt8 *)&amp;addr4, sizeof(addr4));</div><div class="line">        CFSocketConnectToAddress(_mSocket,//当前连接的socket</div><div class="line">                                 address,//CFDataRef类型的包含上面socket的远程地址的对象</div><div class="line">                                 -1);//连接超时时间，如果为负，则不尝试连接，而是把连接放在后台进行，如果_socket消息类型为kCFSocketConnectCallBack，将会在连接成功或失败的时候在后台触发回调函数</div><div class="line">        </div><div class="line">        CFRunLoopRef cRunRef = CFRunLoopGetCurrent();//获取当前线程的循环</div><div class="line">        //创建一个循环，但并没有真正加如到循环中，需要调用CFRunLoopAddSource</div><div class="line">        CFRunLoopSourceRef sourceRef = CFSocketCreateRunLoopSource(kCFAllocatorDefault, _mSocket, 0);</div><div class="line">        CFRunLoopAddSource(cRunRef, sourceRef, kCFRunLoopCommonModes);</div><div class="line">        CFRelease(cRunRef);</div><div class="line">        CFRelease(sourceRef);</div><div class="line">        </div><div class="line">        NSLog(@&quot;start connect&quot;);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="接收数据"><a href="#接收数据" class="headerlink" title="接收数据"></a>接收数据</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">case kCFSocketConnectCallBack:</div><div class="line">        &#123;</div><div class="line">            NSLog(@&quot;connect callback&quot;);</div><div class="line">            //data为回调的错误码,为NULL则为成功</div><div class="line">            if (data != NULL)</div><div class="line">            &#123;</div><div class="line">                NSLog(@&quot;连接失败&quot;);</div><div class="line">                return;</div><div class="line">            &#125;</div><div class="line">            else&#123;</div><div class="line">                //更新界面需要在主线程</div><div class="line">                dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">                    [mSelf ShowMsg:@&quot;服务器连接成功,现在可以开始通信了!!!&quot;];</div><div class="line">                &#125;);</div><div class="line">                //持续的接收数据，不能在主线程做，会阻塞当前线程，放到一个子线程去做。</div><div class="line">                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^&#123;</div><div class="line">                    [mSelf readMessageLoop];</div><div class="line">                &#125;);</div><div class="line">            &#125;</div><div class="line"></div><div class="line">        &#125;</div><div class="line">            break;</div></pre></td></tr></table></figure>
+<p>判断当前连接成功后，可以开一个线程监听是否接收到数据。</p>
+<p>注意这里的监听需要在子线程中进行。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">- (void)readMessageLoop&#123;</div><div class="line"></div><div class="line">    while (1) &#123;</div><div class="line">        char buffer[1024];</div><div class="line">        ssize_t recvLen = recv(CFSocketGetNative(_mSocket), buffer, sizeof(buffer), 0);</div><div class="line">        if (recvLen &gt; 0) &#123;</div><div class="line">            @autoreleasepool &#123;</div><div class="line">                NSString *str = @&quot;服务器发来数据：&quot;;</div><div class="line">                NSData *data = [NSData dataWithBytes:buffer length:recvLen];</div><div class="line">                str = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];</div><div class="line">                //回界面显示信息</div><div class="line">                dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">                    [self ShowMsg:str];</div><div class="line">                &#125;);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="发送数据"><a href="#发送数据" class="headerlink" title="发送数据"></a>发送数据</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">// 发送数据</div><div class="line">- (void)sendMessage &#123;</div><div class="line">    const char *sData = [self.sendContentTextField.text UTF8String];</div><div class="line">    send(CFSocketGetNative(_mSocket), sData, strlen(sData) + 1, 0);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="断开连接"><a href="#断开连接" class="headerlink" title="断开连接"></a>断开连接</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">- (IBAction)closeServerConnectBtnClicked:(id)sender &#123;</div><div class="line">	if(CFSocketIsValid(_mSocket))</div><div class="line">    &#123;</div><div class="line">        close(CFSocketGetNative(_mSocket));//关闭socket</div><div class="line">        CFSocketInvalidate(_mSocket);</div><div class="line">        CFRelease(_mSocket);</div><div class="line">    &#125;&#125;</div></pre></td></tr></table></figure>
+<h3 id="Socket编程-Server"><a href="#Socket编程-Server" class="headerlink" title="Socket编程-Server"></a>Socket编程-Server</h3><p>在本机搭建一个MAC APP模拟Server，实现和Client的通信。</p>
+<h4 id="创建Socket对象绑定端口"><a href="#创建Socket对象绑定端口" class="headerlink" title="创建Socket对象绑定端口"></a>创建Socket对象绑定端口</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div></pre></td><td class="code"><pre><div class="line">- (int)setupSocket&#123;</div><div class="line">    </div><div class="line">    int bRet = 0;</div><div class="line">    </div><div class="line">    CFSocketContext sockContext = &#123;0, // 结构体的版本，必须为0</div><div class="line">        (__bridge void *)(self),</div><div class="line">        NULL, // 一个定义在上面指针中的retain的回调， 可以为NULL</div><div class="line">        NULL,</div><div class="line">        NULL&#125;;</div><div class="line">    </div><div class="line">    _mSocket = CFSocketCreate(kCFAllocatorDefault, PF_INET, SOCK_STREAM, IPPROTO_TCP, kCFSocketAcceptCallBack, serverAcceptCallBack, &amp;sockContext);</div><div class="line">    if (NULL == _mSocket) &#123;</div><div class="line">        NSLog(@&quot;Cannot create socket!&quot;);</div><div class="line">        return 0;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    int optval = 1;</div><div class="line">    setsockopt(CFSocketGetNative(_mSocket), SOL_SOCKET, SO_REUSEADDR, // 允许重用本地地址和端口</div><div class="line">               (void *)&amp;optval, sizeof(optval));</div><div class="line">    struct sockaddr_in addr4;</div><div class="line">    memset(&amp;addr4, 0, sizeof(addr4));</div><div class="line">    addr4.sin_len = sizeof(addr4);</div><div class="line">    addr4.sin_family = AF_INET;</div><div class="line">    addr4.sin_port = htons(6666);</div><div class="line">    addr4.sin_addr.s_addr = htonl(INADDR_ANY);</div><div class="line">    CFDataRef address = CFDataCreate(kCFAllocatorDefault, (UInt8 *)&amp;addr4, sizeof(addr4));</div><div class="line">    </div><div class="line">    if (kCFSocketSuccess != CFSocketSetAddress(_mSocket, address))</div><div class="line">    &#123;</div><div class="line">        NSLog(@&quot;Bind to address failed!&quot;);</div><div class="line">        if (_mSocket)</div><div class="line">            CFRelease(_mSocket);</div><div class="line">        _mSocket = NULL;</div><div class="line">        bRet = 0;</div><div class="line">        return bRet;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    CFRunLoopRef cfRunLoop = CFRunLoopGetCurrent();</div><div class="line">    CFRunLoopSourceRef source = CFSocketCreateRunLoopSource(kCFAllocatorDefault, _mSocket, 0);</div><div class="line">    CFRunLoopAddSource(cfRunLoop, source, kCFRunLoopCommonModes);</div><div class="line">    CFRelease(source);</div><div class="line"></div><div class="line">    bRet = 1;</div><div class="line">    </div><div class="line">    return bRet;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>和Client相比多了一个setsockopt的过程。</p>
+<h4 id="Accept回调处理"><a href="#Accept回调处理" class="headerlink" title="Accept回调处理"></a>Accept回调处理</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div></pre></td><td class="code"><pre><div class="line">if (type == kCFSocketAcceptCallBack) &#123;</div><div class="line">     </div><div class="line">        // 本地套接字句柄</div><div class="line">        CFSocketNativeHandle nativeSocketHandle = *(CFSocketNativeHandle *)data;</div><div class="line">        uint8_t name[SOCK_MAXADDRLEN];</div><div class="line">        socklen_t nameLen = sizeof(name);</div><div class="line">        if (0 != getpeername(nativeSocketHandle, (struct sockaddr *)name, &amp;nameLen)) &#123;</div><div class="line">            NSLog(@&quot;error&quot;);</div><div class="line">            exit(1);</div><div class="line">        &#125;</div><div class="line">        CFReadStreamRef iStream;</div><div class="line">        CFWriteStreamRef oStream;</div><div class="line">        // 创建一个可读写的socket连接</div><div class="line">        CFStreamCreatePairWithSocket(kCFAllocatorDefault, nativeSocketHandle, &amp;iStream, &amp;oStream);</div><div class="line">        if (iStream &amp;&amp; oStream)</div><div class="line">        &#123;</div><div class="line">            CFStreamClientContext streamContext = &#123;0, info, NULL, NULL&#125;;</div><div class="line">            if (!CFReadStreamSetClient(iStream, kCFStreamEventHasBytesAvailable,readStream, &amp;streamContext))</div><div class="line">            &#123;</div><div class="line">                exit(1);</div><div class="line">            &#125;</div><div class="line">            </div><div class="line">            if (!CFWriteStreamSetClient(oStream, kCFStreamEventCanAcceptBytes, writeStream, &amp;streamContext))</div><div class="line">            &#123;</div><div class="line">                exit(1);</div><div class="line">            &#125;</div><div class="line">            CFReadStreamScheduleWithRunLoop(iStream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);</div><div class="line">            CFWriteStreamScheduleWithRunLoop(oStream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);</div><div class="line">            CFReadStreamOpen(iStream);</div><div class="line">            CFWriteStreamOpen(oStream);</div><div class="line">        &#125; else</div><div class="line">        &#123;</div><div class="line">            close(nativeSocketHandle);</div><div class="line">        &#125;</div><div class="line"></div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p>创建一个可读写的Socket连接，当接收或者发送数据时，都会走到回调接口中。</p>
+<p>读数据回调</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">// 读取数据</div><div class="line">void readStream(CFReadStreamRef stream, CFStreamEventType eventType, void *clientCallBackInfo)</div><div class="line">&#123;</div><div class="line">    UInt8 buff[255];</div><div class="line">    CFReadStreamRead(stream, buff, 255);</div><div class="line">    ///根据delegate显示到主界面去</div><div class="line">    NSString *strMsg = [[NSString alloc]initWithFormat:@&quot;客户端传来消息：%s&quot;,buff];</div><div class="line">    ViewController *mSelf = (__bridge ViewController*)clientCallBackInfo;</div><div class="line">    dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">        [mSelf ShowMsg:strMsg];</div><div class="line">    &#125;);</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>写数据回调</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">void writeStream (CFWriteStreamRef stream, CFStreamEventType eventType, void *clientCallBackInfo)</div><div class="line">&#123;</div><div class="line">    outputStream = stream;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>保存当前写数据的实例。</p>
+<h4 id="发送数据-1"><a href="#发送数据-1" class="headerlink" title="发送数据"></a>发送数据</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">- (IBAction)sendMessage:(id)sender &#123;</div><div class="line">    </div><div class="line">    const char *str = [self.sendTextField.stringValue UTF8String];</div><div class="line">    uint8_t *sendS = (uint8_t *)str;</div><div class="line">    if (outputStream != NULL) &#123;</div><div class="line">        CFWriteStreamWrite(outputStream, sendS, strlen(str) + 1);</div><div class="line">    &#125;</div><div class="line">    else&#123;</div><div class="line">        NSLog(@&quot;send failed&quot;);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>通信过程如下图：<br><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Socket/socketclient%26server.png" alt=""></p>
+<p><a href="https://github.com/lilingyu0620/LLYSocketDemo.git" target="_blank" rel="noopener">iOS Socket Demo</a></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/04/01/DNS解析学习笔记/" itemprop="url">
+                  DNS解析学习笔记
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-04-01T17:57:48+08:00" content="2017-04-01">
+              2017-04-01
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/04/01/DNS解析学习笔记/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/04/01/DNS解析学习笔记/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="什么是域名解析"><a href="#什么是域名解析" class="headerlink" title="什么是域名解析"></a>什么是域名解析</h3><p>Internet上的计算机是通过IP地址来定位的，给出一个IP地址，就可以找到Internet上的某台主机。而因为IP地址难于记忆，又发明了域名来代替IP地址。但通过域名并不能直接找到要访问的主机，中间要加一个从域名查找IP地址的过程，这个过程就是域名解析。</p>
+<p>负责将域名解析成为IP地址的服务器，叫做域名解析服务器，英文简称是DNS。Internet上所有的DNS通过域的层次关系连接在一起。</p>
+<p>当Internet用户打开浏览器，输入一个网址的时候，比如<a href="http://www.google.com" target="_blank" rel="noopener">http://www.google.com</a> 用户的计算机并不知道www.google.com是哪一台主机，因此计算机向Internet的DNS发出查询请求，DNS将查询到的IP地址返回给用户的计算机，用户计算机就可以根据IP地址连接www.google.com主机，把网页下载下来。</p>
+<h3 id="相关名词"><a href="#相关名词" class="headerlink" title="相关名词"></a>相关名词</h3><h4 id="根域"><a href="#根域" class="headerlink" title="根域"></a>根域</h4><p>就是所谓的“.”，其实我们的网址www.google.com在配置当中应该是www.google.com.（最后有一点），一般我们在浏览器里输入时会省略后面的点，而这也已经成为了习惯。</p>
+<p>根域服务器我们知道有13台，但是这是错误的观点。</p>
+<p>根域服务器只是具有13个IP地址，但机器数量却不是13台，因为这些IP地址借助了任播的技术，所以我们可以在全球设立这些IP的镜像站点，你访问到的这个IP并不是唯一的那台主机。</p>
+<h4 id="域的划分"><a href="#域的划分" class="headerlink" title="域的划分"></a>域的划分</h4><p>根域下面就是顶级域或者叫一级域.</p>
+<p>有两种划分方式，一种互联网刚兴起时的按照行业性质划分的com. net.等，一种是按国家划分的如cn. jp.等。</p>
+<p>每个域都会有域名服务器，也叫权威域名服务器。</p>
+<p>google.com就是一个顶级域名，而www.google.com却不是顶级域名，是在google.com这个域里的一叫做www的主机。</p>
+<p>一级域之后还有二级域，三级域，只要我买了一个顶级域，并且我搭建了自己BIND服务器（或者其他软件搭建的）注册到互联网中，那么我就可以随意在前面多加几个域了（当然长度是有限制的）。</p>
+<p>比如lly.www.google.com，在这个网址中，www.google.com变成了一个二级域而不是一台主机，主机名是lly。</p>
+<h4 id="域名服务器"><a href="#域名服务器" class="headerlink" title="域名服务器"></a>域名服务器</h4><p>能提供域名解析的服务器，上面的记录类型可以是A(address)记录，NS记录（name server），MX（mail），CNAME等。</p>
+<p>A记录是什么意思呢，就是记录一个IP地址和一个主机名字，比如我这个域名服务器所在的域test.google.com，我们知道这是一个二级的域名，然后我在里面有一条A记录,记录了主机为lly的IP，查到了就返回给你了。</p>
+<p>如果我现在要想google.com这个域名服务器查询lly.test.google.com，那么这个顶级域名服务器就会发现你请求的这个网址在test.google.com这个域中，我这里记录了这个二级域的域名服务器test.google.com的NS的IP。我返回给你这个地址你再去查主机名为lly的主机。</p>
+<h3 id="DNS解析原理"><a href="#DNS解析原理" class="headerlink" title="DNS解析原理"></a>DNS解析原理</h3><p>DNS解析主要有递归查询，就是在某个DNS服务器缓存中查找不到相应的域名与IP地址对应关系时，自动跳转到到下一步骤通过下一个DNS服务器进行查找。具体可见如下两图：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/dns/dnsflow.jpg" alt=""></p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/dns/dnssearchflow.jpg" alt=""></p>
+<h3 id="DNS解析过程"><a href="#DNS解析过程" class="headerlink" title="DNS解析过程"></a>DNS解析过程</h3><p>以下步骤中，当DNS缓存中存在域名对应IP时则DNS解析成功，用户计算机将直接访问服务器，若DNS服务器缓存中不存在域名对应IP，则自动进入下一步。</p>
+<ul>
+<li>浏览器缓存</li>
+</ul>
+<p>当用户通过浏览器访问某域名时，浏览器首先会在自己的缓存中查找是否有该域名对应的IP地址（若曾经访问过该域名且没有清空缓存便存在）；</p>
+<ul>
+<li>系统缓存</li>
+</ul>
+<p>当浏览器缓存中无域名对应IP则会自动检查用户计算机系统Hosts文件DNS缓存是否有该域名对应IP；</p>
+<ul>
+<li>路由器缓存</li>
+</ul>
+<p>当浏览器及系统缓存中均无域名对应IP则进入路由器缓存中检查，以上三步均为客服端的DNS缓存；</p>
+<ul>
+<li>ISP（互联网服务提供商）DNS缓存</li>
+</ul>
+<p>当在用户客服端查找不到域名对应IP地址，则将进入ISP DNS缓存中进行查询。比如你用的是电信的网络，则会进入电信的DNS缓存服务器中进行查找；</p>
+<ul>
+<li>根域名服务器</li>
+</ul>
+<p>当以上均未完成，则进入根服务器进行查询。全球仅有13台根域名服务器，1个主根域名服务器，其余12为辅根域名服务器。根域名收到请求后会查看区域文件记录，若无则将其管辖范围内顶级域名（如.com）服务器IP告诉本地DNS服务器；</p>
+<ul>
+<li>顶级域名服务器</li>
+</ul>
+<p>顶级域名服务器收到请求后查看区域文件记录，若无则将其管辖范围内主域名（如google.com）服务器的IP地址告诉本地DNS服务器；</p>
+<ul>
+<li>主域名服务器</li>
+</ul>
+<p>主域名服务器接受到请求后查询自己的缓存，如果没有则进入下一级域名服务器（www.google.com）进行查找，并重复该步骤直至找到正确纪录；</p>
+<ul>
+<li>保存结果至缓存</li>
+</ul>
+<p>本地域名服务器把返回的结果保存到缓存，以备下一次使用，同时将该结果反馈给客户端，客户端通过这个IP地址与web服务器建立链接。</p>
+<h3 id="DNS优化如何实现"><a href="#DNS优化如何实现" class="headerlink" title="DNS优化如何实现"></a>DNS优化如何实现</h3><p>一般域名商或服务器商都会提供免费的DNS服务，然而，很多情况下这些免费的DNS服务器速度较慢，故可做一定优化，具体可从以下几方面：</p>
+<ul>
+<li>增加DNS服务器数量</li>
+</ul>
+<p>减小服务器压力，当单位服务器需要处理的DNS请求数量较少时速度会更快；</p>
+<ul>
+<li>全国多地分布DNS服务器</li>
+</ul>
+<p>用户网络访问速度跟用户计算机到服务器的距离有关，若可以让用户就近访问所在省份的服务器便可以加速DNS解析速度；</p>
+<ul>
+<li>识别用户线路反馈相应线路IP</li>
+</ul>
+<p>当用户网络线路跟服务器网络线路一致时速度较快，而不一致时则较慢，如：用户使用电信的线路但服务器是联通的线路，这样就会造成用户访问网站速度下降，如果可以识别用户访问线路并反馈相应IP则会加速网站访问。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2017/04/01/SSL-TLS协议学习笔记/" itemprop="url">
                   SSL/TLS协议学习笔记
                 </a>
@@ -1313,478 +1831,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/03/16/H-264文件结构学习笔记/" itemprop="url">
-                  H.264文件结构学习笔记
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-03-16T20:31:08+08:00" content="2017-03-16">
-              2017-03-16
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2017/03/16/H-264文件结构学习笔记/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/03/16/H-264文件结构学习笔记/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>相关研究显示 H.264/AVC 与 MPEG-2 及 MPEG-4 相较之下，无论是压缩率或视讯质量皆有大幅的提升，而且H.264/AVC也首次将 视讯编码层(Video Coding Layer，VCL)与网络提取层(Network Abstraction Layer，NAL)的概念涵盖进来，以往视讯标准着重的是压缩效能部分，而H.264/AVC包含一个内建的NAL网络协议适应层，即由NAL来提供网络的状态，可以让VCL有更好的编译码弹性与纠错能力，使得H.264/AVC非常适用于多媒体串流(multimedia streaming)及行动电视(mobile TV)的相关应用</p>
-<h3 id="编码核心思想"><a href="#编码核心思想" class="headerlink" title="编码核心思想"></a>编码核心思想</h3><p>在编码方面，我理解的他的理论依据是：参照一段时间内图像的统计结果表明，在相邻几幅图像画面中，一般有差别的像素只有10%以内的点,亮度差值变化不超过2%，而色度差值的变化只有1%以内。所以对于一段变化不大图像画面，我们可以先编码出一个完整的图像帧A，随后的B帧就不编码全部图像，只写入与A帧的差别，这样B帧的大小就只有完整帧的1/10或更小！B帧之后的C帧如果变化不大，我们可以继续以参考B的方式编码C帧，这样循环下去。这段图像我们称为一个序列（序列就是有相同特点的一段数据），当某个图像与之前的图像变化很大，无法参考前面的帧来生成，那我们就结束上一个序列，开始下一段序列，也就是对这个图像生成一个完整帧A1，随后的图像就参考A1生成，只写入与A1的差别内容。</p>
-<p>在H264协议里定义了三种帧，完整编码的帧叫I帧，参考之前的I帧生成的只包含差异部分编码的帧叫P帧，还有一种参考前后的帧编码的帧叫B帧。</p>
-<p>H264采用的核心算法是帧内压缩和帧间压缩，帧内压缩是生成I帧的算法，帧间压缩是生成B帧和P帧的算法。</p>
-<h3 id="关于序列的说明"><a href="#关于序列的说明" class="headerlink" title="关于序列的说明"></a>关于序列的说明</h3><p>在H264中图像以序列为单位进行组织，一个序列是一段图像编码后的数据流，以I帧开始，到下一个I帧结束。</p>
-<p>一个序列的第一个图像叫做 IDR 图像（立即刷新图像），IDR 图像都是 I 帧图像,但不是所有I帧图像都是IDR图像。H.264 引入 IDR 图像是为了解码的同步，当解码器解码到 IDR 图像时，立即将参考帧队列清空，将已解码的数据全部输出或抛弃，重新查找参数集，开始一个新的序列。这样，如果前一个序列出现重大错误，在这里可以获得重新同步的机会。IDR图像之后的图像永远不会使用IDR之前的图像的数据来解码。</p>
-<p>一个序列就是一段内容差异不太大的图像编码后生成的一串数据流。当运动变化比较少时，一个序列可以很长，因为运动变化少就代表图像画面的内容变动很小，所以就可以编一个I帧，然后一直P帧、B帧了。当运动变化多时，可能一个序列就比较短了，比如就包含一个I帧和3、4个P帧。</p>
-<h3 id="IPB帧"><a href="#IPB帧" class="headerlink" title="IPB帧"></a>IPB帧</h3><h4 id="I帧"><a href="#I帧" class="headerlink" title="I帧"></a>I帧</h4><p>1.它是一个全帧压缩编码帧。它将全帧图像信息进行JPEG压缩编码及传输; </p>
-<p>2.解码时仅用I帧的数据就可重构完整图像; </p>
-<p>3.I帧描述了图像背景和运动主体的详情; </p>
-<p>4.I帧不需要参考其他画面而生成; </p>
-<p>5.I帧是P帧和B帧的参考帧(其质量直接影响到同组中以后各帧的质量); </p>
-<p>6.I帧是帧组GOP（既一个帧序列）的基础帧(第一帧),在一组中只有一个I帧; </p>
-<p>7.I帧不需要考虑运动矢量; </p>
-<p>8.I帧所占数据的信息量比较大</p>
-<h4 id="P帧"><a href="#P帧" class="headerlink" title="P帧"></a>P帧</h4><p>前向预测编码帧。P帧表示的是这一帧跟之前的一个关键帧（或P帧）的差别，解码时需要用之前缓存的画面叠加上本帧定义的差别，生成最终画面。（也就是差别帧，P帧没有完整画面数据，只有与前一帧的画面差别的数据）</p>
-<p>P帧的预测与重构:P帧是以I帧为参考帧,在I帧中找出P帧“某点”的预测值和运动矢量,取预测差值和运动矢量一起传送。在接收端根据运动矢量从I帧中找出P帧“某点”的预测值并与差值相加以得到P帧“某点”样值,从而可得到完整的P帧。</p>
-<p>1.P帧是I帧后面相隔1~2帧的编码帧; </p>
-<p>2.P帧采用运动补偿的方法传送它与前面的I或P帧的差值及运动矢量(预测误差); </p>
-<p>3.解码时必须将I帧中的预测值与预测误差求和后才能重构完整的P帧图像; </p>
-<p>4.P帧属于前向预测的帧间编码。它只参考前面最靠近它的I帧或P帧; </p>
-<p>5.P帧可以是其后面P帧的参考帧,也可以是其前后的B帧的参考帧; </p>
-<p>6.由于P帧是参考帧,它可能造成解码错误的扩散; </p>
-<p>7.由于是差值传送,P帧的压缩比较高。</p>
-<h4 id="B帧"><a href="#B帧" class="headerlink" title="B帧"></a>B帧</h4><p>双向预测内插编码帧。B帧是双向差别帧，也就是B帧记录的是本帧与前后帧的差别（具体比较复杂，有4种情况，但我这样说简单些），换言之，要解码B帧，不仅要取得之前的缓存画面，还要解码之后的画面，通过前后画面的与本帧数据的叠加取得最终的画面。B帧压缩率高，但是解码时CPU会比较累。</p>
-<p>B帧以前面的I或P帧和后面的P帧为参考帧,“找出”B帧“某点”的预测值和两个运动矢量,并取预测差值和运动矢量传送。接收端根据运动矢量在两个参考帧中“找出(算出)”预测值并与差值求和,得到B帧“某点”样值,从而可得到完整的B帧。</p>
-<p>1.B帧是由前面的I或P帧和后面的P帧来进行预测的; </p>
-<p>2.B帧传送的是它与前面的I或P帧和后面的P帧之间的预测误差及运动矢量; </p>
-<p>3.B帧是双向预测编码帧; </p>
-<p>4.B帧压缩比最高,因为它只反映了参考帧间运动主体的变化情况,预测比较准确; </p>
-<p>5.B帧不是参考帧,不会造成解码错误的扩散。 </p>
-<p>注:I、B、P各帧是根据压缩算法的需要，是人为定义的,它们都是实实在在的物理帧。一般来说，I帧的压缩率是7（跟JPG差不多），P帧是20，B帧可以达到50。可见使用B帧能节省大量空间，节省出来的空间可以用来保存多一些I帧，这样在相同码率下，可以提供更好的画质。</p>
-<h3 id="压缩方法"><a href="#压缩方法" class="headerlink" title="压缩方法"></a>压缩方法</h3><p>h264的压缩方法:</p>
-<p>1.分组:把几帧图像分为一组(GOP，也就是一个序列),为防止运动变化,帧数不宜取多。 </p>
-<p>2.定义帧:将每组内各帧图像定义为三种类型,即I帧、B帧和P帧; </p>
-<p>3.预测帧:以I帧做为基础帧,以I帧预测P帧,再由I帧和P帧预测B帧; </p>
-<p>4.数据传输:最后将I帧数据与预测的差值信息进行存储和传输。</p>
-<p>帧内（Intraframe）压缩也称为空间压缩（Spatial compression）。当压缩一帧图像时，仅考虑本帧的数据而不考虑相邻帧之间的冗余信息，这实际上与静态图像压缩类似。帧内一般采用有损压缩算法，由于帧内压缩是编码一个完整的图像，所以可以独立的解码、显示。帧内压缩一般达不到很高的压缩，跟编码jpeg差不多。</p>
-<p>帧间（Interframe）压缩的原理是：相邻几帧的数据有很大的相关性，或者说前后两帧信息变化很小的特点。也即连续的视频其相邻帧之间具有冗余信息,根据这一特性，压缩相邻帧之间的冗余量就可以进一步提高压缩量，减小压缩比。帧间压缩也称为时间压缩（Temporal compression），它通过比较时间轴上不同帧之间的数据进行压缩。帧间压缩一般是无损的。帧差值（Frame differencing）算法是一种典型的时间压缩法，它通过比较本帧与相邻帧之间的差异，仅记录本帧与其相邻帧的差值，这样可以大大减少数据量。</p>
-<h3 id="网络提取层（NAL）"><a href="#网络提取层（NAL）" class="headerlink" title="网络提取层（NAL）"></a>网络提取层（NAL）</h3><p>以NAL封包为单位的方式来做为VCL编译码的运算单位，这样传输层拿到NAL封包之后不需要再进行切割，只需附加该传输协议的文件头信息(adding header only)就可以交由底层传送出去。</p>
-<p>如图所示，可以将NAL当成是一个专作封装(packaging)的模块，用来将VCL压缩过的bitstream封装成适当大小的封包单位(NAL-unit)，并在NAL-unit Header中的NAL-unit Type字段记载此封包的型式，每种型式分别对应到VCL中不同的编解碼工具。NAL另外一个重要的功能为当网络发生壅塞而导致封包错误或接收次序错乱(out-of-order)的状况时，传输层协议会在Reference Flag作设定的动作，接收端的VCL在收到这种NAL封包时，就知道要进行所谓的纠错运算(error concealment)，在解压缩的同时也会尝试将错误修正回来</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/H.264/200504-03-03.gif" alt=""></p>
-<p>一个完整的H.264/AVC bitstream是由多个NAL-units所组成的，所以此bitstream也称之为NAL unit stream，一个NAL unit stream内可以包含多个压缩视讯序列(coded video sequence)，一个单独的压缩视讯序列代表一部视讯影片，而压缩视讯序列又是由多个access units所组成，当接收端收到一个access unit后，可以完整地译码成单张的画面，而每个压缩视讯序列的第一个access unit必须为Instantaneous Decoding Refresh (IDR) access unit，IDRaccess unit的内容全是采用intra-prediction编码，所以自己本身即可完全译码，不用参考其他access unit的数据。access unit亦是由多个NAL-units所组成，标准中总共规范12种的NAL-unit型式，这些可以进一步分类成VCL NAL-unit及non-VCL NAL-unit，所谓的VCL NAL-unit纯粹是压缩影像的内容，而所谓的non-VCL NAL-unit则有两种：Parameter Sets与Supplemental Enhancement Information (SEI)，SEI可以存放影片简介、版权宣告、用户自行定义的数据…等；Parameter Sets主要是描述整个压缩视讯序列的参数，例如：长宽比例、影像显现的时间点(timestamp)、相关译码所需的参数…等，这些信息非常重要，万一在传送的过程中发生错误，会导致整段影片无法译码，以往像MPEG-2/-4都把这些信息放在一般的packet header，所以很容易随着packet loss而消失，现在H.264/AVC将这些信息独立出来成为特殊的parameter set，可以采用所谓的out-of-band的方式来传送，以便将out-of-band channel用最高层级的信道编码(channel coding)保护机制，来保证传输的正确性。</p>
-<p>总结：</p>
-<p>第一层是多个序列帧（多个GOP）。</p>
-<p>第二层是每个序列帧中具体的IPB帧。</p>
-<p>第三层是每一帧具体的数据（NALU）。</p>
-<h3 id="NALU"><a href="#NALU" class="headerlink" title="NALU"></a>NALU</h3><h4 id="NAL单元格式："><a href="#NAL单元格式：" class="headerlink" title="NAL单元格式："></a>NAL单元格式：</h4><p>NAL头 + RBSP</p>
-<p>RBSP：封装于网络抽象单元的数据称之为原始字节序列载荷RBSP，它是NAL的基本传输单元。其中，RBSP又分为视频编码数据和控制数据。其基本结构是：在原始编码数据的后面填加了结尾比特。一个bit“1”若干比特“0”，以便字节对齐。</p>
-<p>RBSP的类型： </p>
-<p>RBSP 类型之一 PS: 包括序列参数集 SPS  和 图像参数集 PPS </p>
-<p>SPS：包含的是针对一连续编码视频序列的参数，如标识符 seq_parameter_set_id、帧数及 POC 的约束、参考帧数目、解码图像尺寸和帧场编码模式选择标识等等。 </p>
-<p>PPS：对应的是一个序列中某一幅图像或者某几幅图像，其参数如标识符 pic_parameter_set_id、可选的 seq_parameter_set_id、熵编码模式选择标识、片组数目、初始量化参数和去方块滤波系数调整标识等等。 </p>
-<h4 id="NALU类型"><a href="#NALU类型" class="headerlink" title="NALU类型"></a>NALU类型</h4><p>标识NAL单元中的RBSP数据类型，其中，nal_unit_type为1， 2， 3， 4， 5及12的NAL单元称为VCL的NAL单元，其他类型的NAL单元为非VCL的NAL单元。 </p>
-<p>0：未规定 </p>
-<p>1：非IDR图像中不采用数据划分的片段 </p>
-<p>2：非IDR图像中A类数据划分片段 </p>
-<p>3：非IDR图像中B类数据划分片段 </p>
-<p>4：非IDR图像中C类数据划分片段 </p>
-<p>5：IDR图像的片段 </p>
-<p>6：补充增强信息 (SEI) </p>
-<p>7：序列参数集 </p>
-<p>8：图像参数集 </p>
-<p>9：分割符 </p>
-<p>10：序列结束符 </p>
-<p>11：流结束符 </p>
-<p>12：填充数据 </p>
-<p>13 – 23：保留 </p>
-<p>24 – 31：未规定 </p>
-<h3 id="视讯编码层-VCL"><a href="#视讯编码层-VCL" class="headerlink" title="视讯编码层(VCL)"></a>视讯编码层(VCL)</h3><p>视频压缩的原理是利用影像在时间与空间上存有相似性，这些相似的数据经过压缩算法处理之后，可以将人眼无法感知的部分抽离出来，这些称为视觉冗余(visual redundancy)的部分在去除之后，就可以达到视频压缩的目的。如图1所示，H.264/AVC的视讯编码机制是以图块(block-based)为基础单元，也就是说先将整张影像分割成许多矩形的小区域，称之为巨图块(macroblock，MB)，再将这些巨图块进行编码，先使用画面内预测(intra-prediction)与画面间预测(inter-prediction)技术，以去除影像之间的相似性来得到所谓的差余影像(residual)，再将差余影像施以空间转换(transform)与量化(quantize)来去除视觉冗余，最后视讯编码层会输出编码过的比特流(bitstream)，之后再包装成网络提取层的单元封包(NAL-unit)，经由网络传送到远程或储存在储存媒体中。</p>
-<h4 id="H-264-AVC影像格式阶层架构"><a href="#H-264-AVC影像格式阶层架构" class="headerlink" title="H.264/AVC影像格式阶层架构"></a>H.264/AVC影像格式阶层架构</h4><p>H.264/AVC的阶层架构由小到大依序是sub-block、block、macroblock、slice、slicegroup、frame/field-picture、sequence。对一个采用4:2:0取样的MB而言，它是由16x16点的Luma与相对应的2个8x8点Chroma来组成，而在H.264/AVC的规范中，MB可再分割成多个16x8、8x16、8x8、8x4、4x8、4x4格式的sub-blocks。所谓的slice是许多MB的集合，而一张影像是由许多slice所组成(图3)，slice为H.264/AVC格式中的最小可译码单位(self-decodable unit)，也就是说一个slice单靠本身的压缩数据就能译码，而不必依靠其他slice，这样的好处是当传送到远程时，每接收完一笔slice的压缩数据就能马上译码，不用等待整张的数据接收完后才能开始，而且万一传送的过程中发生数据遗失或错误，也只是影响该笔slice，不会对其他slice有所影响，但跟MPEG-2的slice不同处在于它允许slice的范围可以超过一行MB，也就是说H.264/AVC允许整张影像只由单一个slice组成。</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/H.264/200504-03-04.gif" alt=""></p>
-<h4 id="Slice的编码模式-IPB帧"><a href="#Slice的编码模式-IPB帧" class="headerlink" title="Slice的编码模式(IPB帧)"></a>Slice的编码模式(IPB帧)</h4><p>H.264/AVC的slice依照编码的类型可以分成下列种类：(1)I-slice: slice的全部MB都采用intra-prediction的方式来编码；(2) P-slice: slice中的MB使用intra-prediction和inter-prediction的方式来编码，但每一个inter-prediction block最多只能使用一个移动向量；(3) B-slice:与P-slice类似，但每一个inter-prediction block可以使用二个移动向量。比较特别的是B-slice的‘B’是指Bi-predictive，与MPEG-2/-4 B-frame的Bi-directional概念有很大的不同，MPEG-2/-4 B-frame被限定只能由前一张和后一张的I(或P)-frame来做inter- prediction，但是H.264/AVC B-slice除了可由前一张和后一张影像的I(或P、B)-slice外，也能从前二张不同影像的I(或P、B)-slice来做inter- prediction，</p>
-<p>而H.264/AVC另外增加两种特殊slice类型：</p>
-<p>(1) SP-slice:即所谓的Switching P slice，为P-slice的一种特殊类型，用来串接两个不同bitrate的bitstream；</p>
-<p>(2) SI-slice: 即所谓的Switching I slice，为I-slice的一种特殊类型，除了用来串接两个不同content的bitstream外，也可用来执行随机存取(random access)来达到网络VCR的功能。</p>
-<p>这两种特殊的slice主要是考虑当进行Video-On-Demand streaming的应用时，对同一个视讯内容的影片来说，server会预先存放不同bitrate的压缩影片，而当带宽改变时，server就会送出适合当时带宽比特率的影片，传统的做法是需要等到适当的时间点来传送新的I-slice (容量较P-slice大上许多)，但因为带宽变小导致需要较多的时间来传送I-slice，如此会让client端的影像有所延迟，为了让相同content但不同bitrate的bitstream可以较平顺地串接，使用SP-slice会很容易来达成(图4)，不仅可以直接送出新的bitstream，也因为传送的P-slice的容量较小，所以不会有时间延迟的情形出现</p>
-<p>SP-slice</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/H.264/200504-03-05.gif" alt=""></p>
-<p>SI-slice</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/H.264/200504-03-06.gif" alt=""></p>
-<h4 id="画面内预测技术-Intra-frame-Prediction-帧内压缩"><a href="#画面内预测技术-Intra-frame-Prediction-帧内压缩" class="headerlink" title="画面内预测技术(Intra-frame Prediction)-帧内压缩"></a>画面内预测技术(Intra-frame Prediction)-帧内压缩</h4><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/H.264/200504-03-07.gif" alt=""></p>
-<p>以往的压缩标准在进行intra-prediction时，多半只是将转换系数做差值编码，而H.264/AVC在空间领域(spatial domain)来进行像点之间的预测，而不是用转换过的系数，它提供两种intra-prediction的型式：intra_4x4及intra_16x16，所谓的intra_4x4是以Luma 4x4 sub-block为单位，找出它的参考对象(predictor)后，再将其与参考对象相减后所产生的差余影像(residual)送入转换算法，而寻找参考对象的模式共有9种预测的方向(上图)，以mode 0 (vertical)为例，{a,e,i,m}、{b,f,j,n}、{c,g,k,o}、{d,h,l,p}的参考对象分别为A、B、C、D；Luma intra_16x16与Chroma的模式跟Luma intra_4x4类似</p>
-<h4 id="画面间预测技术-Inter-frame-Prediction-帧间压缩"><a href="#画面间预测技术-Inter-frame-Prediction-帧间压缩" class="headerlink" title="画面间预测技术(Inter-frame Prediction)-帧间压缩"></a>画面间预测技术(Inter-frame Prediction)-帧间压缩</h4><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/H.264/200504-03-08.gif" alt=""></p>
-<p>至于横跨每张画面之间的预测技术，H.264/AVC提供了更丰富的编码模式，计有下述几种区块分割(partition)的方法：16x16、16x8、8x16、8x8、8x4、4x8、4x4，多样的分割方式可以让移动向量的预测更准确，如上图所示，画面中有些移动的区域并不是正方形，使用长方形或较小的4x4分割来做预测的区域，可以大幅降低差余影像的数值来增加了压缩比，但也因此P-slice中的MB最多可有16个移动向量(motion vector)，而B-slice中的MB最多可拥有32个移动向量，虽然这些会增加移动向量档头(header)的容量，但整体来说对压缩比仍有正面的益处。</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/H.264/200504-03-09.gif" alt=""></p>
-<p>以往的压缩标准所使用的动态估测(motion estimation)，只有使用前一张图像来作为预测的对象，H.264/AVC提供了多重参考图像(multiple reference frames)的概念，使得移动向量不再只限于前后相邻的影像，而是可以跨过多张影像，如上图所示，在时间点t的图块，可以使用t-1到t-2图像中的图块来作为预测的对象，当影片有周期重复性的内容时，例如：背景影像周期性的出现或被遮盖、对象有来回跳动的行为、形状忽大忽小，或是摄影机在拍摄时，因为有多处的取景点，并且摄影画面在取景点之间来回移动，这种情形在球类比赛转播时常出现，这些状况都能得到较好的动态预测结果，因而提高了压缩的效能。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/03/14/iOS视频硬编码/" itemprop="url">
-                  iOS视频硬编码
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-03-14T10:16:51+08:00" content="2017-03-14">
-              2017-03-14
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2017/03/14/iOS视频硬编码/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/03/14/iOS视频硬编码/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>iOS8之后 系统提供了VideoToolBox用来处理音频和视频的编解码（硬解使用GPU），在iOS8之前，普遍使用的是ffmpeg（软解使用CPU）。</p>
-<h2 id="处理流程"><a href="#处理流程" class="headerlink" title="处理流程"></a>处理流程</h2><h3 id="1-采集"><a href="#1-采集" class="headerlink" title="1.采集"></a>1.采集</h3><p>使用AVFoundation提供的AVCapture系列类自定义一个视频流采集的相机，在采集到数据的回调内处理视频编码。</p>
-<p>相机自定义:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">self.session = [[AVCaptureSession alloc]init];</div><div class="line">    </div><div class="line">    if ([self.session canSetSessionPreset:AVCaptureSessionPreset640x480]) &#123;</div><div class="line">        self.session.sessionPreset = AVCaptureSessionPreset640x480;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    self.videoDevice = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];</div><div class="line">    </div><div class="line">    </div><div class="line">    if ([self.videoDevice isFocusModeSupported:AVCaptureFocusModeAutoFocus]) &#123;</div><div class="line">        if ([self.videoDevice lockForConfiguration:nil]) &#123;</div><div class="line">            self.videoDevice.focusMode = AVCaptureFocusModeContinuousAutoFocus;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    self.videoInput = [[AVCaptureDeviceInput alloc]initWithDevice:self.videoDevice error:nil];</div><div class="line">    if ([self.session canAddInput:self.videoInput]) &#123;</div><div class="line">        [self.session addInput:self.videoInput];</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    self.videoDataOutput = [[AVCaptureVideoDataOutput alloc]init];</div><div class="line">    </div><div class="line">    //kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange 表示原始数据的格式为YUV420</div><div class="line">//    YUV 4:4:4采样，每一个Y对应一组UV分量。</div><div class="line">//    YUV 4:2:2采样，每两个Y共用一组UV分量。</div><div class="line">//    YUV 4:2:0采样，每四个Y共用一组UV分量。</div><div class="line">    NSDictionary *settings = [[NSDictionary alloc]initWithObjectsAndKeys:[NSNumber numberWithUnsignedInteger:kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange],kCVPixelBufferPixelFormatTypeKey,nil];</div><div class="line">    self.videoDataOutput.videoSettings = settings;</div><div class="line">    self.videoDataOutput.alwaysDiscardsLateVideoFrames = YES;</div><div class="line">    </div><div class="line">    _videoOutputQueue = dispatch_queue_create(&quot;videoOutputQueue&quot;, DISPATCH_QUEUE_SERIAL);</div><div class="line">    [self.videoDataOutput setSampleBufferDelegate:self queue:_videoOutputQueue];</div><div class="line">    </div><div class="line">    if ([self.session canAddOutput:self.videoDataOutput]) &#123;</div><div class="line">        [self.session addOutput:self.videoDataOutput];</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    self.videoConnection = [self.videoDataOutput connectionWithMediaType:AVMediaTypeVideo];</div><div class="line">    [self.videoConnection setVideoScaleAndCropFactor:1];</div><div class="line"></div><div class="line">    self.videoConnection.videoOrientation = AVCaptureVideoOrientationPortrait;</div></pre></td></tr></table></figure>
-<p>回调处理:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">- (void)captureOutput:(AVCaptureOutput *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection&#123;</div><div class="line"></div><div class="line">    __weak typeof(self) weakSelf = self;</div><div class="line">//    CVPixelBufferRef pixelBufferRef = CMSampleBufferGetImageBuffer(sampleBuffer);</div><div class="line">    if ([self.delegate respondsToSelector:@selector(videOutputHandler:didOutputSampleBuffer:)]) &#123;</div><div class="line">        [self.delegate videOutputHandler:weakSelf didOutputSampleBuffer:sampleBuffer];</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>sampleBuffer 这个就是视频流的原始数据。</p>
-<h3 id="2-开始编码"><a href="#2-开始编码" class="headerlink" title="2.开始编码"></a>2.开始编码</h3><p>使用VideoToolBox库的相关API可能很方便的编码上面的sampleBuffer数据.</p>
-<p>首先要初始化一个VTCompressionSessionRef对象</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line"> OSStatus status = VTCompressionSessionCreate(NULL, _videoConfig.videoSize.width, _videoConfig.videoSize.height, kCMVideoCodecType_H264, NULL, NULL, NULL, didCompressBuffer, (__bridge void *)self, &amp;_compressionSession);</div><div class="line">    if(status != noErr)&#123;</div><div class="line">        return;</div><div class="line">    &#125;</div><div class="line">    //关键帧间隔 一般为帧率的2倍 间隔越大 压缩比越高</div><div class="line">    VTSessionSetProperty(_compressionSession, kVTCompressionPropertyKey_MaxKeyFrameInterval,(__bridge CFTypeRef)@(_videoConfig.keyframeInterval));</div><div class="line">    VTSessionSetProperty(_compressionSession, kVTCompressionPropertyKey_MaxKeyFrameIntervalDuration,(__bridge CFTypeRef)@(_videoConfig.keyframeInterval));</div><div class="line">    </div><div class="line">    </div><div class="line">    //Just remember that kVTCompressionPropertyKey_AverageBitRate takes bits and kVTCompressionPropertyKey_DataRateLimits takes bytes and seconds.</div><div class="line">//    status = VTSessionSetProperty(session, kVTCompressionPropertyKey_AverageBitRate, (__bridge CFTypeRef)@(600 * 1024));</div><div class="line">//    status = VTSessionSetProperty(session, kVTCompressionPropertyKey_DataRateLimits, (__bridge CFArrayRef)@[800 * 1024 / 8, 1]);</div><div class="line">    //码率 单位是bit</div><div class="line">    VTSessionSetProperty(_compressionSession, kVTCompressionPropertyKey_AverageBitRate, (__bridge CFTypeRef)@(_videoConfig.bitrate * 8));</div><div class="line">    </div><div class="line">    //码率上限 单位为 byte/s</div><div class="line">    NSArray *limit = @[@(_videoConfig.bitrate),@(1)];</div><div class="line">    VTSessionSetProperty(_compressionSession, kVTCompressionPropertyKey_DataRateLimits, (__bridge CFArrayRef)limit);</div><div class="line">    </div><div class="line">    VTSessionSetProperty(_compressionSession, kVTCompressionPropertyKey_ExpectedFrameRate, (__bridge CFTypeRef)@(_videoConfig.fps));</div><div class="line"></div><div class="line">    // 设置实时编码输出（避免延迟）</div><div class="line">    VTSessionSetProperty(_compressionSession, kVTCompressionPropertyKey_RealTime, kCFBooleanFalse);</div><div class="line">    VTSessionSetProperty(_compressionSession, kVTCompressionPropertyKey_ProfileLevel,  kVTProfileLevel_H264_Baseline_AutoLevel);</div><div class="line">    </div><div class="line">    //控制是否产生B帧</div><div class="line">    VTSessionSetProperty(_compressionSession, kVTCompressionPropertyKey_AllowFrameReordering, kCFBooleanFalse);</div><div class="line">    //16:9</div><div class="line">    VTSessionSetProperty(_compressionSession, kVTCompressionPropertyKey_AspectRatio16x9, kCFBooleanTrue);</div><div class="line">    </div><div class="line">    VTCompressionSessionPrepareToEncodeFrames(_compressionSession);</div></pre></td></tr></table></figure>
-<p>开始编码：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line">//开始编码</div><div class="line">- (void)videoEncodeData:(CVPixelBufferRef)pixelBuffer time:(uint64_t)time&#123;</div><div class="line"></div><div class="line">    frameCount++;</div><div class="line">    </div><div class="line">    //CMTimeMake(a,b) a当前第几帧，b每秒钟多少帧。当前播放时间a/b</div><div class="line">    CMTime presentationTimeStamp = CMTimeMake(frameCount, 1000);</div><div class="line">    </div><div class="line">    //每一帧需要播放的时间</div><div class="line">    VTEncodeInfoFlags flags;</div><div class="line">    CMTime duration = CMTimeMake(1, _videoConfig.fps);</div><div class="line">    </div><div class="line">    NSDictionary *properties = nil;</div><div class="line">    if(frameCount % (int32_t)(self.videoConfig.keyframeInterval) == 0)&#123;//强制关键帧</div><div class="line">        properties = @&#123;(__bridge NSString *)kVTEncodeFrameOptionKey_ForceKeyFrame: @YES&#125;;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    NSNumber *timeNumber = @(time);</div><div class="line">     OSStatus statusCode = VTCompressionSessionEncodeFrame(_compressionSession, pixelBuffer, presentationTimeStamp, duration, (__bridge CFDictionaryRef)properties, (__bridge void *)timeNumber, &amp;flags);</div><div class="line">    </div><div class="line">    if (statusCode != noErr) &#123;</div><div class="line">        NSLog(@&quot;H264: VTCompressionSessionEncodeFrame failed with %d&quot;, (int)statusCode);</div><div class="line">        </div><div class="line">        VTCompressionSessionInvalidate(_compressionSession);</div><div class="line">        CFRelease(_compressionSession);</div><div class="line">        _compressionSession = NULL;</div><div class="line">        return;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    NSLog(@&quot;H264: VTCompressionSessionEncodeFrame Success&quot;);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>编码成功回调:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">//编码完成的回调</div><div class="line">static void didCompressBuffer(void *VTref, void *VTFrameRef, OSStatus status, VTEncodeInfoFlags infoFlags, CMSampleBufferRef sampleBuffer)&#123;</div><div class="line"></div><div class="line">    LLYVideoEncode *videoEncode = (__bridge LLYVideoEncode *)VTref;</div><div class="line">    uint64_t timeStamp = [((__bridge_transfer NSNumber*)VTFrameRef) longLongValue];</div><div class="line">    </div><div class="line">    //编码后的原始数据</div><div class="line">    CMBlockBufferRef blockBuffer = CMSampleBufferGetDataBuffer(sampleBuffer);</div><div class="line">    CFArrayRef attachments = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, false);</div><div class="line">    </div><div class="line">    //判断关键帧</div><div class="line">    BOOL isKeyFrame = NO;</div><div class="line">    if (attachments != NULL) &#123;</div><div class="line">        CFDictionaryRef attachment;</div><div class="line">        CFBooleanRef dependsOnOthers;</div><div class="line">        attachment = (CFDictionaryRef)CFArrayGetValueAtIndex(attachments, 0);</div><div class="line">        dependsOnOthers = (CFBooleanRef)CFDictionaryGetValue(attachment, kCMSampleAttachmentKey_DependsOnOthers);</div><div class="line">        isKeyFrame = (dependsOnOthers == kCFBooleanFalse);</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    //关键帧需要把sps pps信息取出</div><div class="line">    if (isKeyFrame) &#123;</div><div class="line">        CMFormatDescriptionRef format = CMSampleBufferGetFormatDescription(sampleBuffer);</div><div class="line">        </div><div class="line">        size_t sparameterSetSize, sparameterSetCount;</div><div class="line">        const uint8_t *sparameterSet;</div><div class="line">        </div><div class="line">        //sps</div><div class="line">        OSStatus statusCode = CMVideoFormatDescriptionGetH264ParameterSetAtIndex(format, 0, &amp;sparameterSet, &amp;sparameterSetSize, &amp;sparameterSetCount, NULL );</div><div class="line">        if (statusCode == noErr) &#123;</div><div class="line">            </div><div class="line">            //pps</div><div class="line">            size_t pparameterSetSize, pparameterSetCount;</div><div class="line">            const uint8_t *pparameterSet;</div><div class="line">            OSStatus statusCode = CMVideoFormatDescriptionGetH264ParameterSetAtIndex(format, 1, &amp;pparameterSet, &amp;pparameterSetSize, &amp;pparameterSetCount, NULL );</div><div class="line">            if (statusCode == noErr) &#123;</div><div class="line">                </div><div class="line">                NSData *sps = [NSData dataWithBytes:sparameterSet length:sparameterSetSize];</div><div class="line">                NSData *pps = [NSData dataWithBytes:pparameterSet length:pparameterSetSize];</div><div class="line">                </div><div class="line">                if ([videoEncode.delegate respondsToSelector:@selector(videoEncode:sps:pps:time:)]  ) &#123;</div><div class="line">                    [videoEncode.delegate videoEncode:videoEncode sps:sps pps:pps time:timeStamp];</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        </div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    //视频数据 不管是不是关键帧都需要取出</div><div class="line">    //前4个字节表示长度后面的数据的长度</div><div class="line">    //除了关键帧,其它帧只有一个数据</div><div class="line">    </div><div class="line">    size_t length, totalLength;</div><div class="line">    char *dataPointer;</div><div class="line">    size_t offset = 0;</div><div class="line">    int const headLen = 4;// 返回的nalu数据前四个字节不是0001的startcode，而是大端模式的帧长度length</div><div class="line"></div><div class="line">    OSStatus statusCodeRet = CMBlockBufferGetDataPointer(blockBuffer, 0, &amp;length, &amp;totalLength, &amp;dataPointer);</div><div class="line">    if (statusCodeRet == noErr) &#123;</div><div class="line">        </div><div class="line">        // 循环获取nalu数据</div><div class="line">        while (offset &lt; totalLength - headLen) &#123;</div><div class="line">            </div><div class="line">            int NALUnitLength = 0;</div><div class="line">            memcpy(&amp;NALUnitLength, dataPointer + offset, headLen);</div><div class="line">            </div><div class="line">            NALUnitLength = CFSwapInt32BigToHost(NALUnitLength);</div><div class="line">            NSData *naluData = [NSData dataWithBytes:dataPointer + headLen + offset length:NALUnitLength];</div><div class="line">            offset += headLen + NALUnitLength;</div><div class="line">            </div><div class="line">            if ([videoEncode.delegate respondsToSelector:@selector(videoEncode:frame:time:isKeyFrame:)]) &#123;</div><div class="line">                [videoEncode.delegate videoEncode:videoEncode frame:naluData time:timeStamp isKeyFrame:isKeyFrame];</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>这里是编码流程中比较关键的一环，需要将编码后的数据（H264数据）根据相应的数据格式取出来，用来做进行二次封装（封装为rtmp协议对应格式的数据）进行rtmp传输。不过这几种数据都是固定格式的，所以只要清楚相应的格式后，拆分了封装应该都是能解决的。</p>
-<h3 id="3-拆分后的视频数据二次封装为rtmp格式包"><a href="#3-拆分后的视频数据二次封装为rtmp格式包" class="headerlink" title="3.拆分后的视频数据二次封装为rtmp格式包"></a>3.拆分后的视频数据二次封装为rtmp格式包</h3><p>sps和pps数据的封装(关键帧数据)</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">- (void)packageKeyFrameSps:(NSData *)spsData pps:(NSData *)ppsData timestamp:(uint64_t)timestamp&#123;</div><div class="line">    </div><div class="line">    if (spsData.length &lt;= 0 || ppsData &lt;= 0) &#123;</div><div class="line">        return;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    if (_hasSendKeyFrame) &#123;</div><div class="line">        return;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    _hasSendKeyFrame = YES;</div><div class="line">    </div><div class="line">    const char *sps = spsData.bytes;</div><div class="line">    const char *pps = ppsData.bytes;</div><div class="line">    NSInteger sps_len = spsData.length;</div><div class="line">    NSInteger pps_len = ppsData.length;</div><div class="line">    </div><div class="line">    NSInteger total = sps_len + pps_len + 16;</div><div class="line">    uint8_t *body = (uint8_t *)malloc(total);</div><div class="line">    int index = 0;</div><div class="line">    </div><div class="line">    memset(body,0,total);</div><div class="line">    </div><div class="line">    body[index++] = 0x17;</div><div class="line">    body[index++] = 0x00;//sps_pps</div><div class="line">    </div><div class="line">    body[index++] = 0x00;</div><div class="line">    body[index++] = 0x00;</div><div class="line">    body[index++] = 0x00;</div><div class="line">    </div><div class="line">    body[index++] = 0x01;</div><div class="line">    body[index++] = sps[1];</div><div class="line">    body[index++] = sps[2];</div><div class="line">    body[index++] = sps[3];</div><div class="line">    body[index++] = 0xff;</div><div class="line">    </div><div class="line">    /*sps*/</div><div class="line">    body[index++]   = 0xe1;</div><div class="line">    body[index++] = (sps_len &gt;&gt; 8) &amp; 0xff;</div><div class="line">    body[index++] = sps_len &amp; 0xff;</div><div class="line">    memcpy(&amp;body[index],sps,sps_len);</div><div class="line">    index +=  sps_len;</div><div class="line">    </div><div class="line">    /*pps*/</div><div class="line">    body[index++]   = 0x01;</div><div class="line">    body[index++] = (pps_len &gt;&gt; 8) &amp; 0xff;</div><div class="line">    body[index++] = (pps_len) &amp; 0xff;</div><div class="line">    memcpy(&amp;body[index], pps, pps_len);</div><div class="line">    index +=  pps_len;</div><div class="line">    </div><div class="line">    if ([self.delegate respondsToSelector:@selector(videoPackage:didPacketFrame:)]) &#123;</div><div class="line">        NSData *data = [NSData dataWithBytes:body length:index];</div><div class="line">        </div><div class="line">        LLYFrame *frame = [[LLYFrame alloc] init];</div><div class="line">        frame.data = data;</div><div class="line">        frame.timestamp = 0;//一定是0</div><div class="line">        frame.msgLength = (int)data.length;</div><div class="line">        frame.msgTypeId = LLYMSGTypeID_VIDEO;</div><div class="line">        frame.msgStreamId = LLYStreamIDVideo;//video</div><div class="line">        frame.isKeyframe = YES;</div><div class="line">        [self.delegate videoPackage:self didPacketFrame:frame];</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>非关键帧数据的封装</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div></pre></td><td class="code"><pre><div class="line">- (void)packageFrame:(NSData *)data timestamp:(uint64_t)timestamp isKeyFrame:(BOOL)isKeyFrame&#123;</div><div class="line"></div><div class="line">    if (!_hasSendKeyFrame) &#123;</div><div class="line">        return;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    NSInteger i = 0;</div><div class="line">    NSInteger total = data.length + 9;</div><div class="line">    unsigned char *body = (unsigned char *)malloc(total);</div><div class="line">    </div><div class="line">    memset(body, 0, total);</div><div class="line">    </div><div class="line">    if (isKeyFrame) &#123;</div><div class="line">        body[i++] = 0x17;//1:I Frame 7:AVC</div><div class="line">    &#125;</div><div class="line">    else&#123;</div><div class="line">        body[i++] = 0x27;//2:P Frame 7:AVC</div><div class="line">    &#125;</div><div class="line">    body[i++] = 0x01;//AVC NALU 不是psp_pps</div><div class="line">    </div><div class="line">    body[i++] = 0x00;</div><div class="line">    body[i++] = 0x00;</div><div class="line">    body[i++] = 0x00;//pts - dts</div><div class="line"></div><div class="line">    //长度数据</div><div class="line">    body[i++] = (data.length &gt;&gt; 24) &amp; 0xff;</div><div class="line">    body[i++] = (data.length &gt;&gt; 16) &amp; 0xff;</div><div class="line">    body[i++] = (data.length &gt;&gt;  8) &amp; 0xff;</div><div class="line">    body[i++] = (data.length ) &amp; 0xff;</div><div class="line"></div><div class="line">    memcpy(&amp;body[i], data.bytes, data.length);</div><div class="line">    </div><div class="line">    if ([self.delegate respondsToSelector:@selector(videoPackage:didPacketFrame:)]) &#123;</div><div class="line">        NSData *data = [NSData dataWithBytes:body length:total];</div><div class="line">        LLYFrame *frame = [[LLYFrame alloc]init];</div><div class="line">        frame.data = data;</div><div class="line">        frame.timestamp = (int)timestamp;</div><div class="line">        frame.msgLength = (int)data.length;</div><div class="line">        frame.msgTypeId = LLYMSGTypeID_VIDEO;</div><div class="line">        frame.msgStreamId = LLYStreamIDVideo;</div><div class="line">        frame.isKeyframe = isKeyFrame;</div><div class="line"></div><div class="line">        [self.delegate videoPackage:self didPacketFrame:frame];</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h3 id="4-建立rtmp通道"><a href="#4-建立rtmp通道" class="headerlink" title="4.建立rtmp通道"></a>4.建立rtmp通道</h3><p>先要开始一个socket的通道</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line">- (void)connectToServer:(NSString *)host port:(UInt32)port&#123;</div><div class="line"></div><div class="line">    if (self.streamStatus &gt; 0) &#123;</div><div class="line">        [self close];</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    //输入流 用来读取数据</div><div class="line">    CFReadStreamRef readStream;</div><div class="line">    //输出流，用来发送数据</div><div class="line">    CFWriteStreamRef writeStream;</div><div class="line">    </div><div class="line">    if (port &lt;= 0) &#123;</div><div class="line">        //RTMP默认端口1935</div><div class="line">        port = 1935;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    //建立socket链接</div><div class="line">    CFStreamCreatePairWithSocketToHost(NULL,(__bridge CFStringRef)host, port, &amp;readStream, &amp;writeStream);</div><div class="line">    </div><div class="line">    //注意__bridge_transfer,转移对象的内存管理权</div><div class="line">    _inputStream           = (__bridge_transfer  NSInputStream  *)readStream;</div><div class="line">    _outputStream          = (__bridge_transfer  NSOutputStream *)writeStream;</div><div class="line"></div><div class="line">    _inputStream.delegate = self;</div><div class="line">    _outputStream.delegate = self;</div><div class="line">    </div><div class="line">    [_outputStream scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];</div><div class="line">    [_inputStream  scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];</div><div class="line"></div><div class="line">    </div><div class="line">    [_inputStream open];</div><div class="line">    [_outputStream open];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>和服务器建立一个rtmp通信，通过服务器返回的状态码发送相应的握手请求，在3次握手成功后，rtmp通道建立完成，就可以发送封二次封装好的数据了。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line">- (void)streamSession:(LLYStreamSession *)session didChangeStatus:(LLYStreamStatus)streamStatus&#123;</div><div class="line"></div><div class="line">    if (streamStatus &amp; NSStreamEventHasBytesAvailable) &#123;//收到数据</div><div class="line">        [self didReceivedata];</div><div class="line">        return;//return</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    if (streamStatus &amp; NSStreamEventHasSpaceAvailable)&#123; //可以写数据</div><div class="line">        </div><div class="line">        if (_rtmpStatus == LLYRtmpSessionStatusConnected) &#123;</div><div class="line">            [self handshake0];</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        return;//return</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    if ((streamStatus &amp; NSStreamEventOpenCompleted) &amp;&amp;</div><div class="line">        _rtmpStatus &lt; LLYRtmpSessionStatusConnected) &#123;</div><div class="line">        self.rtmpStatus = LLYRtmpSessionStatusConnected;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    if (streamStatus &amp; NSStreamEventErrorOccurred) &#123;</div><div class="line">        self.rtmpStatus = LLYRtmpSessionStatusError;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    if (streamStatus &amp; NSStreamEventEndEncountered) &#123;</div><div class="line">        self.rtmpStatus = LLYRtmpSessionStatusNotConnected;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h3 id="5-rtmp推流"><a href="#5-rtmp推流" class="headerlink" title="5.rtmp推流"></a>5.rtmp推流</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div></pre></td><td class="code"><pre><div class="line">/**</div><div class="line"> *  Chunk Basic Header: HeaderType+ChannelID组成  1个字节</div><div class="line"> *     &gt;HeaderType(前两bit): 00-&gt;12字节  01-&gt;8字节</div><div class="line"> *     &gt;ChannelID(后6个bit): 02-&gt;Ping和ByteRead通道 03-&gt;Invoke通道 connect() publish()和自己写的NetConnection.Call() 04-&gt;Audio和Vidio通道</div><div class="line"> *</div><div class="line"> *  12字节举例</div><div class="line"> *  Chunk Message Header:timestamp + message_length+message_typ + msg_stream_id</div><div class="line"> *  message_typ :type为1,2,3,5,6的时候是协议控制消息</div><div class="line"> *</div><div class="line"> *               type为4的时候表示 User Control Messages [Event_type + Event_Data] Event_type有Stream Begin，Stream End...</div><div class="line"> *</div><div class="line"> *               type为8，音频数据</div><div class="line"> *</div><div class="line"> *               type为9，视频数据</div><div class="line"> *</div><div class="line"> *               type为18 元数据消息[AMF0]</div><div class="line"> *</div><div class="line"> *               type为20 命令消息 Command Message(RPC Message)</div><div class="line"> *               例如connect, createStream, publish, play, pause on the peer</div><div class="line"> *</div><div class="line"> *</div><div class="line"> *</div><div class="line"> */</div><div class="line">- (void)sendBuffer:(LLYFrame *)frame&#123;</div><div class="line">    dispatch_sync(_packageQueue, ^&#123;</div><div class="line">        </div><div class="line">        uint64_t ts = frame.timestamp;</div><div class="line">        </div><div class="line">        int streamId = frame.msgStreamId;</div><div class="line">        NSLog(@&quot;streamId------%d&quot;,streamId);</div><div class="line">        NSNumber *preTimestamp = self.preChunk[@(streamId)];</div><div class="line">        </div><div class="line">        uint8_t *chunk;</div><div class="line">        int offset = 0;</div><div class="line">        </div><div class="line">        if (preTimestamp == nil) &#123;//第一帧,音频或者视频</div><div class="line">            chunk = malloc(12);</div><div class="line">            chunk[0] = RTMP_CHUNK_TYPE_0/*0x00*/ | (streamId &amp; 0x1F); //前两个字节 00 表示12字节</div><div class="line">            offset += 1;</div><div class="line">            </div><div class="line">            memcpy(chunk+offset, [NSMutableData be24:(uint32_t)ts], 3);</div><div class="line">            offset += 3;//时间戳3个字节</div><div class="line">            </div><div class="line">            memcpy(chunk+offset, [NSMutableData be24:frame.msgLength], 3);</div><div class="line">            offset += 3;//消息长度3个字节</div><div class="line">            </div><div class="line">            int msgTypeId = frame.msgTypeId;//一个字节的消息类型</div><div class="line">            memcpy(chunk+offset, &amp;msgTypeId, 1);</div><div class="line">            offset += 1;</div><div class="line">            </div><div class="line">            memcpy(chunk+offset, (uint8_t *)&amp;(_streamID), sizeof(_streamID));</div><div class="line">            offset += sizeof(_streamID);</div><div class="line">            </div><div class="line">        &#125;else&#123;//不是第一帧</div><div class="line">            chunk = malloc(8);</div><div class="line">            chunk[0] = RTMP_CHUNK_TYPE_1/*0x40*/ | (streamId &amp; 0x1F);//前两个字节01表示8字节</div><div class="line">            offset += 1;</div><div class="line">            </div><div class="line">            char *temp = [NSMutableData be24:(uint32_t)(ts - preTimestamp.integerValue)];</div><div class="line">            memcpy(chunk+offset, temp, 3);</div><div class="line">            offset += 3;</div><div class="line">            </div><div class="line">            memcpy(chunk+offset, [NSMutableData be24:frame.msgLength], 3);</div><div class="line">            offset += 3;</div><div class="line">            </div><div class="line">            int msgTypeId = frame.msgTypeId;</div><div class="line">            memcpy(chunk+offset, &amp;msgTypeId, 1);</div><div class="line">            offset += 1;</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        self.preChunk[@(streamId)] = @(ts);</div><div class="line">        </div><div class="line">        uint8_t *bufferData = (uint8_t *)frame.data.bytes;</div><div class="line">        uint8_t *outp = (uint8_t *)malloc(frame.data.length + 64);</div><div class="line">        memcpy(outp, chunk, offset);</div><div class="line">        free(chunk);</div><div class="line">        </div><div class="line">        NSUInteger total = frame.data.length;</div><div class="line">        NSInteger step = MIN(total, _outChunkSize);</div><div class="line">        </div><div class="line">        memcpy(outp+offset, bufferData, step);</div><div class="line">        offset += step;</div><div class="line">        total  -= step;</div><div class="line">        bufferData += step;</div><div class="line">        </div><div class="line">        while (total &gt; 0) &#123;</div><div class="line">            step = MIN(total, _outChunkSize);</div><div class="line">            bufferData[-1] = RTMP_CHUNK_TYPE_3/*0xC0*/ | (streamId &amp; 0x1F);//11表示一个字节,直接跳过这个字节;</div><div class="line">            memcpy(outp+offset, bufferData - 1, step + 1);</div><div class="line">            </div><div class="line">            offset += step + 1;</div><div class="line">            total  -= step;</div><div class="line">            bufferData += step;</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        NSData *tosend = [NSData dataWithBytes:outp length:offset];</div><div class="line">        free(outp);</div><div class="line">        [self writeData:tosend];</div><div class="line">    &#125;);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>如果一切OK 推流地址应该就可以用VLC播放了。</p>
-<p>具体代码参考我的 <a href="https://github.com/lilingyu0620/LLYRtmpDemo.git" target="_blank" rel="noopener">demo</a>.</p>
-<p><a href="http://www.jianshu.com/p/37784e363b8a" target="_blank" rel="noopener">参考文档1</a></p>
-<p><a href="http://www.jianshu.com/p/6dfe49b5dab8" target="_blank" rel="noopener">参考文档2</a></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/02/18/OpenGL-ES-3-0学习笔记-简介/" itemprop="url">
-                  OpenGL ES 3.0学习笔记-简介
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-02-18T17:10:53+08:00" content="2017-02-18">
-              2017-02-18
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2017/02/18/OpenGL-ES-3-0学习笔记-简介/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/18/OpenGL-ES-3-0学习笔记-简介/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="可编程管线的各个阶段"><a href="#可编程管线的各个阶段" class="headerlink" title="可编程管线的各个阶段"></a>可编程管线的各个阶段</h2><h3 id="1-顶点着色器"><a href="#1-顶点着色器" class="headerlink" title="1.顶点着色器"></a>1.顶点着色器</h3><p>顶点着色器实现了顶点操作的通用可编程方法。</p>
-<p>顶点着色器的输入包括：</p>
-<ul>
-<li><p>着色器程序–描述顶点上执行操作的顶点着色器程序源代码或者可执行文件。</p>
-</li>
-<li><p>顶点着色器输入（或者属性）– 用顶点数组提供的每个顶点的数据。</p>
-</li>
-<li><p>统一变量– 顶点（或者片段）着色器使用的不变数据</p>
-</li>
-<li><p>采样器–代表顶点着色器使用纹理的特殊统一变量类型</p>
-</li>
-</ul>
-<p>顶点着色器可以用于通过矩阵变换位置，计算照明公式来生成逐顶点颜色以及生成或者变换纹理坐标等基于顶点的传统操作。此外，因为顶点着色器由应用程序规定，所以它可以用于执行自定义计算，实施新的变换，照明或者传统的固定功能管线所不允许的基于顶点的效果。</p>
-<p>简单实例</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">#version 300 es//版本号                        </div><div class="line">uniform mat4 u_mvpMatrix;//变换矩阵</div><div class="line">//输入数据</div><div class="line">in vec4 a_position;//顶点坐标</div><div class="line">in vec4 a_color;//顶点颜色</div><div class="line">//输出数据</div><div class="line">out vec4 v_color;//顶点颜色</div><div class="line"> void main()                              </div><div class="line"> &#123;             </div><div class="line"> 	  v_color = a_color;                           </div><div class="line">     gl_Position = a_position * u_mvpMatrix;              </div><div class="line"> &#125;</div></pre></td></tr></table></figure>
-<h3 id="2-图元装配"><a href="#2-图元装配" class="headerlink" title="2.图元装配"></a>2.图元装配</h3><p>顶点着色器之后，管线的下一个阶段是图元装配。<br>图元是三角形，直线或者点精灵等几何对象。</p>
-<p>对于每个图元，必须确定图元是否位于视锥体（屏幕上可见的3D空间区域）内，如果图元没有完全在视锥体内，则可能需要进行裁剪，如果图元完全处于该区域之外，它就会被抛弃。裁剪之后，顶点位置被转换为屏幕坐标。也可以执行一次淘汰操作，根据图元面向前方或者后方抛弃它们，裁剪和淘汰之后，图元便准备传递给管线的下一个阶段–光栅化阶段。</p>
-<h3 id="3-光栅化"><a href="#3-光栅化" class="headerlink" title="3.光栅化"></a>3.光栅化</h3><p>光栅化是将图元转化为一组二维片段的过程，然后，这些片段由片段着色器处理。这些二维片段代表着可在屏幕上绘制的像素。</p>
-<h3 id="4-片段着色器"><a href="#4-片段着色器" class="headerlink" title="4.片段着色器"></a>4.片段着色器</h3><p>片段着色器为片段上的操作实现了通用的可编程方法。<br>片段着色器的输入：</p>
-<ul>
-<li><p>着色器程序–描述片段上所执行操作的片段着色器程序源代码或者可执行文件。</p>
-</li>
-<li><p>输入变量–光栅化单元用插值为每个片段生成的顶点着色器输出。</p>
-</li>
-<li><p>统一变量–片段（或者顶点）着色器使用的不变数据。</p>
-</li>
-<li><p>采样器–代表片段着色器所用纹理的特殊统一变量类型。</p>
-</li>
-</ul>
-<p>简单实例:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">#version 300 es                              </div><div class="line"> precision mediump float;//默认的精度限定符</div><div class="line"> in vec4 v_color;</div><div class="line">                      </div><div class="line"> out vec4 fragColor;                          </div><div class="line"> void main()                                  </div><div class="line"> &#123;                                            </div><div class="line">    fragColor = v_color;  </div><div class="line"> &#125;</div></pre></td></tr></table></figure>
-<h3 id="5-逐片段操作"><a href="#5-逐片段操作" class="headerlink" title="5.逐片段操作"></a>5.逐片段操作</h3><p>在逐片段操作阶段，在每个片段上执行如下功能：</p>
-<ul>
-<li><p>像素归属测试–这个测试确定帧缓冲区中位置（Xw,Yw）的像素目前是不是归OpenGL ES 所有。</p>
-</li>
-<li><p>裁剪测试–裁剪测试确定（Xw,Yw）是否位于作为OpenGL ES状态的一部分的裁剪矩形范围内。如果该片段位于裁剪区域之外，则被抛弃。</p>
-</li>
-<li><p>模板和深度测试–这些测试在输入片段的模板和深度值上进行，以确保片段是否应该被拒绝。</p>
-</li>
-<li><p>混合–混合将新生成的片段颜色值与保存在帧缓冲区（Xw,Yw）位置的颜色值组合起来。</p>
-</li>
-<li><p>抖动–抖动可用于最小化因为使用有限精度在帧缓冲区中保存颜色值而产生的伪像。</p>
-</li>
-</ul>
-<p>在逐片段操作的最后，片段或者被拒绝，或者在帧缓冲区的（Xw,Yw）位置写入片段的代码，深度或者模板值。写入片段颜色 深度和模板值取决于启用的相应写入掩码。写入掩码可以更精细的控制写入相关缓冲区的颜色，深度和模板值。</p>
-<h2 id="OpenGL-ES-3-0新功能"><a href="#OpenGL-ES-3-0新功能" class="headerlink" title="OpenGL ES 3.0新功能"></a>OpenGL ES 3.0新功能</h2><ul>
-<li><p>纹理</p>
-</li>
-<li><p>着色器</p>
-</li>
-<li><p>几何形状</p>
-</li>
-<li><p>缓冲区对象</p>
-</li>
-<li><p>帧缓冲区</p>
-</li>
-</ul>
-<h2 id="OpenGL-ES-3-0-和向后兼容性"><a href="#OpenGL-ES-3-0-和向后兼容性" class="headerlink" title="OpenGL ES 3.0 和向后兼容性"></a>OpenGL ES 3.0 和向后兼容性</h2><h2 id="EGL（iOS不支持）"><a href="#EGL（iOS不支持）" class="headerlink" title="EGL（iOS不支持）"></a>EGL（iOS不支持）</h2>
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1830,7 +1876,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">47</span>
+              <span class="site-state-item-count">50</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
