@@ -229,6 +229,278 @@
             
               
                 
+                <a class="post-title-link" href="/2018/08/09/HLS协议详解/" itemprop="url">
+                  HLS协议详解
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-08-09T15:54:42+08:00" content="2018-08-09">
+              2018-08-09
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/08/09/HLS协议详解/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/08/09/HLS协议详解/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="HLS协议详解"><a href="#HLS协议详解" class="headerlink" title="HLS协议详解"></a>HLS协议详解</h3><p>HLS （HTTP Live Streaming）, 是由 Apple 公司实现的基于 HTTP 的媒体流传输协议。Apple 的全系列产品支持，由于 HLS 是苹果提出的， 所以在 Apple 的全系列产品包括 iphone、 ipad、safari 都不需要安装任何插件就可以原生支持播放 HLS， 现在Android 也加入了对 HLS 的支持。但PC端目前除了Microsoft Edge外，Chrome、Firefox等浏览器均不支持该协议的播放。</p>
+<p>HLS跟 DASH 协议的原理非常类似，<strong>通过将整条流切割成一个小的可以通过 HTTP 下载的媒体文件，然后提供一个配套的媒体列表文件给客户端，让客户端顺序地拉取这些媒体文件播放, 来实现看上去是在播放一条流的效果。</strong> HLS 目前广泛地应用于点播和直播领域</p>
+<h4 id="HLS-的优势"><a href="#HLS-的优势" class="headerlink" title="HLS 的优势"></a>HLS 的优势</h4><ul>
+<li><p>客户端支持简单，只需要支持 HTTP 请求即可，HTTP 协议无状态，只需要按顺序下载媒体片段即可。</p>
+</li>
+<li><p>使用 HTTP 协议网络兼容性好， HTTP 数据包也可以方便地通过防火墙或者代理服务器，CDN 支持良好。</p>
+</li>
+<li><p>自带多码率自适应，Apple 在提出 HLS 时，就已经考虑了码率自适应的问题。</p>
+</li>
+</ul>
+<h4 id="HLS-的劣势"><a href="#HLS-的劣势" class="headerlink" title="HLS 的劣势"></a>HLS 的劣势</h4><ul>
+<li><p>相比 RTMP 这类长连接协议，延时较高，难以用到互动直播场景。</p>
+</li>
+<li><p>对于点播服务来说，由于 TS 切片通常较小，海量碎片在文件分发、一致性缓存、存储等方面都有较大挑战。</p>
+</li>
+</ul>
+<h3 id="协议详解"><a href="#协议详解" class="headerlink" title="协议详解"></a>协议详解</h3><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/hls01.png" alt=""></p>
+<p>上图可以看出，HLS总共有三个部分: Serve、CDN、Client。HLS 协议的主要内容是关于 M3U8 这个文本协议，其实生成与解析都非常简单，示例如下：</p>
+<p>简单的Media Playlist:</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/hls02.png" alt=""></p>
+<p>包含多种比特率的 Master Playlist:</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/hls03.png" alt=""></p>
+<ul>
+<li>HLS 通过 URI(RFC3986) 指向的一个 Playlist 来表示一个媒体流.</li>
+<li>一个 Playlist 可以是一个 Media Playlist 或者 Master Playlist, 使用 UTF-8 编码的文本文件, 包含一些 URI 跟描述性的 tags.</li>
+<li>一个 Media Playlist 包含一个 Media Segments 列表,当顺序播放时, 能播放整个完整的流.</li>
+<li>要想播放这个 Playlist, 客户端需要首先下载他, 然后播放里面的每一个 Media Segment.</li>
+<li>更加复杂的情况是, Playlist 是一个 Master Playlist, 包含一个 Variant Stream 集合, 通常每个 Variant Stream 里面是同一个流的多个不同版本(如: 分辨率, 码率不同).</li>
+</ul>
+<h4 id="HLS-Media-Segments"><a href="#HLS-Media-Segments" class="headerlink" title="HLS Media Segments"></a>HLS Media Segments</h4><ul>
+<li>每一个 Media Segment 通过一个 URI 指定, 可能包含一个 byte range.</li>
+<li>每一个 Media Segment 的 duration 通过 EXTINF tag 指定.</li>
+<li>每一个 Media Segment 有一个唯一的整数 Media Segment Number.</li>
+<li>有些媒体格式需要一个 format-specific sequence 来初始化一个 parser, 在 Media Segment 被 parse 之前. 这个字段叫做 Media Initialization Section, 通过 EXT-X-MAP tag 来指定. </li>
+</ul>
+<h4 id="支持的Media-Segment格式"><a href="#支持的Media-Segment格式" class="headerlink" title="支持的Media Segment格式"></a>支持的Media Segment格式</h4><h5 id="MPEG-2-Transport-Streams"><a href="#MPEG-2-Transport-Streams" class="headerlink" title="MPEG-2 Transport Streams"></a>MPEG-2 Transport Streams</h5><ul>
+<li>即最常见的 TS 文件.</li>
+<li>RFC: ISO_13818.</li>
+<li>Media Initialization Section: PAT(Program Association Table) 跟 PMT(Program Map Table).</li>
+<li>每个 TS segment 必须值含一个 MPEG-2 Program.</li>
+<li>每个 TS segment 包含一个 PAT 和 PMT, 最好在 segment 的开始处, 或者通过一个 EXT-X-MAP tag 来指定.</li>
+</ul>
+<h5 id="Fragmented-MPEG-4"><a href="#Fragmented-MPEG-4" class="headerlink" title="Fragmented MPEG-4"></a>Fragmented MPEG-4</h5><ul>
+<li>即常提到的 fMP4.</li>
+<li>RFC: ISOBMFF.</li>
+<li>Media Initialization Section: ftyp box(包含一个高于 ios6 的 brand), ftyp box 必须紧跟在 moov box 之后. moov box 必须包含一个 trak box(对于每个 fMP4 segment 里面的 traf box, 包含匹配的 track_ID). 每个 trak box 应该包含一个 sample table, 但是他的 sample count 必须为 0. mvhd box 跟 tkhd 的 duration 必须为 0. mvex box 必须跟在上一个 trak box 后面.</li>
+<li>不像普通的 MP4 文件包含一个 moov box(包含 sample tables) 和一个 mdat box(包含对应的 samples), 一个 fMP4 包含一个 moof box (包含 sample table 的子集), 和一个 mdat box(包含对应的 samples).</li>
+<li>在每一个 fMP4 segment 里面, 每一个 traf box 必须包含一个 tfdt box, fMP4 segment 必须使用 movie-fragment relative addressing. fMP4 segments 绝对不能使用外部的 data references.</li>
+<li>每一个 fMP4 segment 必须有一个 EXT-X-MAP tag.</li>
+</ul>
+<h5 id="Packed-Audio"><a href="#Packed-Audio" class="headerlink" title="Packed Audio"></a>Packed Audio</h5><ul>
+<li>一个 Packed Audio Segment 包含编码的 audio samples 和 ID3 tags. 简单的打包到一起, 包含最小的 framing, 并且没有 per-sample timestamp.</li>
+<li>支持的 Packed Audio: AAC with ADTS framing [ISO_13818_7], MP3 [ISO_13818_3], AC-3 [AC_3], Enhanced AC-3 [AC_3].</li>
+<li>一个 Packed Audio Segment 没有 Media Initialization Section.</li>
+<li>每一个 Packed Audio Segment 必须在他的第一个 sample 指定 timestamp 通过一个 ID3 PRIV tag.</li>
+<li>ID3 PRIV owner identifier 必须是 com.apple.streaming.transportStreamTimestamp.</li>
+<li>ID3 payload 必须是一个 33-bit MPEG-2 Program Elementary Stream timestamp 的大端 eight-octet number, 高 31 为设置为 0.</li>
+</ul>
+<h5 id="WebVTT"><a href="#WebVTT" class="headerlink" title="WebVTT"></a>WebVTT</h5><ul>
+<li>一个 WebVTT Segment 是一个 WebVTT 文件的一个 section, WebVTT Segment 包含 subtitles.</li>
+<li>Media Initialization Section: WebVTT header.</li>
+<li>每一个 WebVTT Segment 必须有以一个 WebVTT header 开始, 或者有一个 EXT-X-MAP tag 来指定.</li>
+<li>每一个 WebVTT header 应该有一个 X-TIMESTAMP-MAP 来保证音视频同步.</li>
+</ul>
+<h4 id="HLS-Playlists"><a href="#HLS-Playlists" class="headerlink" title="HLS Playlists"></a>HLS Playlists</h4><ul>
+<li>Playlist 文件的格式是起源于 M3U, 并且继承两个 tag: EXTM3U 和 EXTINF</li>
+<li>下面的 tags 通过 BNF-style 语法来指定.</li>
+<li>一个 Playlist 文件必须通过 URI(.m3u8 或 m3u) 或者 HTTP Content-Type 来识别(application/vnd.apple.mpegurl 或 audio/mpegurl).</li>
+<li>换行符可以用 \n 或者 \r\n.</li>
+<li>以 # 开头的是 tag 或者注释, 以 #EXT 开头的是 tag, 其余的为注释, 在解析时应该忽略.</li>
+<li>Playlist 里面的 URI 可以用绝对地址或者相对地址, 如果使用相对地址, 那么是相对于 Playlist 文件的地址.</li>
+</ul>
+<h5 id="Attribute-Lists"><a href="#Attribute-Lists" class="headerlink" title="Attribute Lists"></a>Attribute Lists</h5><ul>
+<li>有的 tags 的值是 Attribute Lists.</li>
+<li>一个 Attribute List 是一个用逗号分隔的 attribute/value 对列表.</li>
+<li>格式为: AttributeName=AttributeValue.</li>
+</ul>
+<h5 id="Basic-Tags"><a href="#Basic-Tags" class="headerlink" title="Basic Tags"></a>Basic Tags</h5><p>Basic Tags 可以用在 Media Playlist 和 Master Playlist 里面.</p>
+<ul>
+<li>EXTM3U: 必须在文件的第一行, 标识是一个 Extended M3U Playlist 文件.</li>
+<li>EXT-X-VERSION: 表示 Playlist 兼容的版本.</li>
+</ul>
+<h5 id="Media-Segment-Tags"><a href="#Media-Segment-Tags" class="headerlink" title="Media Segment Tags"></a>Media Segment Tags</h5><p>每一个 Media Segment 通过一系列的 Media Segment tags 跟一个 URI 来指定. 有的 Media Segment tags 只应用与下一个 segment, 有的则是应用所有下面的 segments. 一个 Media Segment tag 只能出现在 Media Playlist 里面.</p>
+<ul>
+<li>EXTINF: 用于指定 Media Segment 的 duration</li>
+<li>EXT-X-BYTERANGE: 用于指定 URI 的 sub-range</li>
+<li>EXT-X-DISCONTINUITY: 表示不连续.</li>
+<li>EXT-X-KEY: 表示 Media Segment 已加密, 该值用于解密.</li>
+<li>EXT-X-MAP: 用于指定 Media Initialization Section.</li>
+<li>EXT-X-PROGRAM-DATE-TIME: 和 Media Segment 的第一个 sample 一起来确定时间戳.</li>
+<li>EXT-X-DATERANGE: 将一个时间范围和一组属性键值对结合到一起.</li>
+</ul>
+<h5 id="Media-Playlist-Tags"><a href="#Media-Playlist-Tags" class="headerlink" title="Media Playlist Tags"></a>Media Playlist Tags</h5><p>Media Playlist tags 描述 Media Playlist 的全局参数. 同样地, Media Playlist tags 只能出现在 Media Playlist 里面.</p>
+<ul>
+<li>EXT-X-TARGETDURATION: 用于指定最大的 Media Segment duration.</li>
+<li>EXT-X-MEDIA-SEQUENCE: 用于指定第一个 Media Segment 的 Media Sequence Number.</li>
+<li>EXT-X-DISCONTINUITY-SEQUENCE: 用于不同 Variant Stream 之间同步.</li>
+<li>EXT-X-ENDLIST: 表示结束.</li>
+<li>EXT-X-PLAYLIST-TYPE: 可选, 指定整个 Playlist 的类型.</li>
+<li>EXT-X-I-FRAMES-ONLY: 表示每个 Media Segment 描述一个单一的 I-frame.</li>
+</ul>
+<h5 id="Master-Playlist-Tags"><a href="#Master-Playlist-Tags" class="headerlink" title="Master Playlist Tags"></a>Master Playlist Tags</h5><p>Master Playlist tags 定义 Variant Streams, Renditions 和 其他显示的全局参数. Master Playlist tags 只能出现在 Master Playlist 中.</p>
+<ul>
+<li>EXT-X-MEDIA: 用于关联同一个内容的多个 Media Playlist 的多种 renditions.</li>
+<li>EXT-X-STREAM-INF: 用于指定一个 Variant Stream.</li>
+<li>EXT-X-I-FRAME-STREAM-INF: 用于指定一个 Media Playlist 包含媒体的 I-frames.</li>
+<li>EXT-X-SESSION-DATA: 存放一些 session 数据.</li>
+<li>EXT-X-SESSION-KEY: 用于解密.</li>
+</ul>
+<h5 id="Media-or-Master-Playlist-Tags"><a href="#Media-or-Master-Playlist-Tags" class="headerlink" title="Media or Master Playlist Tags"></a>Media or Master Playlist Tags</h5><p>这里的 tags 可以出现在 Media Playlist 或者 Master Playlist 中. 但是如果同时出现在同一个 Master Playlist 和 Media Playlist 中时, 必须为相同值.</p>
+<ul>
+<li>EXT-X-INDEPENDENT-SEGMENTS: 表示每个 Media Segment 可以独立解码.</li>
+<li>EXT-X-START: 标识一个优选的点来播放这个 Playlist.</li>
+</ul>
+<h3 id="服务器端与客户端逻辑"><a href="#服务器端与客户端逻辑" class="headerlink" title="服务器端与客户端逻辑"></a>服务器端与客户端逻辑</h3><p>以下流程仅供参考, 其实不同的播放器客户端以及服务器端的拉取规则都有很多细节差异.</p>
+<h4 id="服务器端逻辑"><a href="#服务器端逻辑" class="headerlink" title="服务器端逻辑"></a>服务器端逻辑</h4><ul>
+<li>将媒体源切片成 Media Segment, 应该优先从可以高效解码的时间点来进行切片(如: I-frame).</li>
+<li>为每一个 Media Segment 生成 URI.</li>
+<li>Server 需要支持 “gzip” 方式压缩文本内容.</li>
+<li>创建一个 Media Playlist 索引文件, EXT-X-VERSION 不要高于他需要的版本, 来提供更好的兼容性.</li>
+<li>Server 不能随便修改 Media Playlist, 除了 Append 文本到文件末尾, 按顺序移除 Media Segment URIs, 增长 EXT-X-MEDIA-SEQUENCE 和 EXT-X-DISCONTINUITY-SEQUENCE, 添加 EXT-X-ENDLIST 到文件尾.</li>
+<li>在最后添加 EXT-X-ENDLIST tag, 来减少 Client reload Playlist 的次数.</li>
+<li>注意点播与直播服务器不同的地方是, 直播的 m3u8 文件会不断更新, 而点播的 m3u8 文件是不会变的, 只需要客户端在开始时请求一次即可.</li>
+</ul>
+<h4 id="客户端逻辑"><a href="#客户端逻辑" class="headerlink" title="客户端逻辑"></a>客户端逻辑</h4><ul>
+<li>客户端通过 URI 获取 Playlist. 如果是 Master Playlist, 客户端可以选择一个 Variant Stream 来播放.</li>
+<li>客户端检查 EXT-X-VERSION 版本是否满足.</li>
+<li>客户端应该忽略不可识别的 tags, 忽略不可识别的属性键值对.</li>
+<li>加载 Media Playlist file.</li>
+<li>播放 Media Playlist file.</li>
+<li>重加载 Media Playlist file.</li>
+<li>决定下一次要加载的 Media Segment.</li>
+</ul>
+<h3 id="HLS优化技术"><a href="#HLS优化技术" class="headerlink" title="HLS优化技术"></a>HLS优化技术</h3><p>由于客户端每次请求 TS 或 M3U8 有可能都是一个新的连接请求，所以,我们无法有效的标识客户端，一旦出现问题，基本无法有效的定位问题，因此一般工业级的服务器都会对传统的 HLS 做一些改进。</p>
+<h4 id="302"><a href="#302" class="headerlink" title="302"></a>302</h4><p>首先在客户端第一次进行拉流请求的时候，服务器会做一个302的跳转。</p>
+<h4 id="uuid"><a href="#uuid" class="headerlink" title="uuid"></a>uuid</h4><p>在302跳转后产生的新的url上，服务器会给url加上一个uuid，用来定位可能的问题。</p>
+<h3 id="TS文件详解"><a href="#TS文件详解" class="headerlink" title="TS文件详解"></a>TS文件详解</h3><p>m3u8只是一个传输格式，一个典型的m3u8文件，最终的音视频数据流都是封装在.ts文件中，ts文件的全称是<strong>MPEG-2 Transport Streams</strong>，下面来分析一下这个文件的具体结构。</p>
+<h4 id="文件结构"><a href="#文件结构" class="headerlink" title="文件结构"></a>文件结构</h4><p>视频编码主要格式是h264/mpeg4,音频编码格式主要是acc/mp3</p>
+<p>ts文件分为三层：</p>
+<ul>
+<li>ts(TransportStream)主要是音视频数据</li>
+<li>pes(PacketElementalStream)在音视频数据（ts）上加了时间戳等数据说明信息</li>
+<li>es(ElementaryStream)在（pes）上加入数据流的识别和传输必须信息</li>
+</ul>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/hlsts.png" alt=""></p>
+<p>下面来分析一下每一层具体的格式。</p>
+<h4 id="ts-TransportStream"><a href="#ts-TransportStream" class="headerlink" title="ts(TransportStream)"></a>ts(TransportStream)</h4><p>ts数据大小固定为188个字节，ts又分为三个组成部分，分别是 <strong>ts header</strong>,<strong>adaptation field</strong>和<strong>payload</strong>.<br>其中ts header固定为4个字节，adaptation field可能存在也可能不存在，主要作用是给不足188字节的数据做填充，payload是pes数据。</p>
+<h5 id="ts-header"><a href="#ts-header" class="headerlink" title="ts header"></a>ts header</h5><p>ts header中包含一下字段：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/hlstsheader.png" alt=""></p>
+<p>ts层的内容是通过<strong>pid</strong>值来标识的，主要内容包括：PAT表、PMT表、音频流、视频流。解析ts流要先找到PAT表，只要找到PAT就可以找到PMT，然后就可以找到音视频流了。<strong>PAT表的pid值固定为0</strong>。PAT表和PMT表需要定期插入ts流，因为用户随时可能加入ts流，这个间隔比较小，通常每隔几个视频帧就要加入PAT和PMT。PAT和PMT表是必须的，还可以加入其它表如SDT（业务描述表）等，不过hls流只要有PAT和PMT就可以播放了。</p>
+<h5 id="adaptation-field"><a href="#adaptation-field" class="headerlink" title="adaptation field"></a>adaptation field</h5><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/tsadaptation.png" alt=""></p>
+<p>自适应区的长度要包含传输错误指示符标识的一个字节。pcr是节目时钟参考，pcr、dts、pts都是对同一个系统时钟的采样值，pcr是递增的，因此可以将其设置为dts值，音频数据不需要pcr。如果没有字段，ipad是可以播放的，但vlc无法播放。打包ts流时PAT和PMT表是没有adaptation field的，不够的长度直接补0xff即可。视频流和音频流都需要加adaptation field，通常加在一个帧的第一个ts包和最后一个ts包里，中间的ts包不加。</p>
+<h5 id="PAT-amp-PMT"><a href="#PAT-amp-PMT" class="headerlink" title="PAT &amp; PMT"></a>PAT &amp; PMT</h5><p>这2个类型都是ts的一种，通过pid来区分。</p>
+<p><strong>PAT主要的作用就是指明了PMT表的pid值</strong>，下图是PAT包含的字段：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/tspat.png" alt=""></p>
+<p><strong>PMT主要的作用就是指明了音视频流的pid值</strong>，下图是PMT包含的字段：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/tspmt.png" alt=""></p>
+<h4 id="pes-PacketElementalStream"><a href="#pes-PacketElementalStream" class="headerlink" title="pes(PacketElementalStream)"></a>pes(PacketElementalStream)</h4><p>pes层是在每一个视频/音频帧上加入了时间戳等信息，pes包内容很多，我们只留下最常用的字段，如下：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/hlspes.png" alt=""></p>
+<p><strong>pts是显示时间戳</strong>、<strong>dts是解码时间戳</strong>，视频数据两种时间戳都需要，音频数据的pts和dts相同，所以只需要pts。<strong>有pts和dts两种时间戳是B帧引起的</strong>，I帧和P帧的pts等于dts。如果一个视频没有B帧，则pts永远和dts相同。从文件中顺序读取视频帧，取出的帧顺序和dts顺序相同。dts算法比较简单，初始值 + 增量即可，pts计算比较复杂，需要在dts的基础上加偏移量。</p>
+<p>音频的pes中只有pts（同dts），视频的I、P帧两种时间戳都要有，视频B帧只要pts（同dts）。打包pts和dts就需要知道视频帧类型，但是通过容器格式我们是无法判断帧类型的，必须解析h.264内容才可以获取帧类型。</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/ptsdts.png" alt=""></p>
+<p>点播视频dts算法：</p>
+<p>dts = 初始值 + 90000 / video_frame_rate，初始值可以随便指定，但是最好不要取0，video_frame_rate就是帧率，比如23、30。</p>
+<p>pts和dts是以timescale为单位的，1s = 90000 time scale , 一帧就应该是90000/video_frame_rate 个timescale。</p>
+<p>用一帧的timescale除以采样频率就可以转换为一帧的播放时长</p>
+<p>点播音频dts算法：</p>
+<p>dts = 初始值 + (90000 <em> audio_samples_per_frame) / audio_sample_rate，audio_samples_per_frame这个值与编解码相关，aac取值1024，mp3取值1158，audio_sample_rate是采样率，比如24000、41000。AAC一帧解码出来是每声道1024个sample，也就是说一帧的时长为1024/sample_rate秒。所以每一帧时间戳依次0，1024/sample_rate，…，1024</em>n/sample_rate秒。</p>
+<p>直播视频的dts和pts应该直接用直播数据流中的时间，不应该按公式计算。</p>
+<h4 id="es-ElementaryStream"><a href="#es-ElementaryStream" class="headerlink" title="es(ElementaryStream)"></a>es(ElementaryStream)</h4><p>es层指的就是音视频数据，我们只介绍h.264视频和aac音频。</p>
+<h5 id="h-264"><a href="#h-264" class="headerlink" title="h.264"></a>h.264</h5><p>打包h.264数据我们必须给视频数据加上一个nalu（Network Abstraction Layer unit），nalu包括nalu header和nalu type，nalu header固定为0x00000001（帧开始）或0x000001（帧中）。h.264的数据是由slice组成的，slice的内容包括：视频、sps、pps等。nalu type决定了后面的h.264数据内容。</p>
+<p>对h264格式不太了解可以参考<a href="http://llyblog.com/2017/03/16/H-264文件结构学习笔记/" target="_blank" rel="noopener">h.264文件结构学习笔记</a></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/07/20/UIViewController的内存泄露检测实践/" itemprop="url">
                   UIViewController的内存泄露检测实践
                 </a>
@@ -1657,179 +1929,11 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/04/16/AudioUnit实战/" itemprop="url">
-                  AudioUnit实战
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-04-16T14:33:25+08:00" content="2018-04-16">
-              2018-04-16
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2018/04/16/AudioUnit实战/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/04/16/AudioUnit实战/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>前面学习了AudioUnit相关理论姿势，现在结合实际demo继续深入学习一下。。。</p>
-<h3 id="AudioUnit–播放本地音频"><a href="#AudioUnit–播放本地音频" class="headerlink" title="AudioUnit–播放本地音频"></a>AudioUnit–播放本地音频</h3><p>因为AudioUnit只支持PCM文件，所以这里我们先使用一个本地的PCM文件进行播放，后续会有播放其他格式文件的demo,需要用到转码的相关API。</p>
-<p>这里我们使用<strong>NSInputStream</strong>直接读取音频文件，因为不需要转码，所以读取到的数据就是可以直接拿来播放的数据。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">NSInputStream *inputStream;</div><div class="line"> 	NSURL *url = [NSURL fileURLWithPath:self.pcmPath];</div><div class="line">   inputStream = [NSInputStream inputStreamWithURL:url];</div><div class="line">   if (!inputStream) &#123;</div><div class="line">       NSLog(@&quot;打开文件失败!!!!%@&quot;,url);</div><div class="line">   &#125;</div><div class="line">   else&#123;</div><div class="line">       [inputStream open];</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
-<p>初始化AudioUnit相关内容前，我们需要全局设置一下<strong>AVAudioSession</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">//设置audiosession</div><div class="line"></div><div class="line">   NSError *error = nil;   </div><div class="line">   AVAudioSession *audioSession = [AVAudioSession sharedInstance];</div><div class="line">   [audioSession setCategory:AVAudioSessionCategoryPlayback error:&amp;error];</div></pre></td></tr></table></figure>
-<p>然后可以开始初始化AudioUnit，这里我们需要的是Output type</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">   AudioUnit playerAudioUnit;</div><div class="line"></div><div class="line">//AU描述</div><div class="line">   AudioComponentDescription audioUnitDesc;</div><div class="line">   audioUnitDesc.componentType = kAudioUnitType_Output;</div><div class="line">   audioUnitDesc.componentSubType = kAudioUnitSubType_RemoteIO;</div><div class="line">   audioUnitDesc.componentManufacturer = kAudioUnitManufacturer_Apple;</div><div class="line">   audioUnitDesc.componentFlags = 0;</div><div class="line">   audioUnitDesc.componentFlagsMask = 0;</div><div class="line">   </div><div class="line">   //AudioUnit裸创建</div><div class="line">   AudioComponent audioComponent = AudioComponentFindNext(NULL, &amp;audioUnitDesc);</div><div class="line">   AudioComponentInstanceNew(audioComponent, &amp;playerAudioUnit);</div></pre></td></tr></table></figure>
-<p>接下来有一个<strong>kAudioOutputUnitProperty_EnableIO</strong>属性的设置，这里如果只是播放功能的话，实际上是不需要设置的，因为AudioUnit默认就是支持播放的，如果需要输入功能（比如录音）时，就必须设置这个属性，之后的demo会有使用，这里我们先不设置这个属性，设置的相关格式如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">//通用参数设置,这里是设置扬声器</div><div class="line">  OSStatus status = noErr;</div><div class="line">  UInt32 flag = 1;</div><div class="line">  UInt32 outputBus = 0;//Element 0</div><div class="line">  status = AudioUnitSetProperty(playerAudioUnit, kAudioOutputUnitProperty_EnableIO, kAudioUnitScope_Output, outputBus, &amp;flag, sizeof(flag));</div><div class="line">  if (status) &#123;</div><div class="line">      NSLog(@&quot;AudioUnitSetProperty error with status:%d&quot;, status);</div><div class="line">  &#125;</div></pre></td></tr></table></figure>
-<p>然后我们需要设置AudioUnit的播放音频的格式，这里一般都是PCM格式</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">//设置音频具体结构</div><div class="line">   AudioStreamBasicDescription audioStreamDesc;</div><div class="line">//    bzero(&amp;audioStreamDesc, sizeof(audioStreamDesc));</div><div class="line">   memset(&amp;audioStreamDesc, 0, sizeof(audioStreamDesc));</div><div class="line">   audioStreamDesc.mFormatID = kAudioFormatLinearPCM;</div><div class="line">   audioStreamDesc.mSampleRate = 44100;//采样率</div><div class="line">   audioStreamDesc.mChannelsPerFrame = 1;//声道数</div><div class="line">   audioStreamDesc.mFramesPerPacket = 1;//每帧只有一个packet</div><div class="line">   audioStreamDesc.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger;//kAudioFormatFlagsNativeFloatPacked | kAudioFormatFlagIsNonInterleaved;</div><div class="line">   audioStreamDesc.mBitsPerChannel = 16;//位深</div><div class="line">   audioStreamDesc.mBytesPerFrame = 2;</div><div class="line">   audioStreamDesc.mBytesPerPacket = 2;</div><div class="line"></div><div class="line">//这里是设置的输出音频的格式</div><div class="line">   status = AudioUnitSetProperty(playerAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, outputBus, &amp;audioStreamDesc,sizeof(audioStreamDesc));</div><div class="line">   if (status) &#123;</div><div class="line">       NSLog(@&quot;AudioUnitSetProperty error with status:%d&quot;, status);</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
-<p>最后设置一下输出的回调，这个回调是每次扬声器需要播放数据时都会调一次这个回调，然后我们在这个回调里面把要播放的数据塞给扬声器。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">	//callback</div><div class="line">    AURenderCallbackStruct callbackStruct;</div><div class="line">    callbackStruct.inputProc = PlayCallback;</div><div class="line">    callbackStruct.inputProcRefCon = (__bridge void *)self;</div><div class="line">    AudioUnitSetProperty(playerAudioUnit, kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, outputBus, &amp;callbackStruct, sizeof(callbackStruct));</div><div class="line"></div><div class="line">	//最后初始化AudioUnit</div><div class="line">    OSStatus result = AudioUnitInitialize(playerAudioUnit);</div><div class="line">    NSLog(@&quot;result = %d&quot;,result);</div><div class="line">    </div><div class="line">    //回调实现</div><div class="line">    static OSStatus PlayCallback(void *inRefCon,AudioUnitRenderActionFlags *ioActionFlag,const AudioTimeStamp *inTimeStamp,UInt32 inBusNumber,UInt32 inNumberFrames,AudioBufferList *ioData)&#123;</div><div class="line"></div><div class="line">    __unsafe_unretained LLYAudioUnitPlayer *play = (__bridge LLYAudioUnitPlayer *)inRefCon;</div><div class="line"></div><div class="line">    ioData-&gt;mBuffers[0].mDataByteSize = (UInt32)[play-&gt;inputStream read:ioData-&gt;mBuffers[0].mData maxLength:(NSInteger)ioData-&gt;mBuffers[0].mDataByteSize];</div><div class="line">    NSLog(@&quot;out size: %d&quot;, ioData-&gt;mBuffers[0].mDataByteSize);</div><div class="line"></div><div class="line">    if (ioData-&gt;mBuffers[0].mDataByteSize &lt;= 0) &#123;</div><div class="line">        dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">            [play stop];</div><div class="line">        &#125;);</div><div class="line">    &#125;</div><div class="line">    return noErr;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>然后就可以开始播放音频了</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">- (void)play&#123;</div><div class="line">    </div><div class="line">    [self initAudioUnit];</div><div class="line">    </div><div class="line">    AudioOutputUnitStart(playerAudioUnit);</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (void)stop&#123;</div><div class="line">    </div><div class="line">    AudioOutputUnitStop(playerAudioUnit);</div><div class="line">    [inputStream close];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h3 id="AudioUnit–录音-播放-保存本地"><a href="#AudioUnit–录音-播放-保存本地" class="headerlink" title="AudioUnit–录音+播放+保存本地"></a>AudioUnit–录音+播放+保存本地</h3><p>这个demo做的事情是把本地播放的音频和录制的音频一起输出并写入文件。播放音频部分和上面的流程一样，这里主要说一下录制音频部分的流程。</p>
-<p>AVAudioSession的设置，这里我们需要用到录音功能，同时我们还需要设置一下采样频率。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">//设置AVAudioSession</div><div class="line">   [[AVAudioSession sharedInstance]setCategory:AVAudioSessionCategoryPlayAndRecord error:&amp;error];</div><div class="line">   if (error) &#123;</div><div class="line">       NSLog(@&quot;setCategory error %@&quot;,error);</div><div class="line">   &#125;</div><div class="line">   </div><div class="line">   [[AVAudioSession sharedInstance] setPreferredIOBufferDuration:0.05 error:&amp;error];</div><div class="line">   if (error) &#123;</div><div class="line">       NSLog(@&quot;setPreferredIOBufferDuration error:%@&quot;, error);</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
-<p>我们使用AudioBufferList 这个数据结构来保存获取到的录音音频数据，先对该数据结构做一个初始化</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">AudioBufferList *bufferList;</div><div class="line"></div><div class="line">// buffer list</div><div class="line">uint32_t numberBuffers = 2;</div><div class="line">bufferList = (AudioBufferList *)malloc(sizeof(AudioBufferList) + (numberBuffers - 1) * sizeof(AudioBuffer));</div><div class="line">bufferList-&gt;mNumberBuffers = numberBuffers;</div><div class="line">bufferList-&gt;mBuffers[0].mNumberChannels = 1;</div><div class="line">bufferList-&gt;mBuffers[0].mDataByteSize = BUFFERSIZE;</div><div class="line">bufferList-&gt;mBuffers[0].mData = malloc(BUFFERSIZE);</div><div class="line"></div><div class="line">for (int i =1; i &lt; numberBuffers; ++i) &#123;</div><div class="line">    bufferList-&gt;mBuffers[i].mNumberChannels = 1;</div><div class="line">    bufferList-&gt;mBuffers[i].mDataByteSize = BUFFERSIZE;</div><div class="line">    bufferList-&gt;mBuffers[i].mData = malloc(BUFFERSIZE);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>接着上个demo的代码，这里我们再设置一下输入的数据结构</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">AudioStreamBasicDescription outputFormat = inputFormat;</div><div class="line">   outputFormat.mChannelsPerFrame = 2;</div><div class="line">   status = AudioUnitSetProperty(recordAudioUnit,</div><div class="line">                                 kAudioUnitProperty_StreamFormat,</div><div class="line">                                 kAudioUnitScope_Input,</div><div class="line">                                 OUTPUT_BUS,</div><div class="line">                                 &amp;outputFormat,</div><div class="line">                                 sizeof(outputFormat));</div><div class="line">   </div><div class="line">   if (status != noErr) &#123;</div><div class="line">       NSLog(@&quot;AudioUnitGetProperty error, ret: %d&quot;, status);</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
-<p>然后我们需要设置AudioUnit的输入能力</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">// enable record</div><div class="line">  UInt32 flag = 1;</div><div class="line">  status = AudioUnitSetProperty(recordAudioUnit,</div><div class="line">                                kAudioOutputUnitProperty_EnableIO,</div><div class="line">                                kAudioUnitScope_Input,</div><div class="line">                                INPUT_BUS,</div><div class="line">                                &amp;flag,</div><div class="line">                                sizeof(flag));</div><div class="line">  if (status != noErr) &#123;</div><div class="line">      NSLog(@&quot;AudioUnitGetProperty error, ret: %d&quot;, status);</div><div class="line">  &#125;</div></pre></td></tr></table></figure>
-<p>之后设置一下录音的回调，在回调中获取录音的音频数据</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div></pre></td><td class="code"><pre><div class="line">    // set callback</div><div class="line">    AURenderCallbackStruct recordCallback;</div><div class="line">    recordCallback.inputProc = RecordCallback;</div><div class="line">    recordCallback.inputProcRefCon = (__bridge void *)self;</div><div class="line">    status = AudioUnitSetProperty(recordAudioUnit,</div><div class="line">                                  kAudioOutputUnitProperty_SetInputCallback,</div><div class="line">                                  kAudioUnitScope_Output,</div><div class="line">                                  INPUT_BUS,</div><div class="line">                                  &amp;recordCallback,</div><div class="line">                                  sizeof(recordCallback));</div><div class="line">    if (status != noErr) &#123;</div><div class="line">        NSLog(@&quot;AudioUnitGetProperty error, ret: %d&quot;, status);</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    </div><div class="line">    #pragma mark - callback</div><div class="line">    </div><div class="line">static OSStatus RecordCallback(void *inRefCon,</div><div class="line">                               AudioUnitRenderActionFlags *ioActionFlags,</div><div class="line">                               const AudioTimeStamp *inTimeStamp,</div><div class="line">                               UInt32 inBusNumber,</div><div class="line">                               UInt32 inNumberFrames,</div><div class="line">                               AudioBufferList *ioData)</div><div class="line">&#123;</div><div class="line">    LLYAudioUnitRecord *record = (__bridge LLYAudioUnitRecord *)inRefCon;</div><div class="line">    record-&gt;bufferList-&gt;mNumberBuffers = 1;</div><div class="line">    OSStatus status = AudioUnitRender(record-&gt;recordAudioUnit, ioActionFlags, inTimeStamp, inBusNumber, inNumberFrames, record-&gt;bufferList);</div><div class="line">    if (status != noErr) &#123;</div><div class="line">        NSLog(@&quot;AudioUnitRender error:%d&quot;, status);</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    NSLog(@&quot;size1 = %d&quot;, record-&gt;bufferList-&gt;mBuffers[0].mDataByteSize);</div><div class="line">    [record writePCMData:record-&gt;bufferList-&gt;mBuffers[0].mData size:record-&gt;bufferList-&gt;mBuffers[0].mDataByteSize];</div><div class="line">    </div><div class="line">    return noErr;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>这里我们把录音的音频数据保存在了bufferList中。这个bufferList中的数据将被手动塞给播放的回调进行播放，播放（输出）的回调代码如下:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">static OSStatus OutPlayCallback(void *inRefCon,</div><div class="line">                             AudioUnitRenderActionFlags *ioActionFlags,</div><div class="line">                             const AudioTimeStamp *inTimeStamp,</div><div class="line">                             UInt32 inBusNumber,</div><div class="line">                             UInt32 inNumberFrames,</div><div class="line">                             AudioBufferList *ioData) &#123;</div><div class="line">    LLYAudioUnitRecord *record = (__bridge LLYAudioUnitRecord *)inRefCon;</div><div class="line">    memcpy(ioData-&gt;mBuffers[0].mData, record-&gt;bufferList-&gt;mBuffers[0].mData, record-&gt;bufferList-&gt;mBuffers[0].mDataByteSize);</div><div class="line">    ioData-&gt;mBuffers[0].mDataByteSize = record-&gt;bufferList-&gt;mBuffers[0].mDataByteSize;</div><div class="line">    </div><div class="line">    NSInteger bytes = BUFFERSIZE &lt; ioData-&gt;mBuffers[1].mDataByteSize * 2 ? BUFFERSIZE : ioData-&gt;mBuffers[1].mDataByteSize * 2; //</div><div class="line">    bytes = [record-&gt;inputStream read:record-&gt;buffer maxLength:bytes];</div><div class="line">    </div><div class="line">    for (int i = 0; i &lt; bytes; ++i) &#123;</div><div class="line">        ((Byte*)ioData-&gt;mBuffers[1].mData)[i/2] = record-&gt;buffer[i];</div><div class="line">    &#125;</div><div class="line">    ioData-&gt;mBuffers[1].mDataByteSize = (UInt32)bytes / 2;</div><div class="line">    </div><div class="line">    if (ioData-&gt;mBuffers[1].mDataByteSize &lt; ioData-&gt;mBuffers[0].mDataByteSize) &#123;</div><div class="line">        ioData-&gt;mBuffers[0].mDataByteSize = ioData-&gt;mBuffers[1].mDataByteSize;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    </div><div class="line">    NSLog(@&quot;size2 = %d&quot;, ioData-&gt;mBuffers[0].mDataByteSize);</div><div class="line">    </div><div class="line">    return noErr;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>这里我们给ioData-&gt;mBuffers塞了2组数据，一组是从bufferList中获取的录音音频数据，另外一组是从inputStream中读取的本地音频数据，所以播放时既能听到本地音频也能听到我们录音的音频。</p>
-<p>将音频写入文件的代码如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">- (void)writePCMData:(Byte *)buffer size:(int)size &#123;</div><div class="line">    static FILE *file = NULL;</div><div class="line">    NSString *pathStr = [LLYAudioUnitRecord recordPath];</div><div class="line">    if (!file) &#123;</div><div class="line">        file = fopen(pathStr.UTF8String, &quot;w&quot;);</div><div class="line">    &#125;</div><div class="line">    fwrite(buffer, size, 1, file);</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line">+ (NSString *)recordPath&#123;</div><div class="line">    return [CommonUtil documentsPath:@&quot;/record.pcm&quot;];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h3 id="AudioUnit–播放MP3"><a href="#AudioUnit–播放MP3" class="headerlink" title="AudioUnit–播放MP3"></a>AudioUnit–播放MP3</h3><p>上面说过，AudioUnit是不支持直接播放MP3文件格式的，所以这里我们先把MP3转码为pcm格式然后再塞给播放回调去播放。</p>
-<p>播放的逻辑我们已经很清楚了，这里我主要说一下怎么转码。这里我们用到了<strong>AudioFile</strong>和<strong>AudioConverter</strong>两个类，AudioFile主要做音频相关信息的读取，AudioConverter主要做转码的工作。</p>
-<p>先来看一下AudioFile的相关代码:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div></pre></td><td class="code"><pre><div class="line">   AudioFileID audioFileID;</div><div class="line">   AudioStreamBasicDescription audioFileFormat;</div><div class="line">   AudioStreamPacketDescription *audioPacketFormat;</div><div class="line">   </div><div class="line">SInt64 readedPacket;</div><div class="line">   UInt64 packetNums;</div><div class="line">   UInt64 packetNumsInBuffer;</div><div class="line">   </div><div class="line">   //获取源音频的ID</div><div class="line">   NSString *mp3Path = [CommonUtil bundlePath:@&quot;abc.mp3&quot;];</div><div class="line">   NSURL *mp3Url = [NSURL fileURLWithPath:mp3Path];</div><div class="line">   OSStatus status = AudioFileOpenURL((__bridge CFURLRef)mp3Url, kAudioFileReadPermission, 0, &amp;audioFileID);</div><div class="line">   if (status) &#123;</div><div class="line">       NSLog(@&quot;打开文件失败 %@&quot;, mp3Url);</div><div class="line">       return ;</div><div class="line">   &#125;</div><div class="line">   </div><div class="line">   //获取源音频的FileFormat</div><div class="line">   uint32_t size = sizeof(AudioStreamBasicDescription);</div><div class="line">   status = AudioFileGetProperty(audioFileID, kAudioFilePropertyDataFormat, &amp;size, &amp;audioFileFormat);</div><div class="line">   if (status) &#123;</div><div class="line">       NSLog(@&quot;获取fileformat失败 error status %d&quot;, status);</div><div class="line">       return ;</div><div class="line">   &#125;</div><div class="line"></div><div class="line"></div><div class="line">   //获取源音频的packetnum</div><div class="line">   size = sizeof(packetNums);</div><div class="line">   status = AudioFileGetProperty(audioFileID, kAudioFilePropertyAudioDataPacketCount, &amp;size, &amp;packetNums);</div><div class="line">   if (status) &#123;</div><div class="line">       NSLog(@&quot;获取packetnum失败 error status %d&quot;, status);</div><div class="line">       return ;</div><div class="line">   &#125;</div><div class="line">   </div><div class="line">   //获取源音频单个packet的最大buffer数</div><div class="line">   uint32_t sizePerPacket = audioFileFormat.mFramesPerPacket;</div><div class="line">   if (sizePerPacket == 0) &#123;</div><div class="line">       size = sizeof(sizePerPacket);</div><div class="line">       status = AudioFileGetProperty(audioFileID, kAudioFilePropertyMaximumPacketSize, &amp;size, &amp;sizePerPacket);</div><div class="line">       if (status) &#123;</div><div class="line">           NSLog(@&quot;获取packetmaxnum失败 error status %d&quot;, status);</div><div class="line">           return ;</div><div class="line">       &#125;</div><div class="line">   &#125;</div><div class="line">   </div><div class="line">   //获取源音频的packetformat</div><div class="line">   audioPacketFormat = malloc(sizeof(AudioStreamPacketDescription) * (CONST_BUFFER_SIZE/sizePerPacket + 1));</div></pre></td></tr></table></figure>
-<p>这里说一下packetnum这个属性，因为音频数据流都是以一个个packet的格式封装起来的，所以这个获取的packetnum实际上就是音频的总长度，而每个packet里面又以帧（frame）为单位做了一层封装，每个packet里面的帧数不固定。每一帧就是实际的音频数据了。</p>
-<p>因为数据的处理都在播放回调中，我们来看看AudioConverter都做了哪些工作：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line">	//上面拿到了音频的数据格式，这里用来做AudioConverter的初始化</div><div class="line">	//初始化audioconverter</div><div class="line">    status = AudioConverterNew(&amp;audioFileFormat, &amp;outputFormat, &amp;audioConverter);</div><div class="line">    if (status) &#123;</div><div class="line">        NSLog(@&quot;AudioConverterNew eror with status:%d&quot;, status);</div><div class="line">    &#125;</div><div class="line">    </div><div class="line"></div><div class="line">	OSStatus ConPlayCallback(void *inRefCon,</div><div class="line">                      AudioUnitRenderActionFlags *ioActionFlags,</div><div class="line">                      const AudioTimeStamp *inTimeStamp,</div><div class="line">                      UInt32 inBusNumber,</div><div class="line">                      UInt32 inNumberFrames,</div><div class="line">                      AudioBufferList *ioData) &#123;</div><div class="line">    LLYAudioUnitConverter *converter = (__bridge LLYAudioUnitConverter *)inRefCon;</div><div class="line">    </div><div class="line">    converter-&gt;bufferList-&gt;mBuffers[0].mDataByteSize = CONST_BUFFER_SIZE;</div><div class="line">    OSStatus status = AudioConverterFillComplexBuffer(converter-&gt;audioConverter, InputDataProc, inRefCon, &amp;inNumberFrames, converter-&gt;bufferList, NULL);</div><div class="line">    if (status) &#123;</div><div class="line">        NSLog(@&quot;转换格式失败 %d&quot;, status);</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    NSLog(@&quot;out size: %d&quot;, converter-&gt;bufferList-&gt;mBuffers[0].mDataByteSize);</div><div class="line">    memcpy(ioData-&gt;mBuffers[0].mData, converter-&gt;bufferList-&gt;mBuffers[0].mData, converter-&gt;bufferList-&gt;mBuffers[0].mDataByteSize);</div><div class="line">    ioData-&gt;mBuffers[0].mDataByteSize = converter-&gt;bufferList-&gt;mBuffers[0].mDataByteSize;</div><div class="line">    </div><div class="line">    //    fwrite(player-&gt;buffList-&gt;mBuffers[0].mData, player-&gt;buffList-&gt;mBuffers[0].mDataByteSize, 1, [player pcmFile]);</div><div class="line">    </div><div class="line">    if (converter-&gt;bufferList-&gt;mBuffers[0].mDataByteSize &lt;= 0) &#123;</div><div class="line">        dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">            [converter onPlayEnd];</div><div class="line">        &#125;);</div><div class="line">    &#125;</div><div class="line">    return noErr;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>可以看到，是调用了<strong>AudioConverterFillComplexBuffer</strong>这个方法做的转码，其中第二个参数又是一个回调函数，转码后的数据同样是保存在converter-&gt;bufferList这个结构里面，然后在后面塞给ioData-&gt;mBuffers去播放。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">OSStatus InputDataProc(AudioConverterRef inAudioConverter, UInt32 *ioNumberDataPackets, AudioBufferList *ioData, AudioStreamPacketDescription **outDataPacketDescription, void *inUserData)</div><div class="line">&#123;</div><div class="line">    LLYAudioUnitConverter *player = (__bridge LLYAudioUnitConverter *)(inUserData);</div><div class="line">    </div><div class="line">    UInt32 byteSize = CONST_BUFFER_SIZE;</div><div class="line">    OSStatus status = AudioFileReadPacketData(player-&gt;audioFileID, NO, &amp;byteSize, player-&gt;audioPacketFormat, player-&gt;readedPacket, ioNumberDataPackets, player-&gt;convertBuffer);</div><div class="line">    </div><div class="line">    if (outDataPacketDescription) &#123; // 这里要设置好packetFormat，否则会转码失败</div><div class="line">        *outDataPacketDescription = player-&gt;audioPacketFormat;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    if(status) &#123;</div><div class="line">        NSLog(@&quot;读取文件失败&quot;);</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    if (!status &amp;&amp; ioNumberDataPackets &gt; 0) &#123;</div><div class="line">        ioData-&gt;mBuffers[0].mDataByteSize = byteSize;</div><div class="line">        ioData-&gt;mBuffers[0].mData = player-&gt;convertBuffer;</div><div class="line">        player-&gt;readedPacket += *ioNumberDataPackets;</div><div class="line">        return noErr;</div><div class="line">    &#125;</div><div class="line">    else &#123;</div><div class="line">        return NO_MORE_DATA;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>这个回调函数主要负责读取mp3文件给上面的AudioConverterFillComplexBuffer函数用来做转码处理。</p>
-<h3 id="AudioUnit–更简单的播放MP3"><a href="#AudioUnit–更简单的播放MP3" class="headerlink" title="AudioUnit–更简单的播放MP3"></a>AudioUnit–更简单的播放MP3</h3><p>上一个demo中我们使用AudioUnit播放了一个MP3文件，用到了AudioFile和AudioConverter类的相关方法，可以看到，使用这种方式播放MP3文件是比较繁琐的，我们要获取音频的很多信息，要设置回调，要使用一系列的相关api。。。下面介绍一种更简单的播放MP3的方式，使用<strong>ExtAudioFile</strong>，看名字就知道，它是上面介绍的AudioFile的扩展。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div></pre></td><td class="code"><pre><div class="line">//ExtAudioFileRef对象</div><div class="line"></div><div class="line"> ExtAudioFileRef extAudioFile;</div><div class="line">   AudioStreamBasicDescription audioFileFormat;</div><div class="line">   AudioStreamBasicDescription outputFormat;</div><div class="line">   </div><div class="line">    OSStatus status = noErr;</div><div class="line">   NSURL *mp3Url = [NSURL fileURLWithPath:[CommonUtil bundlePath:@&quot;/abc.mp3&quot;]];</div><div class="line">   status = ExtAudioFileOpenURL((__bridge CFURLRef)mp3Url, &amp;extAudioFile);</div><div class="line">   if (status) &#123;</div><div class="line">       NSLog(@&quot;打开文件失败&quot;);</div><div class="line">   &#125;</div><div class="line">   </div><div class="line">   //获取MP3音频的格式（非必需）</div><div class="line">   uint32_t size = sizeof(AudioStreamBasicDescription);</div><div class="line">   status = ExtAudioFileGetProperty(extAudioFile, kExtAudioFileProperty_FileDataFormat, &amp;size, &amp;audioFileFormat);</div><div class="line">   if (status) &#123;</div><div class="line">       NSLog(@&quot;读取音频格式失败&quot;);</div><div class="line">   &#125;</div><div class="line">   </div><div class="line">    //initFormat 设置输出格式</div><div class="line">   memset(&amp;outputFormat, 0, sizeof(outputFormat));</div><div class="line">   outputFormat.mSampleRate       = 44100;</div><div class="line">   outputFormat.mFormatID         = kAudioFormatLinearPCM;</div><div class="line">   outputFormat.mFormatFlags      = kLinearPCMFormatFlagIsSignedInteger;</div><div class="line">   outputFormat.mBytesPerPacket   = 2;</div><div class="line">   outputFormat.mFramesPerPacket  = 1;</div><div class="line">   outputFormat.mBytesPerFrame    = 2;</div><div class="line">   outputFormat.mChannelsPerFrame = 1;</div><div class="line">   outputFormat.mBitsPerChannel   = 16;</div><div class="line">    status = ExtAudioFileSetProperty(extAudioFile, kExtAudioFileProperty_ClientDataFormat, size, &amp;outputFormat);</div><div class="line">   if (status) &#123;</div><div class="line">       NSLog(@&quot;设置转码音频格式失败&quot;);</div><div class="line">   &#125;</div><div class="line">   </div><div class="line">   //获取总长度（非必需）</div><div class="line">    size = sizeof(totalFrame);</div><div class="line">   status = ExtAudioFileGetProperty(extAudioFile, kExtAudioFileProperty_FileLengthFrames, &amp;size, &amp;totalFrame);</div><div class="line">   if (status) &#123;</div><div class="line">       NSLog(@&quot;获取音频总长度失败&quot;);</div><div class="line">   &#125;</div><div class="line">   NSLog(@&quot;音频总长度：%llu&quot;,totalFrame);</div></pre></td></tr></table></figure>
-<p>AudioUnit相关的代码参考上面的几个demo. 这个必需的操作就是open file，获取到extAudioFile。然后我们看看回调里面做了什么</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line">OSStatus ExtPlayCallback(void *inRefCon,</div><div class="line">                      AudioUnitRenderActionFlags *ioActionFlags,</div><div class="line">                      const AudioTimeStamp *inTimeStamp,</div><div class="line">                      UInt32 inBusNumber,</div><div class="line">                      UInt32 inNumberFrames,</div><div class="line">                      AudioBufferList *ioData) &#123;</div><div class="line">    LLYAudioUnitExtPlayer *player = (__bridge LLYAudioUnitExtPlayer *)inRefCon;</div><div class="line">    player-&gt;bufferList-&gt;mBuffers[0].mDataByteSize = BUFFER_SIZE_CONST;</div><div class="line">    OSStatus status = ExtAudioFileRead(player-&gt;extAudioFile, &amp;inNumberFrames, player-&gt;bufferList);</div><div class="line">    NSLog(@&quot;inNumberFrames = %d&quot;,inNumberFrames);</div><div class="line">    if (status) &#123;</div><div class="line">        NSLog(@&quot;转码失败&quot;);</div><div class="line">    &#125;</div><div class="line">    if (!inNumberFrames) &#123;</div><div class="line">        NSLog(@&quot;播放结束&quot;);</div><div class="line">    &#125;</div><div class="line">    NSLog(@&quot;out size : %d&quot;,player-&gt;bufferList-&gt;mBuffers[0].mDataByteSize);</div><div class="line">    memcpy(ioData-&gt;mBuffers[0].mData, player-&gt;bufferList-&gt;mBuffers[0].mData, player-&gt;bufferList-&gt;mBuffers[0].mDataByteSize);</div><div class="line">    ioData-&gt;mBuffers[0].mDataByteSize = player-&gt;bufferList-&gt;mBuffers[0].mDataByteSize;</div><div class="line">    </div><div class="line">    player-&gt;readedFrame += player-&gt;bufferList-&gt;mBuffers[0].mDataByteSize / player-&gt;outputFormat.mBytesPerFrame;</div><div class="line">    </div><div class="line">    NSLog(@&quot;readedFrame = %d&quot;,player-&gt;readedFrame);</div><div class="line">    </div><div class="line">    if (player-&gt;bufferList-&gt;mBuffers[0].mDataByteSize &lt;= 0) &#123;</div><div class="line">        dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">            [player onPlayEnd];</div><div class="line">        &#125;);</div><div class="line">    &#125;</div><div class="line">    return noErr;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>这里我们只调用了一个<strong>ExtAudioFileRead</strong>方法，就把MP3文件转成了pcm文件存到了player-&gt;bufferList中，最终塞给ioData-&gt;mBuffers去播放即可。是不是比上面demo要简单很多呢。</p>
-<h3 id="AudioUnit–使用AUGraph播放伴奏-录音"><a href="#AudioUnit–使用AUGraph播放伴奏-录音" class="headerlink" title="AudioUnit–使用AUGraph播放伴奏+录音"></a>AudioUnit–使用AUGraph播放伴奏+录音</h3><p>前面都是直接使用AudioUnit实现播放，录音相关工作，这一小节我们来学习一下使用AUGraph管理AudioUnit，当你需要多个AudioUnit来实现不同的模块，且各模块的输入输出直接又有相关联时，使用AUGraph是比较好的选择，因为它可以为AudioUnit之间建立连接，直接进行数据传递，省去了我们手动传递数据的麻烦。</p>
-<p>这里我是分了三步来实现整个功能的：</p>
-<ul>
-<li>1.先播放本地音频</li>
-<li>2.加入录音功能</li>
-<li>3.将录音音频和本地音频送给mix,mix的输出绑定到io的输出</li>
-</ul>
-<p>首先来看第一步，使用AUGraph播放本地音频</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div></pre></td><td class="code"><pre><div class="line">//相关变量</div><div class="line"></div><div class="line">   AUGraph playerGraph;</div><div class="line">   </div><div class="line">   //io相关</div><div class="line">   AUNode ioNode;</div><div class="line">   AudioUnit ioUnit;</div><div class="line">   </div><div class="line">   AudioStreamBasicDescription audioFormat;</div><div class="line">   </div><div class="line">   NSInputStream *inputStream;</div><div class="line"></div><div class="line"></div><div class="line">//init</div><div class="line"></div><div class="line">    </div><div class="line">   NSURL *url = [NSURL fileURLWithPath:[CommonUtil bundlePath:@&quot;/abc.pcm&quot;]];</div><div class="line">   inputStream = [NSInputStream inputStreamWithURL:url];</div><div class="line">   if (!inputStream) &#123;</div><div class="line">       NSLog(@&quot;打开文件失败!!!!%@&quot;,url);</div><div class="line">   &#125;</div><div class="line">   else&#123;</div><div class="line">       [inputStream open];</div><div class="line">   &#125;</div><div class="line">   </div><div class="line">   AVAudioSession *audioSession = [AVAudioSession sharedInstance];</div><div class="line">   [audioSession setCategory:AVAudioSessionCategoryPlayback error:nil]; // 只有播放</div><div class="line"></div><div class="line">OSStatus status = noErr;</div><div class="line">   status = NewAUGraph(&amp;playerGraph);</div><div class="line">   CheckStatus(status, @&quot;创建AUGraph失败&quot;, YES);</div><div class="line">   </div><div class="line">   AudioComponentDescription outputAudioDesc;</div><div class="line">   outputAudioDesc.componentType = kAudioUnitType_Output;</div><div class="line">   outputAudioDesc.componentSubType = kAudioUnitSubType_RemoteIO;</div><div class="line">   outputAudioDesc.componentManufacturer = kAudioUnitManufacturer_Apple;</div><div class="line">   outputAudioDesc.componentFlags = 0;</div><div class="line">   outputAudioDesc.componentFlagsMask = 0;</div><div class="line">   </div><div class="line">   status = AUGraphAddNode(playerGraph, &amp;outputAudioDesc, &amp;ioNode);</div><div class="line">   CheckStatus(status, @&quot;绑定node失败&quot;, YES);</div><div class="line">   </div><div class="line">   status = AUGraphOpen(playerGraph);</div><div class="line">   CheckStatus(status, @&quot;打开AUGraph失败&quot;, YES);</div><div class="line">   </div><div class="line">   status = AUGraphNodeInfo(playerGraph, ioNode, NULL, &amp;ioUnit);</div><div class="line">   CheckStatus(status, @&quot;创建AudioUnit失败&quot;, YES);</div><div class="line"></div><div class="line">   // audio format</div><div class="line">   audioFormat.mSampleRate = 44100;</div><div class="line">   audioFormat.mFormatID = kAudioFormatLinearPCM;</div><div class="line">   audioFormat.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsNonInterleaved;</div><div class="line">   audioFormat.mFramesPerPacket = 1;</div><div class="line">   audioFormat.mChannelsPerFrame = 1;</div><div class="line">   audioFormat.mBytesPerPacket = 2;</div><div class="line">   audioFormat.mBytesPerFrame = 2;</div><div class="line">   audioFormat.mBitsPerChannel = 16;</div><div class="line">   status = AudioUnitSetProperty(ioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, &amp;audioFormat, sizeof(audioFormat));</div><div class="line">   CheckStatus(status, @&quot;设置输入音频数据格式失败&quot;, YES);</div><div class="line">   status = AudioUnitSetProperty(ioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 1, &amp;audioFormat, sizeof(audioFormat));</div><div class="line">   CheckStatus(status, @&quot;设置输出音频格式失败&quot;, YES);</div><div class="line"></div><div class="line">   </div><div class="line">   //callback</div><div class="line">   AURenderCallbackStruct callbackStruct;</div><div class="line">   callbackStruct.inputProc = LLYPlayCallback;</div><div class="line">   callbackStruct.inputProcRefCon = (__bridge void *)self;</div><div class="line">   AudioUnitSetProperty(playerUnit, kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 0, &amp;callbackStruct, sizeof(callbackStruct));</div><div class="line">   </div><div class="line">   status  = AUGraphInitialize(playerGraph);</div><div class="line">   CheckStatus(status, @&quot;Graph初始化失败&quot;, YES);</div><div class="line">   status = AUGraphStart(playerGraph);</div><div class="line">   CheckStatus(status, @&quot;Graph start失败&quot;, YES);</div></pre></td></tr></table></figure>
-<p>io的回调函数</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">	static OSStatus LLYPlayCallback(void *inRefCon,AudioUnitRenderActionFlags *ioActionFlag,const AudioTimeStamp *inTimeStamp,UInt32 inBusNumber,UInt32 inNumberFrames,AudioBufferList *ioData)&#123;</div><div class="line">    </div><div class="line">    __unsafe_unretained LLYAUGraphRecord *play = (__bridge LLYAUGraphRecord *)inRefCon;</div><div class="line">    </div><div class="line">    ioData-&gt;mBuffers[0].mDataByteSize = (UInt32)[play-&gt;inputStream read:ioData-&gt;mBuffers[0].mData maxLength:(NSInteger)ioData-&gt;mBuffers[0].mDataByteSize];</div><div class="line">    NSLog(@&quot;out size: %d&quot;, ioData-&gt;mBuffers[0].mDataByteSize);</div><div class="line">    </div><div class="line">    if (ioData-&gt;mBuffers[0].mDataByteSize &lt;= 0) &#123;</div><div class="line">        dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">            [play stop];</div><div class="line">        &#125;);</div><div class="line">    &#125;</div><div class="line">    return noErr;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>第二步：加入录音功能，这里其实只需要对第一步做一下修改,将io回调数据处理的bus改为输入，设置输入相关属性即可</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line">   AudioBufferList *buffList;</div><div class="line">   Byte *buffer;</div><div class="line">   </div><div class="line">   </div><div class="line">   //init</div><div class="line">   [audioSession setCategory:AVAudioSessionCategoryPlayAndRecord error:nil];</div><div class="line">   [audioSession setPreferredIOBufferDuration:0.02 error:&amp;error];</div><div class="line"></div><div class="line">   </div><div class="line">   // buffer</div><div class="line">   uint32_t numberBuffers = 1;</div><div class="line">   buffList = (AudioBufferList *)malloc(sizeof(AudioBufferList));</div><div class="line">   buffList-&gt;mNumberBuffers = numberBuffers;</div><div class="line">   buffList-&gt;mBuffers[0].mNumberChannels = 1;</div><div class="line">   buffList-&gt;mBuffers[0].mDataByteSize = GRAPH_CONST_BUFFER_SIZE;</div><div class="line">   buffList-&gt;mBuffers[0].mData = malloc(GRAPH_CONST_BUFFER_SIZE);</div><div class="line">   buffer = malloc(GRAPH_CONST_BUFFER_SIZE);</div><div class="line"></div><div class="line">//设置输入格式</div><div class="line">   status = AudioUnitSetProperty(ioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, &amp;audioFormat, sizeof(AudioStreamBasicDescription));</div><div class="line">   CheckStatus(status, @&quot;设置输出音频格式失败&quot;, YES);</div><div class="line">   </div><div class="line">   </div><div class="line">//设置输入部分的回调，实际的录音数据是在这里获取的，</div><div class="line">   AURenderCallbackStruct outputCallbackStruct;</div><div class="line">   outputCallbackStruct.inputProc = OutputPlayCallback;</div><div class="line">   outputCallbackStruct.inputProcRefCon = (__bridge void *)self;</div><div class="line">   status = AudioUnitSetProperty(ioUnit, kAudioOutputUnitProperty_SetInputCallback, kAudioUnitScope_Output, 1, &amp;outputCallbackStruct, sizeof(outputCallbackStruct));</div><div class="line">   CheckStatus(status, @&quot;ioUnit绑定回调失败&quot;, YES);</div></pre></td></tr></table></figure>
-<p>io的回调处理</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">	static OSStatus OutputPlayCallback(void *inRefCon,AudioUnitRenderActionFlags *ioActionFlag,const AudioTimeStamp *inTimeStamp,UInt32 inBusNumber,UInt32 inNumberFrames,AudioBufferList *ioData)&#123;</div><div class="line">    </div><div class="line">    __unsafe_unretained LLYAUGraphRecord *play = (__bridge LLYAUGraphRecord *)inRefCon;</div><div class="line">    </div><div class="line">    play-&gt;buffList-&gt;mNumberBuffers = 1;</div><div class="line">    OSStatus status = AudioUnitRender(play-&gt;ioUnit, ioActionFlag, inTimeStamp, inBusNumber, inNumberFrames, play-&gt;buffList);</div><div class="line">    CheckStatus(status, @&quot;获取录音音频失败&quot;, YES);</div><div class="line">    </div><div class="line">//    NSLog(@&quot;record size %d:&quot;,play-&gt;buffList-&gt;mBuffers[0].mDataByteSize);</div><div class="line">    </div><div class="line">    //将录音写入文件</div><div class="line">    </div><div class="line">    return noErr;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>第三步：获取2路音频并同时播放</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div></pre></td><td class="code"><pre><div class="line">    //负责获取2路音频和混合</div><div class="line">    AUNode mixNode;</div><div class="line">    AudioUnit mixUnit;</div><div class="line"></div><div class="line">	 //混合相关</div><div class="line">    AudioComponentDescription mixAudioDesc;</div><div class="line">    mixAudioDesc.componentType = kAudioUnitType_Mixer;</div><div class="line">    mixAudioDesc.componentSubType = kAudioUnitSubType_MultiChannelMixer;</div><div class="line">    mixAudioDesc.componentManufacturer = kAudioUnitManufacturer_Apple;</div><div class="line">    mixAudioDesc.componentFlags = 0;</div><div class="line">    mixAudioDesc.componentFlagsMask = 0;</div><div class="line">    </div><div class="line">    status = AUGraphAddNode(playerGraph, &amp;mixAudioDesc, &amp;mixNode);</div><div class="line">    CheckStatus(status, @&quot;绑定混合node失败&quot;, YES);</div><div class="line">    </div><div class="line">    status = AUGraphNodeInfo(playerGraph, mixNode, NULL, &amp;mixUnit);</div><div class="line">    CheckStatus(status, @&quot;创建混合AudioUnit失败&quot;, YES);</div><div class="line"></div><div class="line">    //绑定nodes，这里就是将mix的输出和io的输出绑定起来，不再需要手动设置io的输出回调了</div><div class="line">    status = AUGraphConnectNodeInput(playerGraph, mixNode, 0, ioNode, 0);</div><div class="line">    CheckStatus(status, @&quot;绑定node失败&quot;, YES);</div><div class="line"></div><div class="line">    //设置bus数</div><div class="line">    UInt32 busCount = 2;</div><div class="line">    status = AudioUnitSetProperty(mixUnit, kAudioUnitProperty_ElementCount, kAudioUnitScope_Input, 0, &amp;busCount, sizeof(busCount));</div><div class="line">    CheckStatus(status, @&quot;设置声道数失败&quot;, YES);</div><div class="line">    </div><div class="line">    //设置混合的输入格式,有多条输入</div><div class="line">    //bus0</div><div class="line">    status = AudioUnitSetProperty(mixUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, &amp;audioFormat, sizeof(audioFormat));</div><div class="line">    CheckStatus(status, @&quot;设置混合音频输入数据格式失败&quot;, YES);</div><div class="line">    //bus1</div><div class="line">    status = AudioUnitSetProperty(mixUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 1, &amp;audioFormat, sizeof(audioFormat));</div><div class="line">    CheckStatus(status, @&quot;设置混合音频输入数据格式失败&quot;, YES);</div><div class="line"></div><div class="line">	 //获取背景音频数据</div><div class="line">    AURenderCallbackStruct callback0;</div><div class="line">    callback0.inputProc = mixCallback0;</div><div class="line">    callback0.inputProcRefCon = (__bridge void *)self;</div><div class="line">//    status = AUGraphSetNodeInputCallback(playerGraph, mixNode, 0, &amp;callback0);</div><div class="line">    CheckStatus(AudioUnitSetProperty(mixUnit, kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 0, &amp;callback0, sizeof(callback0)), @&quot;add mix callback fail&quot;,YES);</div><div class="line"></div><div class="line">    //获取录音数据</div><div class="line">    AURenderCallbackStruct callback1;</div><div class="line">    callback1.inputProc = mixCallback1;</div><div class="line">    callback1.inputProcRefCon = (__bridge void *)self;</div><div class="line">//    status = AUGraphSetNodeInputCallback(playerGraph, mixNode, 1, &amp;callback1);</div><div class="line">    CheckStatus(AudioUnitSetProperty(mixUnit, kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 1, &amp;callback1, sizeof(callback1)), @&quot;add mix callback fail&quot;,YES);</div></pre></td></tr></table></figure>
-<p>mix的2路数据的回调</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">	//获取本地播放的音频</div><div class="line">	static OSStatus mixCallback0(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags, const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData) &#123;</div><div class="line">    </div><div class="line">    __unsafe_unretained LLYAUGraphRecord *play = (__bridge LLYAUGraphRecord *)inRefCon;</div><div class="line">    </div><div class="line">    ioData-&gt;mBuffers[0].mDataByteSize = (UInt32)[play-&gt;inputStream read:ioData-&gt;mBuffers[0].mData maxLength:(NSInteger)ioData-&gt;mBuffers[0].mDataByteSize];</div><div class="line">    NSLog(@&quot;audio size: %d&quot;, ioData-&gt;mBuffers[0].mDataByteSize);</div><div class="line">    </div><div class="line">    if (ioData-&gt;mBuffers[0].mDataByteSize &lt;= 0) &#123;</div><div class="line">        dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">            [play stop];</div><div class="line">        &#125;);</div><div class="line">    &#125;</div><div class="line">    return noErr;</div><div class="line">&#125;</div><div class="line"></div><div class="line">	//获取录音音频</div><div class="line">	static OSStatus mixCallback1(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags, const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData) &#123;</div><div class="line">    </div><div class="line">    __unsafe_unretained LLYAUGraphRecord *play = (__bridge LLYAUGraphRecord *)inRefCon;</div><div class="line"></div><div class="line">    memcpy(ioData-&gt;mBuffers[0].mData, play-&gt;buffList-&gt;mBuffers[0].mData, play-&gt;buffList-&gt;mBuffers[0].mDataByteSize);</div><div class="line">    ioData-&gt;mBuffers[0].mDataByteSize = play-&gt;buffList-&gt;mBuffers[0].mDataByteSize;</div><div class="line">    </div><div class="line">    NSLog(@&quot;record size: %d&quot;, ioData-&gt;mBuffers[0].mDataByteSize);</div><div class="line"></div><div class="line">    return noErr;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>在mix的2路回调中，我们分别获取到了数据并塞给mix的输入，然后mix直接输出到io的输出bus进行播放，中间不在需要我们做额外的工作。</p>
-<p><a href="https://github.com/lilingyu0620/LLYAudioUnitPlayer.git" target="_blank" rel="noopener">我的demo</a></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/6/">6</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -1870,7 +1974,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">50</span>
+              <span class="site-state-item-count">51</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
