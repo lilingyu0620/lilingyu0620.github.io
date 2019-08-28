@@ -92,7 +92,8 @@
 <meta property="og:description" content="前言作为一个资深的iOS开发，除了专业能力要过硬，还应该具有一些产品scene,关注一些技术之外的内容，学会发现问题然后利用技术去解决这些问题。比如用户体验问题，用户在使用app的过程中，可能会遇到哪些体验不佳的问题，我们要做的就是利用技术手段找出这些问题，然后一一解决，尽我们所能为用户提供最后的用户体验。排除交互设计本身外，最可能出现用户体验问题的原因就是手机在性能上出现了一些瓶颈，因此，找出这">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/iOS性能监控工具/zfgdZ.png">
-<meta property="og:updated_time" content="2019-08-22T11:24:28.589Z">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/iOS性能监控工具/Metrics.png">
+<meta property="og:updated_time" content="2019-08-28T06:33:54.986Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="iOS性能检测工具总结">
 <meta name="twitter:description" content="前言作为一个资深的iOS开发，除了专业能力要过硬，还应该具有一些产品scene,关注一些技术之外的内容，学会发现问题然后利用技术去解决这些问题。比如用户体验问题，用户在使用app的过程中，可能会遇到哪些体验不佳的问题，我们要做的就是利用技术手段找出这些问题，然后一一解决，尽我们所能为用户提供最后的用户体验。排除交互设计本身外，最可能出现用户体验问题的原因就是手机在性能上出现了一些瓶颈，因此，找出这">
@@ -277,20 +278,26 @@
 
       
         <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>作为一个资深的iOS开发，除了专业能力要过硬，还应该具有一些产品scene,关注一些技术之外的内容，学会发现问题然后利用技术去解决这些问题。比如用户体验问题，用户在使用app的过程中，可能会遇到哪些体验不佳的问题，我们要做的就是利用技术手段找出这些问题，然后一一解决，尽我们所能为用户提供最后的用户体验。排除交互设计本身外，最可能出现用户体验问题的原因就是手机在性能上出现了一些瓶颈，因此，找出这些性能瓶颈的时间节点和当前实时数据能很大程度上帮助我们定位到最终原因。</p>
-<p>基于以上的触发点，我们就需要开发一套自己的性能检测工具和上报机制，在app出现性能问题时拿到一手的数据才能帮助我们定位问题和解决问题。</p>
+<p>基于以上的出发点，我们就需要开发一套自己的性能检测工具和上报机制，在app出现性能问题时拿到一手的数据，帮助我们定位问题和解决问题。</p>
 <h3 id="工具介绍"><a href="#工具介绍" class="headerlink" title="工具介绍"></a>工具介绍</h3><p>app的性能主要受两部分内容的影响，一个是手机本身的硬件设备，还有一个就是当前网络状况。这里分两部分分别介绍检测工具的功能点。</p>
 <h4 id="设备性能"><a href="#设备性能" class="headerlink" title="设备性能"></a>设备性能</h4><h5 id="fps"><a href="#fps" class="headerlink" title="fps"></a>fps</h5><p>fps主要用来检测当前页面的卡顿情况，如果fps降到50帧以下，页面卡顿就会比较明显，这个时候就需要具体再去分析卡顿原因。</p>
 <h5 id="cpu-usage"><a href="#cpu-usage" class="headerlink" title="cpu usage"></a>cpu usage</h5><p>cpu利用率主要有三个可以参考的指标，分别是用户使用率，系统使用率和空闲率。</p>
 <h5 id="disk"><a href="#disk" class="headerlink" title="disk"></a>disk</h5><p>磁盘空间有已用空间和可用空间。</p>
-<h5 id="memory"><a href="#memory" class="headerlink" title="memory"></a>memory</h5><p>内存使用情况有总内存，总可用内存和当前app已用内存。</p>
+<h5 id="memory"><a href="#memory" class="headerlink" title="memory"></a>memory</h5><p>内存使用情况有总内存，总可用内存和当前app已用内存。这里都是指的物理内存。因为虚拟内存的检测并没有什么意义。</p>
 <h5 id="battery"><a href="#battery" class="headerlink" title="battery"></a>battery</h5><p>当前电量。</p>
+<p>以上这些指标，大部分需要调用mach内核的相关api才能成功获取，而且需要轮询获取才能保证数据的时效性。</p>
 <h4 id="网络性能"><a href="#网络性能" class="headerlink" title="网络性能"></a>网络性能</h4><h5 id="DNS"><a href="#DNS" class="headerlink" title="DNS"></a>DNS</h5><p>包括当前域名对应的ip,解析总耗时和失败情况。</p>
 <h5 id="Ping"><a href="#Ping" class="headerlink" title="Ping"></a>Ping</h5><p>当前网络延时，一个RTT时长。</p>
 <h5 id="Reachability"><a href="#Reachability" class="headerlink" title="Reachability"></a>Reachability</h5><p>当前网络状态，包括wifi，4G或者无网。</p>
 <h5 id="Metrics-iOS10"><a href="#Metrics-iOS10" class="headerlink" title="Metrics(iOS10)"></a>Metrics(iOS10)</h5><p>Metrics包括了下面这张图中的相关时长：</p>
 <p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/iOS性能监控工具/zfgdZ.png" alt=""></p>
-<h5 id="TraceRoute"><a href="#TraceRoute" class="headerlink" title="TraceRoute"></a>TraceRoute</h5><p>一个完整的请求的路径，包括数据经过的每一个节点和耗时。</p>
+<p>iOS10以后，可以直接从URLSession的回调中拿到这些耗时指标。</p>
+<h5 id="TraceRoute"><a href="#TraceRoute" class="headerlink" title="TraceRoute"></a>TraceRoute</h5><p>一个完整的请求的路径，包括数据经过的每一个节点和耗时。该数据可以完整反映出一个数据报的传输过程。</p>
 <h5 id="Traffic-I-O"><a href="#Traffic-I-O" class="headerlink" title="Traffic(I/O)"></a>Traffic(I/O)</h5><p>网络I/O</p>
+<h3 id="上报格式"><a href="#上报格式" class="headerlink" title="上报格式"></a>上报格式</h3><p>为了方便上报和数据分析，需要统一各项数据的上报格式，以上面的Metrics为例，将各项数据按统一的格式一同上报，定义格式如下：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/iOS性能监控工具/Metrics.png" alt=""></p>
+<p>上报格式如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">NetworkMetrics: 450,50,80,60,100,120,Network Load</div><div class="line">NetworkMetrics: 220,0,0,0,100,120,Loacl Cache</div></pre></td></tr></table></figure>
 
       
     </div>
@@ -426,7 +433,7 @@
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#工具介绍"><span class="nav-number">2.</span> <span class="nav-text">工具介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#设备性能"><span class="nav-number">2.1.</span> <span class="nav-text">设备性能</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#fps"><span class="nav-number">2.1.1.</span> <span class="nav-text">fps</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#cpu-usage"><span class="nav-number">2.1.2.</span> <span class="nav-text">cpu usage</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#disk"><span class="nav-number">2.1.3.</span> <span class="nav-text">disk</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#memory"><span class="nav-number">2.1.4.</span> <span class="nav-text">memory</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#battery"><span class="nav-number">2.1.5.</span> <span class="nav-text">battery</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#网络性能"><span class="nav-number">2.2.</span> <span class="nav-text">网络性能</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#DNS"><span class="nav-number">2.2.1.</span> <span class="nav-text">DNS</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Ping"><span class="nav-number">2.2.2.</span> <span class="nav-text">Ping</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Reachability"><span class="nav-number">2.2.3.</span> <span class="nav-text">Reachability</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Metrics-iOS10"><span class="nav-number">2.2.4.</span> <span class="nav-text">Metrics(iOS10)</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#TraceRoute"><span class="nav-number">2.2.5.</span> <span class="nav-text">TraceRoute</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Traffic-I-O"><span class="nav-number">2.2.6.</span> <span class="nav-text">Traffic(I/O)</span></a></li></ol></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#工具介绍"><span class="nav-number">2.</span> <span class="nav-text">工具介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#设备性能"><span class="nav-number">2.1.</span> <span class="nav-text">设备性能</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#fps"><span class="nav-number">2.1.1.</span> <span class="nav-text">fps</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#cpu-usage"><span class="nav-number">2.1.2.</span> <span class="nav-text">cpu usage</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#disk"><span class="nav-number">2.1.3.</span> <span class="nav-text">disk</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#memory"><span class="nav-number">2.1.4.</span> <span class="nav-text">memory</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#battery"><span class="nav-number">2.1.5.</span> <span class="nav-text">battery</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#网络性能"><span class="nav-number">2.2.</span> <span class="nav-text">网络性能</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#DNS"><span class="nav-number">2.2.1.</span> <span class="nav-text">DNS</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Ping"><span class="nav-number">2.2.2.</span> <span class="nav-text">Ping</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Reachability"><span class="nav-number">2.2.3.</span> <span class="nav-text">Reachability</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Metrics-iOS10"><span class="nav-number">2.2.4.</span> <span class="nav-text">Metrics(iOS10)</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#TraceRoute"><span class="nav-number">2.2.5.</span> <span class="nav-text">TraceRoute</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Traffic-I-O"><span class="nav-number">2.2.6.</span> <span class="nav-text">Traffic(I/O)</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#上报格式"><span class="nav-number">3.</span> <span class="nav-text">上报格式</span></a></li></ol></div>
             
           </div>
         </section>
