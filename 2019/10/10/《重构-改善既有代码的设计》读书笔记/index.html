@@ -91,7 +91,7 @@
 <meta property="og:site_name" content="lly&#39;s Blog">
 <meta property="og:description" content="读完了martin老师的《代码XX之道》系列后，颇有收获，代码质量也有比较明显的提高，渐渐对代码也有了自己的一些理解。但是学习的脚步不能停，《重构》这本书也是提高代码质量方面的经典书籍，当然不能错过了。 从第一个案例说起–影片租赁系统发现问题-编写测试用例（测试用例的重构的根本）- 步步为营的修改 重构的本质：尽可能小的修改，这样任何可能出现的错误都会很容易发现。 如何拆分一个臃肿的函数 处理函数">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-10-11T13:22:28.657Z">
+<meta property="og:updated_time" content="2019-10-18T12:56:29.208Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="《重构--改善既有代码的设计》读书笔记">
 <meta name="twitter:description" content="读完了martin老师的《代码XX之道》系列后，颇有收获，代码质量也有比较明显的提高，渐渐对代码也有了自己的一些理解。但是学习的脚步不能停，《重构》这本书也是提高代码质量方面的经典书籍，当然不能错过了。 从第一个案例说起–影片租赁系统发现问题-编写测试用例（测试用例的重构的根本）- 步步为营的修改 重构的本质：尽可能小的修改，这样任何可能出现的错误都会很容易发现。 如何拆分一个臃肿的函数 处理函数">
@@ -317,6 +317,23 @@
 <li>新的改动不会危及现有行为</li>
 <li>尽可能简单表达条件逻辑</li>
 </ul>
+<p>当代码不能正常工作时，应该选择重写而不是重构。重构之前的代码，至少大部分情况下是能正常运行的。</p>
+<p>项目接近最后期限时，应该避免重构。未完成的重构工作可以比作技术债务，而维护和扩展代码所花费的额外成本就是利息。一定程度的利息是可以接受的，但是如果利息太高，就会被压垮。把债务管理好很重要，应该随时通过重构来偿还一部分债务。</p>
+<h4 id="重构的难点"><a href="#重构的难点" class="headerlink" title="重构的难点"></a>重构的难点</h4><ul>
+<li>数据库的重构，需要加上中间层和做好数据迁移</li>
+<li>接口的重构，添加新接口，让老接口去调用新接口，不要复制函数，并将旧接口标记为deprecated</li>
+</ul>
+<h3 id="坏代码的味道"><a href="#坏代码的味道" class="headerlink" title="坏代码的味道"></a>坏代码的味道</h3><ul>
+<li>坏代码没有一个统一的评判标准，你必须培养出自己的判断力，学会判断一个类内有多少实例变量算是太大，一个函数内有多少行代码算太长。</li>
+</ul>
+<h4 id="坏代码条款"><a href="#坏代码条款" class="headerlink" title="坏代码条款"></a>坏代码条款</h4><ul>
+<li>重复代码</li>
+<li>过长函数</li>
+<li>过大的类</li>
+<li>过长的参数</li>
+<li>发散式变化（拆分）</li>
+<li>霰(xian)弹式修改（合并） </li>
+</ul>
 
       
     </div>
@@ -452,7 +469,7 @@
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#从第一个案例说起–影片租赁系统"><span class="nav-number">1.</span> <span class="nav-text">从第一个案例说起–影片租赁系统</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#如何拆分一个臃肿的函数"><span class="nav-number">1.1.</span> <span class="nav-text">如何拆分一个臃肿的函数</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#重构原则"><span class="nav-number">2.</span> <span class="nav-text">重构原则</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#两顶帽子理论"><span class="nav-number">2.1.</span> <span class="nav-text">两顶帽子理论</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#重构的目的"><span class="nav-number">2.2.</span> <span class="nav-text">重构的目的</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#何时重构"><span class="nav-number">2.3.</span> <span class="nav-text">何时重构</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#从第一个案例说起–影片租赁系统"><span class="nav-number">1.</span> <span class="nav-text">从第一个案例说起–影片租赁系统</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#如何拆分一个臃肿的函数"><span class="nav-number">1.1.</span> <span class="nav-text">如何拆分一个臃肿的函数</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#重构原则"><span class="nav-number">2.</span> <span class="nav-text">重构原则</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#两顶帽子理论"><span class="nav-number">2.1.</span> <span class="nav-text">两顶帽子理论</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#重构的目的"><span class="nav-number">2.2.</span> <span class="nav-text">重构的目的</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#何时重构"><span class="nav-number">2.3.</span> <span class="nav-text">何时重构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#重构的难点"><span class="nav-number">2.4.</span> <span class="nav-text">重构的难点</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#坏代码的味道"><span class="nav-number">3.</span> <span class="nav-text">坏代码的味道</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#坏代码条款"><span class="nav-number">3.1.</span> <span class="nav-text">坏代码条款</span></a></li></ol></li></ol></div>
             
           </div>
         </section>
