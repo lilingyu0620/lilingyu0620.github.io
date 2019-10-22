@@ -395,9 +395,20 @@
 <h4 id="Split-Temporary-Variable-分解临时变量"><a href="#Split-Temporary-Variable-分解临时变量" class="headerlink" title="Split Temporary Variable(分解临时变量)"></a>Split Temporary Variable(分解临时变量)</h4><p>临时变量被赋值多次，但它既不是循环变量，也不是计算结果收集变量。</p>
 <h5 id="提炼动机-5"><a href="#提炼动机-5" class="headerlink" title="提炼动机"></a>提炼动机</h5><ul>
 <li>临时变量被赋值多次，说明它承担了多个责任，应该被替换为多个临时变量，每个临时变量只承担一个责任。</li>
-<li>一个临时变量承担多件事情，会令代码阅读者懵逼。</li>
+<li>一个临时变量承担多件事情，会令代码阅读者懵圈。</li>
 </ul>
-
+<h4 id="Remove-Assignments-to-Parameters-移除对参数的赋值"><a href="#Remove-Assignments-to-Parameters-移除对参数的赋值" class="headerlink" title="Remove Assignments to Parameters(移除对参数的赋值)"></a>Remove Assignments to Parameters(移除对参数的赋值)</h4><p>在引用传递语言中，会改变该参数的值，在值传递语言中，不会影响外部继续使用该参数。</p>
+<h4 id="Replace-Method-with-Method-Object-以函数对象取代函数"><a href="#Replace-Method-with-Method-Object-以函数对象取代函数" class="headerlink" title="Replace Method with Method Object(以函数对象取代函数)"></a>Replace Method with Method Object(以函数对象取代函数)</h4><p>函数过大时，对其中局部变量的使用使你无法提炼出较小的函数</p>
+<h5 id="提炼动机-6"><a href="#提炼动机-6" class="headerlink" title="提炼动机"></a>提炼动机</h5><ul>
+<li>局部变量太多，无法一一提取。</li>
+<li>当使用对象时，所有局部变量就会成为成员变量，方便拆解</li>
+</ul>
+<h5 id="具体做法-4"><a href="#具体做法-4" class="headerlink" title="具体做法"></a>具体做法</h5><ul>
+<li>新建一个类，将需要的局部变量申明为对象的属性</li>
+<li>在新类建立一个构造方法，参数为所有需要的局部变量</li>
+<li>将源方法的实现拷贝过来，然后使用新建类替换源方法</li>
+</ul>
+<h4 id="Substitute-Algorithm-替换算法"><a href="#Substitute-Algorithm-替换算法" class="headerlink" title="Substitute Algorithm(替换算法)"></a>Substitute Algorithm(替换算法)</h4>
           
         
       
