@@ -229,6 +229,151 @@
             
               
                 
+                <a class="post-title-link" href="/2018/05/07/使用AudioQueue实现一个音频播放器/" itemprop="url">
+                  使用AudioQueue实现一个音频播放器
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-05-07T15:46:32+08:00" content="2018-05-07">
+              2018-05-07
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/05/07/使用AudioQueue实现一个音频播放器/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/05/07/使用AudioQueue实现一个音频播放器/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>在系统的学习了AudioQueue相关姿势之后，我尝试使用AudioQueue做一个简单的音频播放器，包括播放，暂停，停止，快进快退，同时支持本地音频和网络音频等功能。</p>
+<p>这里将整个流程分为下面几个模块：</p>
+<ul>
+<li><p>AudioProperty – 用来保存音频的相关属性</p>
+</li>
+<li><p>AudioSource – 主要负责提供音频数据</p>
+<ul>
+<li>LocalAudioSource 本地数据来源</li>
+<li>NetAudioSource 网络数据来源</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>AudioStream – 主要负责对音频流的解析</li>
+</ul>
+<ul>
+<li>AudioQueue – 主要负责音频播放</li>
+</ul>
+<ul>
+<li>AudioPlayer – 播放器实体，负责管理上面的几个模块。</li>
+</ul>
+<p>下面分模块来介绍下：</p>
+<h4 id="AudioProperty"><a href="#AudioProperty" class="headerlink" title="AudioProperty"></a>AudioProperty</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">@protocol LLYAudioPropertyDelegate &lt;NSObject&gt;</div><div class="line"></div><div class="line">- (void)audioProrperty_error:(NSError *)error;</div><div class="line">- (void)audioProperty_statusChanged:(LLYAudioStatus)audioStatus;</div><div class="line"></div><div class="line">@end</div><div class="line"></div><div class="line">@interface LLYAudioProperty : NSObject</div><div class="line"></div><div class="line">@property (nonatomic, assign) UInt64 fileSize;</div><div class="line">@property (nonatomic, assign) UInt32 packetMaxSize;</div><div class="line">@property (nonatomic, assign) void * magicData;</div><div class="line">@property (nonatomic, assign) UInt32 cookieSize;</div><div class="line">@property (nonatomic, assign) LLYAudioStatus status;</div><div class="line">@property (nonatomic, strong) NSError *error;</div><div class="line">@property (nonatomic, weak) id &lt;LLYAudioPropertyDelegate&gt; delegate;</div><div class="line">@property (nonatomic, assign) AudioStreamBasicDescription audioDesc;</div><div class="line"></div><div class="line">- (void)error:(LLYAudioError)errorType;</div><div class="line">- (NSString *)errorDomain:(LLYAudioError)errorType;</div><div class="line">- (void)clean;</div><div class="line"></div><div class="line">@end</div></pre></td></tr></table></figure>
+<p>当每次音频的状态发生改变时，我们通过上面的代理将状态传给UI。</p>
+<p>这里我们保存了fileSize和audioDesc，主要是用来计算音频的总时长，计算方法在之前已经介绍过了。</p>
+<h4 id="AudioSource"><a href="#AudioSource" class="headerlink" title="AudioSource"></a>AudioSource</h4><p>因为这个模块有两种类型，所以我们先定义一个父类，然后让子类去继承</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line">@class LLYBaseAudioSource;</div><div class="line"></div><div class="line">@protocol LLYAudioSourceDelegate &lt;NSObject&gt;</div><div class="line"></div><div class="line">- (void)audioSource_fileType:(LLYBaseAudioSource *)curAudioSource fileType:(AudioFileTypeID)fileType;</div><div class="line">- (void)audioSource_dataArrived:(LLYBaseAudioSource *)curAudioSource data:(NSData *)data contine:(BOOL)isContine;</div><div class="line">- (void)audioSource_finished:(LLYBaseAudioSource *)curAudioSource error:(NSError *)error;</div><div class="line">- (void)audioSource_shouldExit:(LLYBaseAudioSource*)currAudioData;</div><div class="line"></div><div class="line"></div><div class="line">@end</div><div class="line"></div><div class="line">@interface LLYBaseAudioSource : NSObject</div><div class="line"></div><div class="line">@property (nonatomic, copy) NSString *urlStr;</div><div class="line">@property (nonatomic, weak) id&lt;LLYAudioSourceDelegate&gt; delegate;</div><div class="line">@property (nonatomic, assign) int audioVersion;</div><div class="line">@property (nonatomic, strong) LLYAudioProperty *audioProperty;</div><div class="line"></div><div class="line">- (void)start;</div><div class="line">- (void)cancel;</div><div class="line">- (void)seekToOffset:(UInt64)offset;</div><div class="line">- (AudioFileTypeID)fileTypeWithFileExtension:(NSString *)fileExtension;</div><div class="line">- (void)audioSourceError:(NSString *)errorDomain userInfo:(NSDictionary *)userInfo;</div><div class="line"></div><div class="line"></div><div class="line">@end</div></pre></td></tr></table></figure>
+<p>在我们获取到原始的音频数据后，也是通过代理的方式将数据交给其它模块去处理。</p>
+<p>具体看一下本地和网络数据获取的方式有何不同：</p>
+<h5 id="LLYLocalAudioSource"><a href="#LLYLocalAudioSource" class="headerlink" title="LLYLocalAudioSource"></a>LLYLocalAudioSource</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">- (void)loadData&#123;</div><div class="line">    if([[NSFileManager defaultManager] fileExistsAtPath:self.urlStr])&#123;</div><div class="line">        NSError *error;</div><div class="line">        NSDictionary *fileAttDic = [[NSFileManager defaultManager] attributesOfItemAtPath:self.urlStr error:&amp;error];</div><div class="line">        fileSize = [[fileAttDic objectForKey:NSFileSize] longValue];</div><div class="line">        if (fileSize &gt; 0) &#123;</div><div class="line">            self.audioProperty.fileSize = fileSize;</div><div class="line">            filehandle = [NSFileHandle fileHandleForReadingAtPath:self.urlStr];</div><div class="line">            currOffset = 0;</div><div class="line">            if (!fileTimer) &#123;</div><div class="line">                fileTimer = [NSTimer scheduledTimerWithTimeInterval:0.05 target:self selector:@selector(fileTimer_intval) userInfo:nil repeats:YES];</div><div class="line">                [[NSRunLoop currentRunLoop] run];</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        else&#123;</div><div class="line">            [self audioSourceError:@&quot;file read error&quot; userInfo:nil];</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    else&#123;</div><div class="line">        [self audioSourceError:@&quot;file not exists&quot; userInfo:nil];</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里我是使用了一个计时器去读取的本地数据，用while循环应该也是ok的。然后是整个数据读取操作都需要放在子线程去操作，因为如果放在主线程的话会阻塞当前线程，造成UI卡顿。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">- (void)fileTimer_intval&#123;</div><div class="line">    </div><div class="line">    if (exit) &#123;</div><div class="line">        [filehandle closeFile];</div><div class="line">        filehandle=nil;</div><div class="line">        </div><div class="line">        if (self.delegate) &#123;</div><div class="line">            [self.delegate audioSource_shouldExit:self];</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        CFRunLoopStop([[NSRunLoop currentRunLoop] getCFRunLoop]);//必须停止，要不线程一直不会被释放</div><div class="line">        return;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    if (!filehandle) &#123;</div><div class="line">        return;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    if (newOffset &gt; 0) &#123;</div><div class="line">        currOffset = newOffset;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    UInt64 currReadLength = readLength;</div><div class="line">    if (currOffset + currReadLength &gt; fileSize) &#123;</div><div class="line">        currReadLength = fileSize - currOffset;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    if (currOffset == 0) &#123;</div><div class="line">        isContine = NO;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    if (newOffset &gt; 0)&#123;</div><div class="line">        [filehandle seekToFileOffset:newOffset];</div><div class="line">        </div><div class="line">        newOffset = 0;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    audioFileData = [filehandle readDataOfLength:currReadLength];</div><div class="line">    if (audioFileData &amp;&amp; self.delegate) &#123;</div><div class="line">        [self.delegate audioSource_dataArrived:self data:audioFileData contine:isContine];</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    currOffset += currReadLength;</div><div class="line"></div><div class="line">    if (currOffset &gt;= fileSize) &#123;</div><div class="line">        if (fileTimer) &#123;</div><div class="line">            [fileTimer invalidate];</div><div class="line">            fileTimer=nil;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    if (!isContine) &#123;</div><div class="line">        isContine = YES;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    if (!fileTimer) &#123;</div><div class="line">        if (self.delegate) &#123;</div><div class="line">            [self.delegate audioSource_finished:self error:nil];</div><div class="line">            [filehandle closeFile];</div><div class="line">            filehandle=nil;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在数据读取过程中，我们需要记录一下当前读取了多少数据，防止最后一次读取的数据不够，这里还有2个参数是seek相关的，isContine 和 newOffset ，当newOffset不为0时，我们需要将当前文件的读取偏移量seek到newOffset处，然后在继续读文件，同时，我们标记isContine为NO，通知其他模块，清空之前的音频读取相关记录，重新开始读取新的数据。</p>
+<h5 id="LLYNetAudioSource"><a href="#LLYNetAudioSource" class="headerlink" title="LLYNetAudioSource"></a>LLYNetAudioSource</h5><p>网络音频和本地音频处理起来不太一样，因为它们使用的是不同的协议，本地文件可以看做file协议，网络音频则是http协议。不过原理上其实是一样的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">- (void)requestStart&#123;</div><div class="line">    </div><div class="line">    if (!self.audioTask) &#123;</div><div class="line">        </div><div class="line">        self.audioRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:self.urlStr]];</div><div class="line">        if (seekOffset) &#123;</div><div class="line">            [self.audioRequest setValue:[NSString stringWithFormat:@&quot;bytes=%llu-&quot;,seekOffset] forHTTPHeaderField:@&quot;Range&quot;];</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        NSURLSessionConfiguration *config = [NSURLSessionConfiguration ephemeralSessionConfiguration];</div><div class="line">        self.audioSession = [NSURLSession sessionWithConfiguration:config delegate:self delegateQueue:[NSOperationQueue new]];</div><div class="line">        self.audioTask = [self.audioSession dataTaskWithRequest:self.audioRequest];</div><div class="line">        [self.audioTask resume];</div><div class="line">        </div><div class="line">        NSLog(@&quot;requestStart current thread %@&quot;,[NSThread currentThread]);</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line">#pragma mark - NSURLSessionDataDelegate</div><div class="line"></div><div class="line">- (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask</div><div class="line">didReceiveResponse:(NSURLResponse *)response</div><div class="line"> completionHandler:(void (^)(NSURLSessionResponseDisposition disposition))completionHandler&#123;</div><div class="line">    </div><div class="line">    NSLog(@&quot;didReceiveResponse current thread %@&quot;,[NSThread currentThread]);</div><div class="line"></div><div class="line">    fileSize = seekOffset + response.expectedContentLength;</div><div class="line">    seekOffset = 0;</div><div class="line">    self.audioProperty.fileSize = fileSize;</div><div class="line">    </div><div class="line">    completionHandler(NSURLSessionResponseAllow);</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask</div><div class="line">    didReceiveData:(NSData *)data&#123;</div><div class="line">    </div><div class="line">    NSLog(@&quot;didReceiveData current thread %@&quot;,[NSThread currentThread]);</div><div class="line"></div><div class="line">    if (self.delegate) &#123;</div><div class="line">        if (currDataSize == 0) &#123;</div><div class="line">            isContine = NO;</div><div class="line">        &#125;</div><div class="line">        [self.delegate audioSource_dataArrived:self data:data contine:isContine];</div><div class="line">        currDataSize = currDataSize + data.length;</div><div class="line">        if (!isContine) &#123;</div><div class="line">            isContine = YES;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>同样的 ，这个数据请求过程也是放在子线程中进行。</p>
+<p>这里，使用代理的方式而不是完成快的方式去请求数据，是因为音频数据相对来说还是有点大的，如果使用完成块的方式需要等待数据全部请求完成才会返回，等待时候会比较长，而且我们在开始播放音频时也并不需要全部的数据，边播放请求数据也比较符合正常的逻辑。</p>
+<p>在发送请求前，也有一个seek相关的操作，如果当前是seek后第一次请求数据，通过设置http header中的Range的字段，请求seek后的数据。</p>
+<h4 id="LLYAudioStream"><a href="#LLYAudioStream" class="headerlink" title="LLYAudioStream"></a>LLYAudioStream</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">@protocol LLYAudioStreamDelegate &lt;NSObject&gt;</div><div class="line"></div><div class="line">- (void)audioStream_readyToProducePackets;</div><div class="line">- (void)audioStream_packets:(NSData *)data packetNum:(UInt32)packetCount packetDesc:(AudioStreamPacketDescription *)inPacketDesc;</div><div class="line"></div><div class="line">@end</div><div class="line"></div><div class="line">@interface LLYAudioStream : NSObject</div><div class="line"></div><div class="line">@property (nonatomic, assign) AudioStreamBasicDescription audioDesc;</div><div class="line">@property (nonatomic, assign) double duration;</div><div class="line">@property (nonatomic, weak) id&lt;LLYAudioStreamDelegate&gt; delegate;</div><div class="line">@property (nonatomic, strong) LLYAudioProperty *audioProperty;</div><div class="line">@property (nonatomic, assign) UInt64 seekByteOffset;</div><div class="line">@property (nonatomic, assign) double seekTime;</div><div class="line">@property (nonatomic, assign) NSInteger audioVersion;</div><div class="line"></div><div class="line">//- (instancetype)initWithFileType:(AudioFileTypeID)fileTypeID;</div><div class="line"></div><div class="line">- (void)audioStreamParseBytes:(NSData *)data flags:(UInt32)flags;</div><div class="line"></div><div class="line">- (void)getSeekToOffset:(double)seekToTime;</div><div class="line"></div><div class="line">- (void)close;</div><div class="line"></div><div class="line">@end</div></pre></td></tr></table></figure>
+<p>收到AudioSource的数据后，使用AudioStream来解析，然后把解析到的数据通过代理给AudioQueue，这就是AudoStream需要做的事情。</p>
+<p>这里主要看一下下面几个方法：</p>
+<h5 id="计算seek的偏移量"><a href="#计算seek的偏移量" class="headerlink" title="计算seek的偏移量"></a>计算seek的偏移量</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">- (void)getSeekToOffset:(double)seekToTime&#123;</div><div class="line">    </div><div class="line">    self.seekByteOffset = dataOffset +</div><div class="line">    (seekToTime / self.duration) * (_audioProperty.fileSize - dataOffset);</div><div class="line">    </div><div class="line">    if (self.seekByteOffset &gt; _audioProperty.fileSize - 2 * _audioProperty.packetMaxSize)&#123;</div><div class="line">        self.seekByteOffset = _audioProperty.fileSize - 2 * _audioProperty.packetMaxSize;</div><div class="line">    &#125;</div><div class="line">    self.seekTime = seekToTime;</div><div class="line">    isSeeking=YES;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h5 id="总时长"><a href="#总时长" class="headerlink" title="总时长"></a>总时长</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">-(double)duration&#123;</div><div class="line">    double calculatedBitRate = [self calculatedBitRate];</div><div class="line">    </div><div class="line">    if (calculatedBitRate == 0 || _audioProperty.fileSize == 0)</div><div class="line">    &#123;</div><div class="line">        return 0.0;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    return (_audioProperty.fileSize-dataOffset) / (calculatedBitRate * 0.125);</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (double)calculatedBitRate</div><div class="line">&#123;</div><div class="line">    if (packetDuration &amp;&amp; packetCount &gt; BitRateEstimationMinPackets)</div><div class="line">    &#123;</div><div class="line">        double averagePacketByteSize = packetDataSize / packetCount;</div><div class="line">        return 8.0 * averagePacketByteSize / packetDuration;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    if (bitRate)</div><div class="line">    &#123;</div><div class="line">        return (double)bitRate;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>AudioQueue模块和AudioPlayer模块相对来讲就比较简单了，之前的demo里面也使用过，就不一一介绍。</p>
+<p><a href="https://github.com/lilingyu0620/LLYAudioPlayer.git" target="_blank" rel="noopener">demo</a></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/04/28/AudioQueue学习笔记和实战/" itemprop="url">
                   AudioQueue学习笔记和实战
                 </a>
@@ -1595,136 +1740,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/07/07/高性能iOS应用开发/高性能iOS应用开发读书笔记/" itemprop="url">
-                  高性能iOS应用开发读书笔记
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-07-07T10:02:22+08:00" content="2017-07-07">
-              2017-07-07
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2017/07/07/高性能iOS应用开发/高性能iOS应用开发读书笔记/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/07/07/高性能iOS应用开发/高性能iOS应用开发读书笔记/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><img src="http://ofy1hyquv.bkt.clouddn.com/%E9%AB%98%E6%80%A7%E8%83%BDiOS%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91.png" alt=""></p>
-<h3 id="第一章-移动应用的性能"><a href="#第一章-移动应用的性能" class="headerlink" title="第一章 移动应用的性能"></a>第一章 移动应用的性能</h3><ul>
-<li>应用首次工作出错以后，79%的用户只会再重试一两次</li>
-<li>当应用载入时间超过3秒时，25%的用户会放弃使用该应用。</li>
-<li>31%的用户会将糟糕的体验转告他人。</li>
-</ul>
-<h4 id="定义性能"><a href="#定义性能" class="headerlink" title="定义性能"></a>定义性能</h4><p>高性能有着多重的含义和丰富的解释方式。</p>
-<h4 id="性能指标"><a href="#性能指标" class="headerlink" title="性能指标"></a>性能指标</h4><ul>
-<li>内存</li>
-<li>电池消耗</li>
-<li>程序初始化时间</li>
-<li>执行速度</li>
-<li>响应速度</li>
-<li>本地存储</li>
-<li>互操作性</li>
-<li>网络环境</li>
-<li>带宽</li>
-<li>数据刷新</li>
-<li>多用户支持</li>
-<li>单点登录</li>
-<li>安全</li>
-<li>崩溃</li>
-</ul>
-<h4 id="应用性能分析"><a href="#应用性能分析" class="headerlink" title="应用性能分析"></a>应用性能分析</h4><ul>
-<li>采样</li>
-<li>埋点</li>
-</ul>
-<h4 id="测量"><a href="#测量" class="headerlink" title="测量"></a>测量</h4><p>过早优化是编程领域的万恶之源–高德纳？？？</p>
-<p><a href="https://github.com/gvaish/hpios" target="_blank" rel="noopener">测试代码地址</a></p>
-<h3 id="第二章-内存管理"><a href="#第二章-内存管理" class="headerlink" title="第二章 内存管理"></a>第二章 内存管理</h3><p>90%的应用崩溃与内存管理有关，其中最主要的原因是错误的内存访问和保留环所引起的内存泄露 – Apple Dev</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1770,7 +1785,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">52</span>
+              <span class="site-state-item-count">53</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
