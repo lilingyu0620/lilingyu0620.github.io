@@ -229,6 +229,197 @@
             
               
                 
+                <a class="post-title-link" href="/2018/05/07/FFMPEG学习笔记/" itemprop="url">
+                  FFMPEG学习笔记
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-05-07T17:52:01+08:00" content="2018-05-07">
+              2018-05-07
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/05/07/FFMPEG学习笔记/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/05/07/FFMPEG学习笔记/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>想要从事音视频相关的工作，FFMPEG是绕不开的一道坎，就像吉他里面的大横按，既然我能给征服大横按，相信我也能征服你，FFMPEG！！！</p>
+<p>自学音视频相关的内容也有一段时间啦，比如之前的H264,RTMP,FLV,还有最近的AudioUint和AudioQueue，通过这段时间的学习，我总结出来的方法就是，先将他们的数据结构分析清楚，了解主要的api，然后从简单的api开始实践。</p>
+<p>所以我们先来看一下FFMPEG的主要数据结构和api…</p>
+<h3 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h3><h4 id="文件读取相关"><a href="#文件读取相关" class="headerlink" title="文件读取相关"></a>文件读取相关</h4><h5 id="AVIOContext"><a href="#AVIOContext" class="headerlink" title="AVIOContext"></a>AVIOContext</h5><p>AVIOContext是FFMPEG管理输入输出数据的结构体</p>
+<p>比较重要的属性：</p>
+<ul>
+<li><p>unsigned char *buffer：缓存读取的数据</p>
+</li>
+<li><p>int buffer_size：缓存大小（默认32768）</p>
+</li>
+<li><p>unsigned char *buf_ptr：当前指针读取到的位置</p>
+</li>
+<li><p>unsigned char *buf_end：缓存结束的位置</p>
+</li>
+<li><p>void *opaque：URLContext结构体</p>
+</li>
+</ul>
+<h4 id="协议相关"><a href="#协议相关" class="headerlink" title="协议相关"></a>协议相关</h4><h5 id="URLContext、URLProtocol"><a href="#URLContext、URLProtocol" class="headerlink" title="URLContext、URLProtocol"></a>URLContext、URLProtocol</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line">typedef struct URLContext &#123;  </div><div class="line">    const AVClass *av_class; ///&lt; information for av_log(). Set by url_open().  </div><div class="line">    struct URLProtocol *prot;  </div><div class="line">    int flags;  </div><div class="line">    int is_streamed;  /**&lt; true if streamed (no seek possible), default = false */  </div><div class="line">    int max_packet_size;  /**&lt; if non zero, the stream is packetized with this max packet size */  </div><div class="line">    void *priv_data;  </div><div class="line">    char *filename; /**&lt; specified URL */  </div><div class="line">    int is_connected;  </div><div class="line">    AVIOInterruptCB interrupt_callback;  </div><div class="line">&#125; URLContext;  </div><div class="line"></div><div class="line">typedef struct URLProtocol &#123;  </div><div class="line">    const char *name;  </div><div class="line">    int (*url_open)(URLContext *h, const char *url, int flags);  </div><div class="line">    int (*url_read)(URLContext *h, unsigned char *buf, int size);  </div><div class="line">    int (*url_write)(URLContext *h, const unsigned char *buf, int size);  </div><div class="line">    int64_t (*url_seek)(URLContext *h, int64_t pos, int whence);  </div><div class="line">    int (*url_close)(URLContext *h);  </div><div class="line">    struct URLProtocol *next;  </div><div class="line">    int (*url_read_pause)(URLContext *h, int pause);  </div><div class="line">    int64_t (*url_read_seek)(URLContext *h, int stream_index,  </div><div class="line">        int64_t timestamp, int flags);  </div><div class="line">    int (*url_get_file_handle)(URLContext *h);  </div><div class="line">    int priv_data_size;  </div><div class="line">    const AVClass *priv_data_class;  </div><div class="line">    int flags;  </div><div class="line">    int (*url_check)(URLContext *h, int mask);  </div><div class="line">&#125; URLProtocol;</div></pre></td></tr></table></figure>
+<p>URLContext结构体中还有一个结构体URLProtocol,每种协议（rtp，rtmp，file等）对应一个URLProtocol。</p>
+<h4 id="封装格式相关"><a href="#封装格式相关" class="headerlink" title="封装格式相关"></a>封装格式相关</h4><h5 id="AVFormatContext"><a href="#AVFormatContext" class="headerlink" title="AVFormatContext"></a>AVFormatContext</h5><p>这个结构体描述了一个媒体文件或媒体流的构成和基本信息</p>
+<p>在使用FFMPEG进行开发的时候，AVFormatContext是一个贯穿始终的数据结构，很多函数都要用到它作为参数。</p>
+<p>看几个主要变量的作用:</p>
+<ul>
+<li><p>struct AVInputFormat *iformat：输入数据的封装格式</p>
+</li>
+<li><p>AVIOContext *pb：输入数据的缓存</p>
+</li>
+<li><p>unsigned int nb_streams：视音频流的个数</p>
+</li>
+<li><p>AVStream **streams：音视频流</p>
+</li>
+<li><p>char filename[1024]：文件名</p>
+</li>
+<li><p>int64_t duration：时长（单位：微秒us，转换为秒需要除以1000000）</p>
+</li>
+<li><p>int bit_rate：比特率（单位bps，转换为kbps需要除以1000）</p>
+</li>
+<li><p>AVDictionary *metadata：元数据</p>
+</li>
+</ul>
+<h5 id="AVInputFormat"><a href="#AVInputFormat" class="headerlink" title="AVInputFormat"></a>AVInputFormat</h5><p>作为输入容器，包含了输入文件的音视频流信息,程序从输入容器从读出音视频包进行解码处理</p>
+<h5 id="AVOutputFormat"><a href="#AVOutputFormat" class="headerlink" title="AVOutputFormat"></a>AVOutputFormat</h5><p>作为输出容器，程序把编码好的音视频包写入到输出容器中</p>
+<h4 id="编解码相关"><a href="#编解码相关" class="headerlink" title="编解码相关"></a>编解码相关</h4><h5 id="AVCodecContext"><a href="#AVCodecContext" class="headerlink" title="AVCodecContext"></a>AVCodecContext</h5><p>这是一个描述编解码器上下文的数据结构，包含了众多编解码器需要的参数信息</p>
+<p>看一下关键属性：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">enum AVMediaType codec_type：编解码器的类型（视频，音频...）</div><div class="line"></div><div class="line">struct AVCodec  *codec：采用的解码器AVCodec（H.264,MPEG2...）</div><div class="line"></div><div class="line">int bit_rate：平均比特率</div><div class="line"></div><div class="line">uint8_t *extradata; int extradata_size：针对特定编码器包含的附加信息（例如对于H.264解码器来说，存储SPS，PPS等）</div><div class="line"></div><div class="line">AVRational time_base：根据该参数，可以把PTS转化为实际的时间（单位为秒s）</div><div class="line"></div><div class="line">int width, height：如果是视频的话，代表宽和高</div><div class="line"></div><div class="line">int refs：运动估计参考帧的个数（H.264的话会有多帧，MPEG2这类的一般就没有了）</div><div class="line"></div><div class="line">int sample_rate：采样率（音频）</div><div class="line"></div><div class="line">int channels：声道数（音频）</div><div class="line"></div><div class="line">enum AVSampleFormat sample_fmt：采样格式</div><div class="line"></div><div class="line">int profile：型（H.264里面就有，其他编码标准应该也有）</div><div class="line"></div><div class="line">int level：级（和profile差不太多）</div></pre></td></tr></table></figure>
+<h5 id="AVCodec"><a href="#AVCodec" class="headerlink" title="AVCodec"></a>AVCodec</h5><p>AVCodec是存储编解码器信息的结构体，每一个编解码器对应一个该结构体。</p>
+<p>下面说一下最主要的几个变量：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">const char *name：编解码器的名字，比较短</div><div class="line"></div><div class="line">const char *long_name：编解码器的名字，全称，比较长</div><div class="line"></div><div class="line">enum AVMediaType type：指明了类型，是视频，音频，还是字幕</div><div class="line"></div><div class="line">enum AVCodecID id：ID，不重复</div><div class="line"></div><div class="line">const AVRational *supported_framerates：支持的帧率（仅视频）</div><div class="line"></div><div class="line">const enum AVPixelFormat *pix_fmts：支持的像素格式（仅视频）</div><div class="line"></div><div class="line">const int *supported_samplerates：支持的采样率（仅音频）</div><div class="line"></div><div class="line">const enum AVSampleFormat *sample_fmts：支持的采样格式（仅音频）</div><div class="line"></div><div class="line">const uint64_t *channel_layouts：支持的声道数（仅音频）</div><div class="line"></div><div class="line">int priv_data_size：私有数据的大小</div></pre></td></tr></table></figure>
+<h5 id="AVStream"><a href="#AVStream" class="headerlink" title="AVStream"></a>AVStream</h5><p>AVStream是存储每一个视频/音频流信息的结构体</p>
+<p>AVStream重要的变量如下所示：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">int index：标识该视频/音频流</div><div class="line"></div><div class="line">AVCodecContext *codec：指向该视频/音频流的AVCodecContext（它们是一一对应的关系）</div><div class="line"></div><div class="line">AVRational time_base：时基。通过该值可以把PTS，DTS转化为真正的时间。FFMPEG其他结构体中也有这个字段，但是根据我的经验，只有AVStream中的time_base是可用的。PTS*time_base=真正的时间</div><div class="line"></div><div class="line">int64_t duration：该视频/音频流长度</div><div class="line"></div><div class="line">AVDictionary *metadata：元数据信息</div><div class="line"></div><div class="line">AVRational avg_frame_rate：帧率（注：对视频来说，这个挺重要的）</div><div class="line"></div><div class="line">AVPacket attached_pic：附带的图片。比如说一些MP3，AAC音频文件附带的专辑封面。</div></pre></td></tr></table></figure>
+<h5 id="AVPacket"><a href="#AVPacket" class="headerlink" title="AVPacket"></a>AVPacket</h5><p>AVPacket是存储压缩编码数据相关信息的结构体</p>
+<p>重要的变量有以下几个:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">&lt;!--例如对于H.264来说。1个AVPacket的data通常对应一个NAL。</div><div class="line"></div><div class="line">注意：在这里只是对应，而不是一模一样。他们之间有微小的差别：使用FFMPEG类库分离出多媒体文件中的H.264码流</div><div class="line"></div><div class="line">因此在使用FFMPEG进行视音频处理的时候，常常可以将得到的AVPacket的data数据直接写成文件，从而得到视音频的码流文件。</div><div class="line">--&gt;</div><div class="line"></div><div class="line">uint8_t *data：压缩编码的数据。</div><div class="line"></div><div class="line">int   size：data的大小</div><div class="line"></div><div class="line">int64_t pts：显示时间戳</div><div class="line"></div><div class="line">int64_t dts：解码时间戳</div><div class="line"></div><div class="line">int   stream_index：标识该AVPacket所属的视频/音频流。</div></pre></td></tr></table></figure>
+<h5 id="AVFrame"><a href="#AVFrame" class="headerlink" title="AVFrame"></a>AVFrame</h5><p>AVFrame结构体一般用于存储原始数据（即非压缩数据，例如对视频来说是YUV，RGB，对音频来说是PCM），此外还包含了一些相关的信息。比如说，解码的时候存储了宏块类型表，QP表，运动矢量表等数据。编码的时候也存储了相关的数据。因此在使用FFMPEG进行码流分析的时候，AVFrame是一个很重要的结构体。</p>
+<p>下面看几个主要变量的作用：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">uint8_t *data[AV_NUM_DATA_POINTERS]：解码后原始数据（对视频来说是YUV，RGB，对音频来说是PCM）</div><div class="line"></div><div class="line">int linesize[AV_NUM_DATA_POINTERS]：data中“一行”数据的大小。注意：未必等于图像的宽，一般大于图像的宽。</div><div class="line"></div><div class="line">int width, height：视频帧宽和高（1920x1080,1280x720...）</div><div class="line"></div><div class="line">int nb_samples：音频的一个AVFrame中可能包含多个音频帧，在此标记包含了几个</div><div class="line"></div><div class="line">int format：解码后原始数据类型（YUV420，YUV422，RGB24...）</div><div class="line"></div><div class="line">int key_frame：是否是关键帧</div><div class="line"></div><div class="line">enum AVPictureType pict_type：帧类型（I,B,P...）</div><div class="line"></div><div class="line">AVRational sample_aspect_ratio：宽高比（16:9，4:3...）</div><div class="line"></div><div class="line">int64_t pts：显示时间戳</div><div class="line"></div><div class="line">int coded_picture_number：编码帧序号</div><div class="line"></div><div class="line">int display_picture_number：显示帧序号</div><div class="line"></div><div class="line">int8_t *qscale_table：QP表</div><div class="line"></div><div class="line">uint8_t *mbskip_table：跳过宏块表</div><div class="line"></div><div class="line">int16_t (*motion_val[2])[2]：运动矢量表</div><div class="line"></div><div class="line">uint32_t *mb_type：宏块类型表</div><div class="line"></div><div class="line">short *dct_coeff：DCT系数，这个没有提取过</div><div class="line"></div><div class="line">int8_t *ref_index[2]：运动估计参考帧列表（貌似H.264这种比较新的标准才会涉及到多参考帧）</div><div class="line"></div><div class="line">int interlaced_frame：是否是隔行扫描</div><div class="line"></div><div class="line">uint8_t motion_subsample_log2：一个宏块中的运动矢量采样个数，取log的</div></pre></td></tr></table></figure>
+<p>结构体之间的关系可以参考下图：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/FFMPEG/20130914204051125.jpg" alt=""></p>
+<h3 id="api"><a href="#api" class="headerlink" title="api"></a>api</h3><h4 id="avcodec-init"><a href="#avcodec-init" class="headerlink" title="avcodec_init()"></a>avcodec_init()</h4><p>初始化libavcodec,一般最先调用该函数</p>
+<p>该函数必须在调用libavcodec里的其它函数前调用,一般在程序启动或模块初始化时调用,如果你调用了多次也无所谓,因为后面的调用不会做任何事情.从函数的实现里你可以发现,代码中对多次调用进行了控制.</p>
+<h4 id="av-register-all"><a href="#av-register-all" class="headerlink" title="av_register_all()"></a>av_register_all()</h4><p>初始化 libavformat和注册所有的muxers、demuxers和protocols，</p>
+<p>一般在调用avcodec_init后调用该方法</p>
+<p>其中会调用avcodec_register_all()注册多种音视频格式的编解码器,并注册各种文件的编解复用器</p>
+<h4 id="avformat-alloc-context"><a href="#avformat-alloc-context" class="headerlink" title="avformat_alloc_context()"></a>avformat_alloc_context()</h4><p>分配一个AVFormatContext结构，负责申请一个AVFormatContext结构的内存,并进行简单初始化</p>
+<h4 id="avformat-open-input"><a href="#avformat-open-input" class="headerlink" title="avformat_open_input()"></a>avformat_open_input()</h4><p>打开一个流媒体文件</p>
+<h4 id="avformat-close-input"><a href="#avformat-close-input" class="headerlink" title="avformat_close_input()"></a>avformat_close_input()</h4><p>关闭一个流媒体文件</p>
+<h4 id="avformat-free-context"><a href="#avformat-free-context" class="headerlink" title="avformat_free_context()"></a>avformat_free_context()</h4><p>释放一个AVFormatContext结构</p>
+<p>使用 avformat_alloc_context()分配的结构,采用该函数进行释放,除释放AVFormatContext结构本身内存之外,AVFormatContext中指针所指向的内存也会一并释放</p>
+<h4 id="avio-alloc-context"><a href="#avio-alloc-context" class="headerlink" title="avio_alloc_context()"></a>avio_alloc_context()</h4><p>为I/0缓存申请并初始化一个AVIOContext结构,结束使用时必须使用av_free()进行释放</p>
+<h4 id="av-open-input-file"><a href="#av-open-input-file" class="headerlink" title="av_open_input_file()"></a>av_open_input_file()</h4><p>以输入方式打开一个媒体文件,也即源文件,codecs并没有打开,只读取了文件的头信息.</p>
+<h4 id="av-close-input-file"><a href="#av-close-input-file" class="headerlink" title="av_close_input_file()"></a>av_close_input_file()</h4><p>关闭使用avformat_close_input()打开的输入文件容器,但并不关系它的codecs</p>
+<p>使用 av_close_input_file 关闭后,就不再需要使用avformat_free_context 进行释放了</p>
+<h4 id="av-find-stream-info-AVFormatContext-ic"><a href="#av-find-stream-info-AVFormatContext-ic" class="headerlink" title="av_find_stream_info(AVFormatContext *ic)"></a>av_find_stream_info(AVFormatContext *ic)</h4><p>通过读取媒体文件的中的包来获取媒体文件中的流信息,对于没有头信息的文件如(mpeg)是非常有用的</p>
+<h4 id="AVCodec-avcodec-find-decoder-enum-CodecID-id"><a href="#AVCodec-avcodec-find-decoder-enum-CodecID-id" class="headerlink" title="AVCodec *avcodec_find_decoder(enum CodecID id)"></a>AVCodec *avcodec_find_decoder(enum CodecID id)</h4><p>通过code ID查找一个已经注册的音视频解码器</p>
+<p>查找解码器之前,必须先调用av_register_all注册所有支持的解码器</p>
+<p>音视频解码器保存在一个链表中,查找过程中,函数从头到尾遍历链表,通过比较解码器的ID来查找</p>
+<h4 id="AVCodec-avcodec-find-decoder-by-name-constchar-name"><a href="#AVCodec-avcodec-find-decoder-by-name-constchar-name" class="headerlink" title="AVCodec  avcodec_find_decoder_by_name (constchar  name)"></a>AVCodec <em> avcodec_find_decoder_by_name (constchar </em> name)</h4><p>通过一个指定的名称查找一个已经注册的音视频解码器</p>
+<p>查找解码器之前,必须先调用av_register_all注册所有支持的解码器</p>
+<p>音视频解码器保存在一个链表中,查找过程中,函数从头到尾遍历链表,通过比较解码器的name来查找</p>
+<h4 id="avcodec-find-encoder"><a href="#avcodec-find-encoder" class="headerlink" title="avcodec_find_encoder()"></a>avcodec_find_encoder()</h4><h4 id="avcodec-find-encoder-by-name"><a href="#avcodec-find-encoder-by-name" class="headerlink" title="avcodec_find_encoder_by_name()"></a>avcodec_find_encoder_by_name()</h4><p>同上。。。</p>
+<h4 id="int-avcodec-open-AVCodecContext-avctx-AVCodec-codec-avcodec-open2"><a href="#int-avcodec-open-AVCodecContext-avctx-AVCodec-codec-avcodec-open2" class="headerlink" title="int avcodec_open(AVCodecContext  avctx, AVCodec  codec) / avcodec_open2()"></a>int avcodec_open(AVCodecContext <em> avctx, AVCodec </em> codec) / avcodec_open2()</h4><p>使用给定的AVCodec初始化AVCodecContext</p>
+<h4 id="av-guess-format"><a href="#av-guess-format" class="headerlink" title="av_guess_format()"></a>av_guess_format()</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">AVOutputFormat *av_guess_format(constchar *short_name,</div><div class="line"></div><div class="line">                                constchar *filename,</div><div class="line"></div><div class="line">                                constchar *mime_type);</div></pre></td></tr></table></figure>
+<p>返回一个已经注册的最合适的输出格式</p>
+<h4 id="void-av-init-packet-AVPacket-pkt"><a href="#void-av-init-packet-AVPacket-pkt" class="headerlink" title="void av_init_packet(AVPacket *pkt);"></a>void av_init_packet(AVPacket *pkt);</h4><p>使用默认值初始化AVPacket</p>
+<p>定义AVPacket对象后,请使用av_init_packet进行初始化</p>
+<h4 id="int-av-read-frame-AVFormatContext-s-AVPacket-pkt"><a href="#int-av-read-frame-AVFormatContext-s-AVPacket-pkt" class="headerlink" title="int av_read_frame(AVFormatContext  s, AVPacket  pkt)"></a>int av_read_frame(AVFormatContext <em> s, AVPacket </em> pkt)</h4><p>从输入源文件容器中读取一个AVPacket数据包</p>
+<p>该函数读出的包并不每次都是有效的,对于读出的包我们都应该进行相应的解码(视频解码/音频解码),</p>
+<p>在返回值&gt;=0时,循环调用该函数进行读取,循环调用之前请调用av_free_packet函数清理AVPacket</p>
+<h4 id="avcodec-decode-video2"><a href="#avcodec-decode-video2" class="headerlink" title="avcodec_decode_video2()"></a>avcodec_decode_video2()</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">int avcodec_decode_video2(AVCodecContext *avctx, 										AVFrame *picture,</div><div class="line">                         int *got_picture_ptr,</div><div class="line">                         AVPacket *avpkt);</div><div class="line">                         </div><div class="line">                         </div><div class="line">// 解码视频流AVPacket</div><div class="line">// 使用av_read_frame读取媒体流后需要进行判断,如果为视频流则调用该函数解码</div><div class="line">// 返回结果&lt;0时失败,此时程序应该退出检查原因</div><div class="line">// 返回&gt;=0时正常,假设 读取包为:AVPacket vPacket 返回值为 int vLen; 每次解码正常时,对vPacket做</div><div class="line">// 如下处理:</div><div class="line">//   vPacket.size -= vLen;</div><div class="line">//   vPacket.data += vLen;</div><div class="line">// 如果 vPacket.size==0,则继续读下一流包,否则继续调度该方法进行解码,直到vPacket.size==0</div><div class="line">// 返回 got_picture_ptr &gt; 0 时,表示解码到了AVFrame *picture,其后可以对picture进程处理</div></pre></td></tr></table></figure>
+<h4 id="avcodec-decode-audio3-avcodec-decode-audio4"><a href="#avcodec-decode-audio3-avcodec-decode-audio4" class="headerlink" title="avcodec_decode_audio3()/avcodec_decode_audio4()"></a>avcodec_decode_audio3()/avcodec_decode_audio4()</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">int avcodec_decode_audio3(AVCodecContext *avctx, int16_t *samples,</div><div class="line"></div><div class="line">                         int *frame_size_ptr,</div><div class="line"></div><div class="line">                         AVPacket *avpkt);</div><div class="line">                         </div><div class="line">int avcodec_decode_audio4(AVCodecContext *avctx, AVFrame *frame,</div><div class="line">int *got_frame_ptr, </div><div class="line">const AVPacket *avpkt);</div><div class="line"></div><div class="line"></div><div class="line">// 解码音频流AVPacket</div><div class="line">// 使用av_read_frame读取媒体流后需要进行判断,如果为音频流则调用该函数解码</div><div class="line">// 返回结果&lt;0时失败,此时程序应该退出检查原因</div><div class="line">// 返回&gt;=0时正常,假设 读取包为:AVPacket vPacket 返回值为 int vLen; 每次解码正常时,对vPacket做</div><div class="line">// 如下处理:</div><div class="line">//   vPacket.size -= vLen;</div><div class="line">//   vPacket.data += vLen;</div><div class="line">// 如果 vPacket.size==0,则继续读下一流包,否则继续调度该方法进行解码,直到vPacket.size==0</div></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/05/07/使用AudioQueue实现一个音频播放器/" itemprop="url">
                   使用AudioQueue实现一个音频播放器
                 </a>
@@ -1560,186 +1751,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/08/21/Python的一些高级特性/" itemprop="url">
-                  Python的一些高级特性
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-08-21T10:26:11+08:00" content="2017-08-21">
-              2017-08-21
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2017/08/21/Python的一些高级特性/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/08/21/Python的一些高级特性/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Python的一些高级特性"><a href="#Python的一些高级特性" class="headerlink" title="Python的一些高级特性"></a>Python的一些高级特性</h3><h4 id="函数相关"><a href="#函数相关" class="headerlink" title="函数相关"></a>函数相关</h4><h5 id="关键字参数"><a href="#关键字参数" class="headerlink" title="关键字参数"></a>关键字参数</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">def person(name, age, **kw):</div><div class="line">    print &apos;name:&apos;, name, &apos;age:&apos;, age, &apos;other:&apos;, kw</div></pre></td></tr></table></figure>
-<p>示例一：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">person(&apos;Michael&apos;, 30)</div><div class="line"></div><div class="line">person(&apos;Bob&apos;, 35, city=&apos;Beijing&apos;)</div><div class="line"></div><div class="line">person(&apos;Adam&apos;, 45, gender=&apos;M&apos;, job=&apos;Engineer&apos;)</div></pre></td></tr></table></figure>
-<p>示例二：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">kw = &#123;&apos;city&apos;: &apos;Beijing&apos;, &apos;job&apos;: &apos;Engineer&apos;&#125;</div><div class="line">person(&apos;Jack&apos;, 24, **kw)</div></pre></td></tr></table></figure>
-<h5 id="高阶函数"><a href="#高阶函数" class="headerlink" title="高阶函数"></a>高阶函数</h5><p><strong>一个函数可以接收另一个函数作为参数，这种函数就称之为高阶函数</strong></p>
-<ul>
-<li>变量可以指向函数</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">f = abs</div><div class="line"></div><div class="line">f(-10)</div></pre></td></tr></table></figure>
-<ul>
-<li>函数名也是变量</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">abs = 10</div><div class="line"></div><div class="line">abs</div><div class="line"></div><div class="line">abs(-10)</div></pre></td></tr></table></figure>
-<ul>
-<li>传入参数</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">f = abs</div><div class="line"></div><div class="line">def add(x,y,f):</div><div class="line">	return f(x) + f(y)</div></pre></td></tr></table></figure>
-<ul>
-<li><p>内建map()</p>
-<p>  <strong>map()函数接收两个参数，一个是函数，一个是序列，map将传入的函数依次作用到序列的每个元素，并把结果作为新的list返回</strong></p>
-</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">def f(x):</div><div class="line">	return x * x</div><div class="line"></div><div class="line">map(f, [1, 2, 3, 4, 5, 6, 7, 8, 9])</div><div class="line"></div><div class="line">map(str, [1, 2, 3, 4, 5, 6, 7, 8, 9])</div><div class="line"></div><div class="line">//&apos;&apos; &quot;&quot; 区别</div></pre></td></tr></table></figure>
-<ul>
-<li><p>内建reduce()</p>
-<p>  <strong>reduce把一个函数作用在一个序列[x1, x2, x3…]上，这个函数必须接收两个参数，reduce把结果继续和序列的下一个元素做累积计算</strong></p>
-</li>
-</ul>
-<p>示例一：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">def add(x,y):</div><div class="line">	return x + y</div><div class="line"></div><div class="line">reduce(add,range(1,10))</div><div class="line"></div><div class="line">sum(range(1,10))</div></pre></td></tr></table></figure>
-<p>示例二：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">def fn(x,y)</div><div class="line">	return x * 10 + y</div><div class="line"></div><div class="line">reduce(fn,[1,3,5,7,9])</div></pre></td></tr></table></figure>
-<ul>
-<li><p>内建filter()</p>
-<p>  <strong>filter()把传入的函数依次作用于每个元素，然后根据返回值是True还是False决定保留还是丢弃该元素</strong></p>
-</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">//奇数</div><div class="line">def is_odd(n):</div><div class="line">    return n % 2 == 1</div><div class="line"></div><div class="line">filter(is_odd,range(1,10))</div></pre></td></tr></table></figure>
-<ul>
-<li>内建sorted()</li>
-</ul>
-<p>示例一：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"># 逆序</div><div class="line">def reversed_cmp(x, y):</div><div class="line">    if x &gt; y:</div><div class="line">        return -1</div><div class="line">    if x &lt; y:</div><div class="line">        return 1</div><div class="line">    return 0</div><div class="line"></div><div class="line">sorted([36, 5, 12, 9, 21], reversed_cmp)</div></pre></td></tr></table></figure>
-<p>示例二：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"># 字符串忽略大小写排序</div><div class="line">def cmp_ignore_case(s1, s2):</div><div class="line">    u1 = s1.upper()</div><div class="line">    u2 = s2.upper()</div><div class="line">    if u1 &lt; u2:</div><div class="line">        return -1</div><div class="line">    if u1 &gt; u2:</div><div class="line">        return 1</div><div class="line">    return 0</div><div class="line"></div><div class="line">sorted([&apos;bob&apos;, &apos;about&apos;, &apos;Zoo&apos;, &apos;Credit&apos;], cmp_ignore_case)</div></pre></td></tr></table></figure>
-<h5 id="返回函数"><a href="#返回函数" class="headerlink" title="返回函数"></a>返回函数</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">def lazy_sum(L=[]):</div><div class="line">    def sum():</div><div class="line">        ax = 0</div><div class="line">        for n in L:</div><div class="line">            ax = ax + n</div><div class="line">        return ax</div><div class="line">    return sum</div><div class="line">    </div><div class="line">f = lazy_sum(range(1,10))</div><div class="line"></div><div class="line">f</div><div class="line"></div><div class="line">f()</div></pre></td></tr></table></figure>
-<h5 id="装饰器"><a href="#装饰器" class="headerlink" title="装饰器"></a>装饰器</h5><p><strong>在代码运行期间动态增加功能的方式，称之为“装饰器”（Decorator）</strong></p>
-<p>示例一：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">def log(func):</div><div class="line">    def wrapper(*args, **kw):</div><div class="line">        print &apos;call %s():&apos; % func.__name__</div><div class="line">        return func(*args, **kw)</div><div class="line">    return wrapper</div><div class="line">    </div><div class="line">@log</div><div class="line">def name():</div><div class="line">    print &apos;lly&apos;</div></pre></td></tr></table></figure>
-<p>把<em>@log</em>放到<em>now()</em>函数的定义处，相当于执行了语句：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">now = log(now)</div></pre></td></tr></table></figure>
-<p>由于<em>log()</em>是一个<strong>decorator</strong>，返回一个函数，所以，原来的<em>now()</em>函数仍然存在，只是现在同名的now变量指向了新的函数，于是调用<em>now()</em>将执行新函数，即在<em>log()</em>函数中返回的<em>wrapper()</em>函数。</p>
-<p>示例二：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">def log(text):</div><div class="line">    def decorator(func):</div><div class="line">        def wrapper(*args, **kw):</div><div class="line">            print &apos;%s %s():&apos; % (text, func.__name__)</div><div class="line">            return func(*args, **kw)</div><div class="line">        return wrapper</div><div class="line">    return decorator</div><div class="line">    </div><div class="line">@log(&apos;netease&apos;)</div><div class="line">def name():</div><div class="line">    print &apos;lly&apos;</div></pre></td></tr></table></figure>
-<p>示例三:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">import functools</div><div class="line"></div><div class="line">def log(func):</div><div class="line">    @functools.wraps(func)</div><div class="line">    def wrapper(*args, **kw):</div><div class="line">        print &apos;call %s():&apos; % func.__name__</div><div class="line">        return func(*args, **kw)</div><div class="line">    return wrapper</div></pre></td></tr></table></figure>
-<h4 id="面向对象"><a href="#面向对象" class="headerlink" title="面向对象"></a>面向对象</h4><h5 id="属性、方法的动态绑定和限制"><a href="#属性、方法的动态绑定和限制" class="headerlink" title="属性、方法的动态绑定和限制"></a>属性、方法的动态绑定和限制</h5><p>一、属性的动态绑定</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">class Student(object):</div><div class="line">	pass</div><div class="line"></div><div class="line">s = Student()</div><div class="line">s.name = &apos;lly&apos;</div><div class="line"></div><div class="line">print s.name</div></pre></td></tr></table></figure>
-<p>二、方法的动态绑定</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">class Student(object):</div><div class="line">	pass</div><div class="line"></div><div class="line">def set_age(self, age): # 定义一个函数作为实例方法</div><div class="line">	self.age = age</div><div class="line"></div><div class="line">from types import MethodType</div><div class="line"></div><div class="line">s.set_age = MethodType(set_age, s, Student)</div><div class="line">s.set_age(25)</div><div class="line"></div><div class="line">s.age</div></pre></td></tr></table></figure>
-<p>三、类的方法绑定</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">class Student(object):</div><div class="line">	pass</div><div class="line"></div><div class="line">def set_score(self, score):</div><div class="line">	self.score = score</div><div class="line"></div><div class="line">from types import MethodType</div><div class="line"></div><div class="line">Student.set_score = MethodType(set_score, None, Student)</div></pre></td></tr></table></figure>
-<p>四、限制动态添加</p>
-<p><strong>Python允许在定义class的时候，定义一个特殊的<strong>slots</strong>变量，来限制该class能添加的属性</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">class Student(object):</div><div class="line">	__slots__ = (&apos;name&apos;, &apos;age&apos;) # 用tuple定义允许绑定的属性名称 插槽</div><div class="line"></div><div class="line">s = Student() # 创建新的实例</div><div class="line">s.name = &apos;Michael&apos; # 绑定属性&apos;name&apos;</div><div class="line">s.age = 25 # 绑定属性&apos;age&apos;</div><div class="line">s.score = 99 # 绑定属性&apos;score&apos;</div></pre></td></tr></table></figure>
-<p><em><strong>slots</strong>定义的属性仅对当前类起作用，对继承的子类是不起作用</em></p>
-<h5 id="安全简洁的属性"><a href="#安全简洁的属性" class="headerlink" title="安全简洁的属性"></a>安全简洁的属性</h5><p><strong>Python内置的@property装饰器就是负责把一个方法变成属性调用</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">class Student(object):</div><div class="line"></div><div class="line">    @property</div><div class="line">    def score(self):</div><div class="line">        return self._score</div><div class="line"></div><div class="line">    @score.setter</div><div class="line">    def score(self, value):</div><div class="line">        if not isinstance(value, int):</div><div class="line">            raise ValueError(&apos;score must be an integer!&apos;)</div><div class="line">        if value &lt; 0 or value &gt; 100:</div><div class="line">            raise ValueError(&apos;score must between 0 ~ 100!&apos;)</div><div class="line">        self._score = value</div><div class="line">        </div><div class="line">s = Student()</div><div class="line">s.score = 60 # OK，实际转化为s.set_score(60)</div><div class="line">s.score # OK，实际转化为s.get_score()</div></pre></td></tr></table></figure>
-<h4 id="多进程和多线程"><a href="#多进程和多线程" class="headerlink" title="多进程和多线程"></a>多进程和多线程</h4><h5 id="多进程"><a href="#多进程" class="headerlink" title="多进程"></a>多进程</h5><p>Unix/Linux操作系统提供了一个fork()系统调用，它非常特殊。普通的函数调用，调用一次，返回一次，但是fork()调用一次，返回两次，因为操作系统自动把当前进程（称为父进程）复制了一份（称为子进程），然后，分别在父进程和子进程内返回。</p>
-<p>子进程永远返回0，而父进程返回子进程的ID。这样做的理由是，一个父进程可以fork出很多子进程，所以，父进程要记下每个子进程的ID，而子进程只需要调用getppid()就可以拿到父进程的ID。</p>
-<p>示例一：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">import os</div><div class="line"></div><div class="line">print &apos;Process (%s) start...&apos; % os.getpid()</div><div class="line">pid = os.fork()</div><div class="line">if pid==0:</div><div class="line">    print &apos;I am child process (%s) and my parent is %s.&apos; % (os.getpid(), os.getppid())</div><div class="line">else:</div><div class="line">    print &apos;I (%s) just created a child process (%s).&apos; % (os.getpid(), pid)</div></pre></td></tr></table></figure>
-<p>示例二：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">def run_proc(name):</div><div class="line">    print &apos;Run child process %s (%s)...&apos; % (name, os.getpid())</div><div class="line"></div><div class="line">if __name__==&apos;__main__&apos;:</div><div class="line">    print &apos;Parent process %s.&apos; % os.getpid()</div><div class="line">    p = multiprocessing.Process(target=run_proc, args=(&apos;test&apos;,))</div><div class="line">    print &apos;Process will start.&apos;</div><div class="line">    p.start()</div><div class="line">    p.join()</div><div class="line">    print &apos;Process end.&apos;</div></pre></td></tr></table></figure>
-<h5 id="多线程"><a href="#多线程" class="headerlink" title="多线程"></a>多线程</h5><p>Python的标准库提供了两个模块：thread和threading，thread是低级模块，threading是高级模块，对thread进行了封装。绝大多数情况下，我们只需要使用threading这个高级模块。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">import time, threading</div><div class="line"></div><div class="line"># 新线程执行的代码:</div><div class="line">def loop():</div><div class="line">    print &apos;thread %s is running...&apos; % threading.current_thread().name</div><div class="line">    n = 0</div><div class="line">    while n &lt; 5:</div><div class="line">        n = n + 1</div><div class="line">        print &apos;thread %s &gt;&gt;&gt; %s&apos; % (threading.current_thread().name, n)</div><div class="line">        time.sleep(1)</div><div class="line">    print &apos;thread %s ended.&apos; % threading.current_thread().name</div><div class="line"></div><div class="line">print &apos;thread %s is running...&apos; % threading.current_thread().name</div><div class="line">t = threading.Thread(target=loop, name=&apos;LoopThread&apos;)</div><div class="line">t.start()</div><div class="line">t.join()</div><div class="line">print &apos;thread %s ended.&apos; % threading.current_thread().name</div></pre></td></tr></table></figure>
-<p>线程加锁</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">balance = 0</div><div class="line">lock = threading.Lock()</div><div class="line"></div><div class="line">def run_thread(n):</div><div class="line">    for i in range(100000):</div><div class="line">        # 先要获取锁:</div><div class="line">        lock.acquire()</div><div class="line">        try:</div><div class="line">            # 放心地改吧:</div><div class="line">            change_it(n)</div><div class="line">        finally:</div><div class="line">            # 改完了一定要释放锁:</div><div class="line">            lock.release()</div></pre></td></tr></table></figure>
-<p>因为Python的线程虽然是真正的线程，但解释器执行代码时，有一个GIL锁：Global Interpreter Lock，任何Python线程执行前，必须先获得GIL锁，然后，每执行100条字节码，解释器就自动释放GIL锁，让别的线程有机会执行。这个GIL全局锁实际上把所有线程的执行代码都给上了锁，所以，多线程在Python中只能交替执行，即使100个线程跑在100核CPU上，也只能用到1个核。</p>
-<h4 id="简单爬虫"><a href="#简单爬虫" class="headerlink" title="简单爬虫"></a>简单爬虫</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">import urllib</div><div class="line"></div><div class="line">uf = urllib.urlopen(&apos;https://baidu.com&apos;)</div><div class="line"></div><div class="line">uf.read()</div><div class="line"></div><div class="line">urllib.urlretrieve(&apos;urlpath&apos;,&apos;filename&apos;)</div></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1785,7 +1796,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">53</span>
+              <span class="site-state-item-count">54</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
