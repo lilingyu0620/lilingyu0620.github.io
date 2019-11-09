@@ -1,0 +1,631 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="重新组织数据Self Encapsulate Field(自封装字段)你直接访问一个字段，但与字段之间的耦合关系逐渐变得笨拙。 动机 间接访问的好处是子类可以通过覆写一个函数而改变获取数据的途径，支持懒加载。 直接访问的好处是代码更容易阅读。  Replace Data Value with Object(以对象取代数据值)你有一个数据项，需要与其他数据和行为一起使用才有意义。 动机当几个相关联的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《重构-改善既有代码的设计》系列读书笔记（四、重新组织数据）">
+<meta property="og:url" content="http://yoursite.com/2019/11/09/《重构-改善既有代码的设计》系列读书笔记（四、重新组织数据）/index.html">
+<meta property="og:site_name" content="lly&#39;s Blog">
+<meta property="og:description" content="重新组织数据Self Encapsulate Field(自封装字段)你直接访问一个字段，但与字段之间的耦合关系逐渐变得笨拙。 动机 间接访问的好处是子类可以通过覆写一个函数而改变获取数据的途径，支持懒加载。 直接访问的好处是代码更容易阅读。  Replace Data Value with Object(以对象取代数据值)你有一个数据项，需要与其他数据和行为一起使用才有意义。 动机当几个相关联的">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-11-09T06:27:22.664Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="《重构-改善既有代码的设计》系列读书笔记（四、重新组织数据）">
+<meta name="twitter:description" content="重新组织数据Self Encapsulate Field(自封装字段)你直接访问一个字段，但与字段之间的耦合关系逐渐变得笨拙。 动机 间接访问的好处是子类可以通过覆写一个函数而改变获取数据的途径，支持懒加载。 直接访问的好处是代码更容易阅读。  Replace Data Value with Object(以对象取代数据值)你有一个数据项，需要与其他数据和行为一起使用才有意义。 动机当几个相关联的">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/11/09/《重构-改善既有代码的设计》系列读书笔记（四、重新组织数据）/"/>
+
+  <title> 《重构-改善既有代码的设计》系列读书笔记（四、重新组织数据） | lly's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">lly's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">用心记录点滴</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                《重构-改善既有代码的设计》系列读书笔记（四、重新组织数据）
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-11-09T14:26:23+08:00" content="2019-11-09">
+              2019-11-09
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2019/11/09/《重构-改善既有代码的设计》系列读书笔记（四、重新组织数据）/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2019/11/09/《重构-改善既有代码的设计》系列读书笔记（四、重新组织数据）/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="重新组织数据"><a href="#重新组织数据" class="headerlink" title="重新组织数据"></a>重新组织数据</h3><h4 id="Self-Encapsulate-Field-自封装字段"><a href="#Self-Encapsulate-Field-自封装字段" class="headerlink" title="Self Encapsulate Field(自封装字段)"></a>Self Encapsulate Field(自封装字段)</h4><p>你直接访问一个字段，但与字段之间的耦合关系逐渐变得笨拙。</p>
+<h5 id="动机"><a href="#动机" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>间接访问的好处是子类可以通过覆写一个函数而改变获取数据的途径，支持懒加载。</li>
+<li>直接访问的好处是代码更容易阅读。</li>
+</ul>
+<h4 id="Replace-Data-Value-with-Object-以对象取代数据值"><a href="#Replace-Data-Value-with-Object-以对象取代数据值" class="headerlink" title="Replace Data Value with Object(以对象取代数据值)"></a>Replace Data Value with Object(以对象取代数据值)</h4><p>你有一个数据项，需要与其他数据和行为一起使用才有意义。</p>
+<h5 id="动机-1"><a href="#动机-1" class="headerlink" title="动机"></a>动机</h5><p>当几个相关联的数据同时出现而且经常使用时，将它们组合为一个新的数据类吧。</p>
+<h5 id="做法"><a href="#做法" class="headerlink" title="做法"></a>做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line">//before</div><div class="line">class Order...</div><div class="line">	public Order(String customer) &#123;</div><div class="line">		_customer = customer;</div><div class="line">	&#125;</div><div class="line">	public String getCustomer() &#123;</div><div class="line">		return _customer;</div><div class="line">	&#125;</div><div class="line">	public void setCustomer(String arg) &#123;</div><div class="line">		_customer = arg;</div><div class="line">	&#125;</div><div class="line">	private String _customer;</div><div class="line">	</div><div class="line">//after</div><div class="line">class Customer &#123;</div><div class="line">	public Customer(String name) &#123;</div><div class="line">		_name = name;</div><div class="line">	&#125;</div><div class="line">	public String getName() &#123;</div><div class="line">		return _name;</div><div class="line">	&#125;</div><div class="line">	private final String _name;</div><div class="line">&#125;</div><div class="line"></div><div class="line">class Order...</div><div class="line">	public Order(String customerName) &#123;</div><div class="line">		_customer = new Customer(customerName);</div><div class="line">	&#125;</div><div class="line">	public String getCustomer() &#123;</div><div class="line">		return _customer.getName();</div><div class="line">	&#125;</div><div class="line">	public void setCustomer(String customerName) &#123;</div><div class="line">		_customer = new Customer(customerName);</div><div class="line">	&#125;</div><div class="line">	private Customer _customer;</div></pre></td></tr></table></figure>
+<h4 id="Change-Value-to-Reference-将值对象改为引用对象"><a href="#Change-Value-to-Reference-将值对象改为引用对象" class="headerlink" title="Change Value to Reference(将值对象改为引用对象)"></a>Change Value to Reference(将值对象改为引用对象)</h4><ul>
+<li>值对象不能被修改，引用对象可以被修改</li>
+<li>值对象每次获取到的值应该相等，而引用对象每次获取到的值不一定相等</li>
+<li>使用单例或者工厂创建引用对象</li>
+</ul>
+<h4 id="Change-Reference-to-Value-将引用对象改为值对象"><a href="#Change-Reference-to-Value-将引用对象改为值对象" class="headerlink" title="Change Reference to Value(将引用对象改为值对象)"></a>Change Reference to Value(将引用对象改为值对象)</h4><ul>
+<li>跟上面的过程刚好相反</li>
+</ul>
+<h4 id="Replace-Array-with-Object-以对象取代数组"><a href="#Replace-Array-with-Object-以对象取代数组" class="headerlink" title="Replace Array with Object(以对象取代数组)"></a>Replace Array with Object(以对象取代数组)</h4><h5 id="动机-2"><a href="#动机-2" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>一个数组中存放了不同类型的数据，这种骚操作有点要不得啊。。。</li>
+</ul>
+<h5 id="做法-1"><a href="#做法-1" class="headerlink" title="做法"></a>做法</h5><ul>
+<li>这个做法很有步步重构的代表性，所以写详细点。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div></pre></td><td class="code"><pre><div class="line">//before</div><div class="line"></div><div class="line">String[] row = new String[3];</div><div class="line">row[0] = &quot;Livepool&quot;;</div><div class="line">row[1] = &quot;15&quot;;</div><div class="line"></div><div class="line">String name = row[0];</div><div class="line">int wins = Integer.parseInt(row[1]);</div><div class="line"></div><div class="line">// step 1 新建类</div><div class="line"></div><div class="line">class Performance &#123;</div><div class="line">	public String[] _data = new String[3];</div><div class="line">&#125;</div><div class="line"></div><div class="line">Performance row = new Performance();</div><div class="line">row._date[0] = &quot;Livepool&quot;;</div><div class="line">row._date[1] = &quot;15&quot;;</div><div class="line"></div><div class="line">String name = row._date[0];</div><div class="line">int wins = Integer.parseInt(row._date[1]);</div><div class="line"></div><div class="line">// step 2 封装替换存取方法</div><div class="line"></div><div class="line">class Performance &#123;</div><div class="line">	public String[] _data = new String[3];</div><div class="line">	</div><div class="line">	public String getName() &#123;</div><div class="line">		return _date[0];</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	public void setName(String arg) &#123;</div><div class="line">		_date[0] = arg;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	public int getWins() &#123;</div><div class="line">		return Integer.parseInt(_data[1]);</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	public void setWins(String arg) &#123;</div><div class="line">		_data[1] = arg</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">Performance row = new Performance();</div><div class="line">row.setName = &quot;Livepool&quot;;</div><div class="line">row.setWins = &quot;15&quot;;</div><div class="line"></div><div class="line">String name = row.getName();</div><div class="line">int wins = row.getWins();</div><div class="line"></div><div class="line">// step 3 添加属性 删除临时数据</div><div class="line"></div><div class="line">class Performance &#123;</div><div class="line">	private String _name;</div><div class="line">	private String _wins;</div><div class="line">	</div><div class="line">	public String getName() &#123;</div><div class="line">		return _name;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	public void setName(String arg) &#123;</div><div class="line">		_name = arg;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	public int getWins() &#123;</div><div class="line">		return Integer.parseInt(_wins);</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	public void setWins(String arg) &#123;</div><div class="line">		_wins = arg</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">Performance row = new Performance();</div><div class="line">row.setName = &quot;Livepool&quot;;</div><div class="line">row.setWins = &quot;15&quot;;</div><div class="line">	</div><div class="line">String name = row.getName();</div><div class="line">int wins = row.getWins();</div></pre></td></tr></table></figure>
+<h4 id="Duplicate-Observed-Data-复制被监视数据"><a href="#Duplicate-Observed-Data-复制被监视数据" class="headerlink" title="Duplicate Observed Data(复制被监视数据)"></a>Duplicate Observed Data(复制被监视数据)</h4><ul>
+<li>mvc模式的应用，数据处理和UI层分离</li>
+<li>使用观察者或者通知的方式进行数据的同步</li>
+</ul>
+<h4 id="Change-Unidirectional-Association-to-Bidirectional-将单向关联改为双向关联"><a href="#Change-Unidirectional-Association-to-Bidirectional-将单向关联改为双向关联" class="headerlink" title="Change Unidirectional Association to Bidirectional(将单向关联改为双向关联)"></a>Change Unidirectional Association to Bidirectional(将单向关联改为双向关联)</h4><p>两个类都需要使用对方的特性，但其间只有一条单向链接。</p>
+<h5 id="动机-3"><a href="#动机-3" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>当两个类需要互相引用时，可以使用反向指针来实现。</li>
+<li>如果使用不当，反向指针很容易造成混乱，但只要你习惯了这种手法，其实并不太复杂。</li>
+<li>双向依赖容易产生僵尸对象，造成内存泄露。</li>
+</ul>
+<h5 id="做法-2"><a href="#做法-2" class="headerlink" title="做法"></a>做法</h5><ul>
+<li>不建议这么做。。。</li>
+</ul>
+<h4 id="Change-Bidirectional-Association-to-Unidirectional-将双向关联改为单向关联"><a href="#Change-Bidirectional-Association-to-Unidirectional-将双向关联改为单向关联" class="headerlink" title="Change Bidirectional Association to Unidirectional(将双向关联改为单向关联)"></a>Change Bidirectional Association to Unidirectional(将双向关联改为单向关联)</h4><h5 id="动机-4"><a href="#动机-4" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>双向依赖导致其中一个类的修改都可能影响另外一个类，形成了高度耦合的代码，并导致重新编译的问题。</li>
+<li>将双向依赖改为单向依赖的理由比较充分，打破相互依赖可以避免可能的内存泄露问题。</li>
+</ul>
+<h5 id="做法-3"><a href="#做法-3" class="headerlink" title="做法"></a>做法</h5><ul>
+<li>如果另外一条依赖是完全多余的，则直接去掉。</li>
+<li>如果不能去掉，可以采用协议的方式去打破其中一条依赖。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div></pre></td><td class="code"><pre><div class="line">//before</div><div class="line">ClassA &#123;</div><div class="line">	ClassB b = new ClassB();</div><div class="line">	</div><div class="line">	public void funcA() &#123;</div><div class="line">		b.funcB();</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">ClassB &#123;</div><div class="line">	ClassA a = new ClassA();</div><div class="line">	</div><div class="line">	public void funcB() &#123;</div><div class="line">		a.funcA();</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">//after</div><div class="line">ClassA_Delegate &#123;</div><div class="line">	public void delegate_func();</div><div class="line">&#125;</div><div class="line"></div><div class="line">ClassA &#123;</div><div class="line"></div><div class="line">	ClassA_Delegate delegate;</div><div class="line">	</div><div class="line">	public void funcA() &#123;</div><div class="line">		delegate.delegate_func()</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">ClassB&lt;ClassA_Delegate&gt; &#123;</div><div class="line"></div><div class="line">	ClassA a = new ClassA();</div><div class="line">	a.delegate = self;</div><div class="line"></div><div class="line">	public void funcB() &#123;</div><div class="line">		a.funcA();</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	public void delegate_func() &#123;</div><div class="line">		self.funcB()</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">// 这个例子比较特殊，两个函数会相互调用产生爆栈，加代理并不能消除互相调用的逻辑，只能消除相互引用。</div></pre></td></tr></table></figure>
+<h4 id="Replace-Magic-Number-with-Symbolic-Constant（以字面常量取代魔法数）"><a href="#Replace-Magic-Number-with-Symbolic-Constant（以字面常量取代魔法数）" class="headerlink" title="Replace Magic Number with Symbolic Constant（以字面常量取代魔法数）"></a>Replace Magic Number with Symbolic Constant（以字面常量取代魔法数）</h4><ul>
+<li>道理大家都懂，真正写起来就控制不住自己的手啊。。。</li>
+</ul>
+<h4 id="Encapsulate-Field-封装字段"><a href="#Encapsulate-Field-封装字段" class="headerlink" title="Encapsulate Field(封装字段)"></a>Encapsulate Field(封装字段)</h4><p>你的类存在一个public字段</p>
+<h5 id="动机-5"><a href="#动机-5" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>限制外界直接修改类的字段 </li>
+</ul>
+<h5 id="做法-4"><a href="#做法-4" class="headerlink" title="做法"></a>做法</h5><ul>
+<li>将字段改为private，然后添加存/取方法。</li>
+</ul>
+<h4 id="Encapsulate-Collection-封装集合"><a href="#Encapsulate-Collection-封装集合" class="headerlink" title="Encapsulate Collection(封装集合)"></a>Encapsulate Collection(封装集合)</h4><h5 id="动机-amp-做法"><a href="#动机-amp-做法" class="headerlink" title="动机 &amp; 做法"></a>动机 &amp; 做法</h5><ul>
+<li>不要直接返回集合本身，这样集合很容易被修改。</li>
+<li>应该只返回集合的一个只读副本，并提供集合元素的添加和删除方法。</li>
+<li>如果是多线程访问，这种方式还能扩展为线程安全的访问方式。</li>
+</ul>
+<h4 id="Replace-Type-Code-with-Class-以类取代类型码"><a href="#Replace-Type-Code-with-Class-以类取代类型码" class="headerlink" title="Replace Type Code with Class(以类取代类型码)"></a>Replace Type Code with Class(以类取代类型码)</h4><h4 id="Replace-Type-Code-with-Subclasses-以子类取代类型码"><a href="#Replace-Type-Code-with-Subclasses-以子类取代类型码" class="headerlink" title="Replace Type Code with Subclasses(以子类取代类型码)"></a>Replace Type Code with Subclasses(以子类取代类型码)</h4><h4 id="Replace-Type-Code-with-State-Strategy-以策略模式取代类型码"><a href="#Replace-Type-Code-with-State-Strategy-以策略模式取代类型码" class="headerlink" title="Replace Type Code with State/Strategy(以策略模式取代类型码)"></a>Replace Type Code with State/Strategy(以策略模式取代类型码)</h4><h4 id="Replace-Subclass-with-Fields-以字段取代子类"><a href="#Replace-Subclass-with-Fields-以字段取代子类" class="headerlink" title="Replace Subclass with Fields(以字段取代子类)"></a>Replace Subclass with Fields(以字段取代子类)</h4><h5 id="动机-6"><a href="#动机-6" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>如果子类中只有常数函数，就没有足够的存在价值。</li>
+</ul>
+<h5 id="做法-5"><a href="#做法-5" class="headerlink" title="做法"></a>做法</h5><ul>
+<li>你可以在父类中定义一个相应的字段，在类的构造时进行赋值，然后直接返回该字段的值即可。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div></pre></td><td class="code"><pre><div class="line">//before</div><div class="line">abstract class Person &#123;</div><div class="line">	abstract boolean isMale();</div><div class="line">	abstract char getCode();</div><div class="line">&#125;</div><div class="line"></div><div class="line">class Male extends Person &#123;</div><div class="line">	boolean isMale() &#123;</div><div class="line">		return true;</div><div class="line">	&#125;</div><div class="line">	char getCode() &#123;</div><div class="line">		return &apos;M&apos;;</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">class Female extends Person &#123;</div><div class="line">	boolean isMale() &#123;</div><div class="line">		return false;</div><div class="line">	&#125;</div><div class="line">	char getCode() &#123;</div><div class="line">		return &apos;F&apos;;</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">//after</div><div class="line">abstract class Person &#123;</div><div class="line">	private final boolean _isMale;</div><div class="line">	private final char _code;</div><div class="line">	</div><div class="line">	protected Person (boolean isMale, char code) &#123;</div><div class="line">		_isMale = isMale;</div><div class="line">		_code = code;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	static Person createMale() &#123;</div><div class="line">		return new Person(true,&apos;M&apos;);</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	static Person createFemale() &#123;</div><div class="line">		return new Person(false,&apos;F&apos;);</div><div class="line">	&#125;	</div><div class="line">	</div><div class="line">	boolean isMale() &#123;</div><div class="line">		return _isMale;	</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	char getCode() &#123;</div><div class="line">		return _code;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/11/06/《重构-改善既有代码的设计》系列读书笔记（三、类的重构）/" rel="next" title="《重构-改善既有代码的设计》系列读书笔记（三、类的重构）">
+                <i class="fa fa-chevron-left"></i> 《重构-改善既有代码的设计》系列读书笔记（三、类的重构）
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2019/11/09/《重构-改善既有代码的设计》系列读书笔记（四、重新组织数据）/"
+           data-title="《重构-改善既有代码的设计》系列读书笔记（四、重新组织数据）" data-url="http://yoursite.com/2019/11/09/《重构-改善既有代码的设计》系列读书笔记（四、重新组织数据）/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/head.png"
+               alt="lly" />
+          <p class="site-author-name" itemprop="name">lly</p>
+          <p class="site-description motion-element" itemprop="description">耿直的一Boy</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">55</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#重新组织数据"><span class="nav-number">1.</span> <span class="nav-text">重新组织数据</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Self-Encapsulate-Field-自封装字段"><span class="nav-number">1.1.</span> <span class="nav-text">Self Encapsulate Field(自封装字段)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机"><span class="nav-number">1.1.1.</span> <span class="nav-text">动机</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Replace-Data-Value-with-Object-以对象取代数据值"><span class="nav-number">1.2.</span> <span class="nav-text">Replace Data Value with Object(以对象取代数据值)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-1"><span class="nav-number">1.2.1.</span> <span class="nav-text">动机</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#做法"><span class="nav-number">1.2.2.</span> <span class="nav-text">做法</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Change-Value-to-Reference-将值对象改为引用对象"><span class="nav-number">1.3.</span> <span class="nav-text">Change Value to Reference(将值对象改为引用对象)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Change-Reference-to-Value-将引用对象改为值对象"><span class="nav-number">1.4.</span> <span class="nav-text">Change Reference to Value(将引用对象改为值对象)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Replace-Array-with-Object-以对象取代数组"><span class="nav-number">1.5.</span> <span class="nav-text">Replace Array with Object(以对象取代数组)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-2"><span class="nav-number">1.5.1.</span> <span class="nav-text">动机</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#做法-1"><span class="nav-number">1.5.2.</span> <span class="nav-text">做法</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Duplicate-Observed-Data-复制被监视数据"><span class="nav-number">1.6.</span> <span class="nav-text">Duplicate Observed Data(复制被监视数据)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Change-Unidirectional-Association-to-Bidirectional-将单向关联改为双向关联"><span class="nav-number">1.7.</span> <span class="nav-text">Change Unidirectional Association to Bidirectional(将单向关联改为双向关联)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-3"><span class="nav-number">1.7.1.</span> <span class="nav-text">动机</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#做法-2"><span class="nav-number">1.7.2.</span> <span class="nav-text">做法</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Change-Bidirectional-Association-to-Unidirectional-将双向关联改为单向关联"><span class="nav-number">1.8.</span> <span class="nav-text">Change Bidirectional Association to Unidirectional(将双向关联改为单向关联)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-4"><span class="nav-number">1.8.1.</span> <span class="nav-text">动机</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#做法-3"><span class="nav-number">1.8.2.</span> <span class="nav-text">做法</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Replace-Magic-Number-with-Symbolic-Constant（以字面常量取代魔法数）"><span class="nav-number">1.9.</span> <span class="nav-text">Replace Magic Number with Symbolic Constant（以字面常量取代魔法数）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Encapsulate-Field-封装字段"><span class="nav-number">1.10.</span> <span class="nav-text">Encapsulate Field(封装字段)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-5"><span class="nav-number">1.10.1.</span> <span class="nav-text">动机</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#做法-4"><span class="nav-number">1.10.2.</span> <span class="nav-text">做法</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Encapsulate-Collection-封装集合"><span class="nav-number">1.11.</span> <span class="nav-text">Encapsulate Collection(封装集合)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-amp-做法"><span class="nav-number">1.11.1.</span> <span class="nav-text">动机 &amp; 做法</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Replace-Type-Code-with-Class-以类取代类型码"><span class="nav-number">1.12.</span> <span class="nav-text">Replace Type Code with Class(以类取代类型码)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Replace-Type-Code-with-Subclasses-以子类取代类型码"><span class="nav-number">1.13.</span> <span class="nav-text">Replace Type Code with Subclasses(以子类取代类型码)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Replace-Type-Code-with-State-Strategy-以策略模式取代类型码"><span class="nav-number">1.14.</span> <span class="nav-text">Replace Type Code with State/Strategy(以策略模式取代类型码)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Replace-Subclass-with-Fields-以字段取代子类"><span class="nav-number">1.15.</span> <span class="nav-text">Replace Subclass with Fields(以字段取代子类)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-6"><span class="nav-number">1.15.1.</span> <span class="nav-text">动机</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#做法-5"><span class="nav-number">1.15.2.</span> <span class="nav-text">做法</span></a></li></ol></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lly</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"llyblog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
