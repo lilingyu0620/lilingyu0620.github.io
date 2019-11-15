@@ -1,0 +1,609 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="简化条件表达式Decompose Conditional(分解条件表达式)将复杂的条件判断分解为一组简单的函数 动机 复杂的条件逻辑是最常导致代码复杂度上升的地点之一。  做法123456789101112131415161718192021222324252627// beforeif (date.before(SUMMER_START) || date.after(SUMMER_END))&amp;#">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《重构-改善既有代码的设计》系列读书笔记（五、重构条件表达式）">
+<meta property="og:url" content="http://yoursite.com/2019/11/15/《重构-改善既有代码的设计》系列读书笔记（五、重构条件表达式）/index.html">
+<meta property="og:site_name" content="lly&#39;s Blog">
+<meta property="og:description" content="简化条件表达式Decompose Conditional(分解条件表达式)将复杂的条件判断分解为一组简单的函数 动机 复杂的条件逻辑是最常导致代码复杂度上升的地点之一。  做法123456789101112131415161718192021222324252627// beforeif (date.before(SUMMER_START) || date.after(SUMMER_END))&amp;#">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-11-15T08:45:40.212Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="《重构-改善既有代码的设计》系列读书笔记（五、重构条件表达式）">
+<meta name="twitter:description" content="简化条件表达式Decompose Conditional(分解条件表达式)将复杂的条件判断分解为一组简单的函数 动机 复杂的条件逻辑是最常导致代码复杂度上升的地点之一。  做法123456789101112131415161718192021222324252627// beforeif (date.before(SUMMER_START) || date.after(SUMMER_END))&amp;#">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/11/15/《重构-改善既有代码的设计》系列读书笔记（五、重构条件表达式）/"/>
+
+  <title> 《重构-改善既有代码的设计》系列读书笔记（五、重构条件表达式） | lly's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">lly's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">用心记录点滴</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                《重构-改善既有代码的设计》系列读书笔记（五、重构条件表达式）
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-11-15T16:44:46+08:00" content="2019-11-15">
+              2019-11-15
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2019/11/15/《重构-改善既有代码的设计》系列读书笔记（五、重构条件表达式）/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2019/11/15/《重构-改善既有代码的设计》系列读书笔记（五、重构条件表达式）/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="简化条件表达式"><a href="#简化条件表达式" class="headerlink" title="简化条件表达式"></a>简化条件表达式</h3><h4 id="Decompose-Conditional-分解条件表达式"><a href="#Decompose-Conditional-分解条件表达式" class="headerlink" title="Decompose Conditional(分解条件表达式)"></a>Decompose Conditional(分解条件表达式)</h4><p>将复杂的条件判断分解为一组简单的函数</p>
+<h5 id="动机"><a href="#动机" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>复杂的条件逻辑是最常导致代码复杂度上升的地点之一。</li>
+</ul>
+<h5 id="做法"><a href="#做法" class="headerlink" title="做法"></a>做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line">// before</div><div class="line">if (date.before(SUMMER_START) || date.after(SUMMER_END))&#123;</div><div class="line">	charge = quantity * _winterRate + _winterServiceCharge;</div><div class="line">&#125;</div><div class="line">else &#123;</div><div class="line">	charge = quantity * _summerRate;</div><div class="line">&#125;</div><div class="line"></div><div class="line">// after</div><div class="line">if (notSummer(date)) &#123;</div><div class="line">	charge = winterCharge(quantity);</div><div class="line">&#125;</div><div class="line">else &#123;</div><div class="line">	charge = summerCharge(quantity);</div><div class="line">&#125;</div><div class="line"></div><div class="line">private boolean notSummer(Date date) &#123;</div><div class="line">	return date.before(SUMMER_START) || date.after(SUMMER_END);</div><div class="line">&#125;</div><div class="line"></div><div class="line">private double summerCharge(int quantity) &#123;</div><div class="line">	return quantity * _summerRate;</div><div class="line">&#125;</div><div class="line"></div><div class="line">private double winterCharge(int quantity) &#123;</div><div class="line">	return quantity * _winterRate + _winterServiceCharge;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="Consolidate-Conditional-Expression-合并条件表达式"><a href="#Consolidate-Conditional-Expression-合并条件表达式" class="headerlink" title="Consolidate Conditional Expression(合并条件表达式)"></a>Consolidate Conditional Expression(合并条件表达式)</h4><p>一系列条件测试都得到相同的结果</p>
+<h5 id="动机-1"><a href="#动机-1" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>如果有一串条件各不相同的判断，最终结果却一致，则应该将这些条件合并为一个表达式。</li>
+<li>将检查条件提炼为一个独立函数对于厘清代码意义非常有用，因为它将“做什么”的语句换成“为什么这么做”。</li>
+</ul>
+<h5 id="做法-1"><a href="#做法-1" class="headerlink" title="做法"></a>做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">// before</div><div class="line">double disabilityAmount () &#123;</div><div class="line">	if (_seniority &lt; 2) return 0;</div><div class="line">	if (_monthsDisabled &gt; 12) return 0;</div><div class="line">	if (_isPartTime) return 0;</div><div class="line">	...</div><div class="line">&#125;</div><div class="line"></div><div class="line">//after</div><div class="line"></div><div class="line">double disabilityAmount () &#123;</div><div class="line">	if (isNotEligibleForDisability()) return 0;</div><div class="line">	...</div><div class="line">&#125;</div><div class="line"></div><div class="line">boolean isNotEligibleForDisability() &#123;</div><div class="line">	return ((_seniority &lt; 2) || (_monthsDisabled &gt; 12) || (_isPartTime));</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="Consolidate-Duplicate-Conditional-Fragments-合并重复的条件片段"><a href="#Consolidate-Duplicate-Conditional-Fragments-合并重复的条件片段" class="headerlink" title="Consolidate Duplicate Conditional Fragments(合并重复的条件片段)"></a>Consolidate Duplicate Conditional Fragments(合并重复的条件片段)</h4><p>在条件表达式的每个分支上有着相同的一段代码</p>
+<h5 id="动机-2"><a href="#动机-2" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>消除重复代码</li>
+</ul>
+<h5 id="做法-2"><a href="#做法-2" class="headerlink" title="做法"></a>做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">// before</div><div class="line">if (isSpecialDeal()) &#123;</div><div class="line">	total = price * 0.95;</div><div class="line">	send();</div><div class="line">&#125;</div><div class="line">else &#123;</div><div class="line">	total = price * 0.98;</div><div class="line">	send();</div><div class="line">&#125;</div><div class="line"></div><div class="line">// after</div><div class="line">if (isSpecialDeal()) &#123;</div><div class="line">	total = price * 0.95;</div><div class="line">&#125;</div><div class="line">else &#123;</div><div class="line">	total = price * 0.98;</div><div class="line">&#125;</div><div class="line">send();</div></pre></td></tr></table></figure>
+<h4 id="Remove-Control-Flag-移除控制标记"><a href="#Remove-Control-Flag-移除控制标记" class="headerlink" title="Remove Control Flag (移除控制标记)"></a>Remove Control Flag (移除控制标记)</h4><p>在一系列布尔表达式中，某个变量带有控制标记的作用</p>
+<h5 id="动机-3"><a href="#动机-3" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>控制标记的频繁使用大大降低了表达式的可读性</li>
+<li>单一入口原则没有问题，但是单一出口原则可能需要引用讨厌的控制标记</li>
+<li>使用break,continue和return替换控制标记，会使条件语句清晰很多</li>
+</ul>
+<h5 id="做法-3"><a href="#做法-3" class="headerlink" title="做法"></a>做法</h5><h4 id="Replace-Nested-Conditional-with-Guard-Clauses-以卫语句取代嵌套条件表达式"><a href="#Replace-Nested-Conditional-with-Guard-Clauses-以卫语句取代嵌套条件表达式" class="headerlink" title="Replace Nested Conditional with Guard Clauses(以卫语句取代嵌套条件表达式)"></a>Replace Nested Conditional with Guard Clauses(以卫语句取代嵌套条件表达式)</h4><p>函数中的条件逻辑使人难以看清正常的执行路径</p>
+<h5 id="动机-4"><a href="#动机-4" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>如果某个条件极其罕见，就应该单独检查该条件，并在该条件为真时立即从函数中返回。这种单独检查常常被称为”卫语句“</li>
+<li>卫语句的精髓就是：给某一条分支以特别的重视。</li>
+</ul>
+<h5 id="做法-4"><a href="#做法-4" class="headerlink" title="做法"></a>做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">// before</div><div class="line">double getPayAmount() &#123;</div><div class="line">	double result;</div><div class="line">	if (_isDead) result = deadAmount();</div><div class="line">	else &#123;</div><div class="line">		if(_isSeparated) result = separatedAmount();</div><div class="line">		else &#123;</div><div class="line">			if(_isRetried) result = retriedAmount();</div><div class="line">			else result = normalPayAmount();</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	return result;</div><div class="line">&#125;</div><div class="line"></div><div class="line">// after</div><div class="line">double getPayAmount() &#123;</div><div class="line">	if (_isDead) return deadAmount();</div><div class="line">	if (_isSeparated) return separatedAmount();</div><div class="line">	if (_isRetried) return retriedAmount();</div><div class="line">	return normalPayAmount();</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="以多态取代条件表达式"><a href="#以多态取代条件表达式" class="headerlink" title="以多态取代条件表达式"></a>以多态取代条件表达式</h4><p>你手上有个条件表达式，它根据对象类型的不同而选择不同的行为</p>
+<h5 id="动机-5"><a href="#动机-5" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>在面向对象术语中，听上去最高贵的词非”多态“莫属了。</li>
+<li>多态最根本的好处是，如果你需要根据对象的不同而采取不同的行为，多态使你不必编写明显的条件表达式。</li>
+</ul>
+<h5 id="做法-5"><a href="#做法-5" class="headerlink" title="做法"></a>做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div></pre></td><td class="code"><pre><div class="line">// before </div><div class="line">class Employee...</div><div class="line">	int payAmount() &#123;</div><div class="line">		switch (getType()) &#123;</div><div class="line">			case EmployeeType.ENGINEER:</div><div class="line">				return _monthlySalary;</div><div class="line">			case EmployeeType.SALESMAN:</div><div class="line">				return _monthlySalary + _commission;</div><div class="line">			case EmployeeType.MANAGER:</div><div class="line">				return _monthlySalary + _bonus;</div><div class="line">			default:</div><div class="line">				throw new RuntimeExcepetion(&quot;Incorrect Employee&quot;);</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">		</div><div class="line">	int getType() &#123;</div><div class="line">		return _type.getTypeCode();</div><div class="line">	&#125;</div><div class="line">	private EmployeeType _type;</div><div class="line">	</div><div class="line">	abstract class EmployeeType...</div><div class="line">		abstract int getTypeCode();</div><div class="line">		</div><div class="line">	class Engineer extends EmployeeType...</div><div class="line">		int getTypeCode() &#123;</div><div class="line">			return Employee.ENGINEER;</div><div class="line">		&#125;</div><div class="line"></div><div class="line">// after</div><div class="line">class Employee...</div><div class="line">	int payAmount() &#123;</div><div class="line">		return _type.payAmount(this);</div><div class="line">	&#125;</div><div class="line"></div><div class="line">class EmployeeType...</div><div class="line"> 	abstract int payAmount(Employee emp);</div><div class="line"> 	</div><div class="line">class Engineer extends EmployeeType...</div><div class="line">	int payAmount(Employee emp) &#123;</div><div class="line">		return emp.getMonthSalary();</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">class Salesman extends EmployeeType...</div><div class="line">	int payAmount(Employee emp) &#123;</div><div class="line">		return emp.getMonthSalary() + emp.getCommission();</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">class Manager extends EmployeeType...</div><div class="line">	int payAmount(Employee emp) &#123;</div><div class="line">		return emp.getMonthSalary() + emp.bouns();</div><div class="line">	&#125;</div></pre></td></tr></table></figure>
+<h4 id="Introduce-Null-Object-引入Null对象"><a href="#Introduce-Null-Object-引入Null对象" class="headerlink" title="Introduce Null Object(引入Null对象)"></a>Introduce Null Object(引入Null对象)</h4><p>你需要再三检查某对象是否为null</p>
+<h5 id="动机-6"><a href="#动机-6" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>大量的判空逻辑会引入大量的重复代码，空对象的运用，可以摆脱大量过程化的重复代码</li>
+<li>空对象不会破坏原有系统，空对象一定是常量，可以使用单例创建空对象。</li>
+</ul>
+<h5 id="做法-6"><a href="#做法-6" class="headerlink" title="做法"></a>做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div></pre></td><td class="code"><pre><div class="line">// before</div><div class="line">class Site...</div><div class="line">	Customer getCustomer() &#123;</div><div class="line">		return _customer;	</div><div class="line">	&#125;</div><div class="line">	Customer _customer;</div><div class="line">	</div><div class="line">class Customer...</div><div class="line">	public String getName() &#123;...&#125;</div><div class="line">	public BillingPlan getPlan() &#123;...&#125;</div><div class="line">	public PaymentHistory getHistory() &#123;...&#125;</div><div class="line">	</div><div class="line">class PaymentHistory...</div><div class="line">	int getWeeksDelinquentInlastYear()</div><div class="line">	</div><div class="line">///</div><div class="line">Customer customer = site.getCustomer();</div><div class="line"></div><div class="line">BillingPlan plan;</div><div class="line">if (customer == null) plan = BillingPlan.basic()</div><div class="line">else plan = customer.getPlan();</div><div class="line"></div><div class="line">String customerName;</div><div class="line">if (customer == null) customerName = &quot;occupant&quot;</div><div class="line">else customerName = customer.getName();</div><div class="line"></div><div class="line">int weeksDelinquent;</div><div class="line">if (customer == null) weeksDelinquent = 0</div><div class="line">else weeksDelinquent = customer.getHistory().getWeeksDelinquentInlastYear();</div><div class="line"></div><div class="line">//step 1 引入空对象</div><div class="line">class Site...</div><div class="line">	Customer getCustomer() &#123;</div><div class="line">		return (_customer == null) ? Customer.newNull() : _customer;</div><div class="line">	&#125;</div><div class="line">	Customer _customer;</div><div class="line"></div><div class="line">class NullCustomer extends Customer &#123;</div><div class="line">	public boolean isNull() &#123;</div><div class="line">		return true;</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line">class Customer...</div><div class="line">	public boolean isNull() &#123;</div><div class="line">		return false;	</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	static Customer newNull() &#123;</div><div class="line">		return new NullCustomer();</div><div class="line">	&#125;</div><div class="line">///</div><div class="line">Customer customer = site.getCustomer();</div><div class="line"></div><div class="line">BillingPlan plan;</div><div class="line">if (customer.isNull()) plan = BillingPlan.basic()</div><div class="line">else plan = customer.getPlan();</div><div class="line"></div><div class="line">String customerName;</div><div class="line">if (customer.isNull()) customerName = &quot;occupant&quot;</div><div class="line">else customerName = customer.getName();</div><div class="line"></div><div class="line">int weeksDelinquent;</div><div class="line">if (customer.isNull()) weeksDelinquent = 0</div><div class="line">else weeksDelinquent = customer.getHistory().getWeeksDelinquentInlastYear();</div><div class="line">	</div><div class="line">//step 2 引入空字段</div><div class="line">class NullPaymentHistory extends PaymentHistory &#123;</div><div class="line">	static PaymentHistory newNull() &#123;</div><div class="line">		return new NullPaymentHistory();</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	public getWeeksDelinquentInlastYear() &#123;</div><div class="line">		return 0;</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">class NullCustomer extends Customer &#123;</div><div class="line">	public String getName()&#123;</div><div class="line">		return &quot;occupant&quot;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	public BillingPlan getPlan() &#123;</div><div class="line">		return BillingPlan.basic();</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	public PaymentHistory getHistory() &#123;</div><div class="line">		return NullPaymentHistory.newNull();</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">Customer customer = site.getCustomer();</div><div class="line"></div><div class="line">BillingPlan plan = customer.getPlan();</div><div class="line">String customerName = customer.getName();</div><div class="line">int weeksDelinquent = customer.getHistory().getWeeksDelinquentInlastYear();</div></pre></td></tr></table></figure>
+<h4 id="Introduce-Assertion-引入断言"><a href="#Introduce-Assertion-引入断言" class="headerlink" title="Introduce Assertion(引入断言)"></a>Introduce Assertion(引入断言)</h4><p>某一段代码需要对程序状态做出某种假设</p>
+<h5 id="动机-7"><a href="#动机-7" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>代码依赖某个条件为真才能运行，如果不为真，则说明程序出现了错误。</li>
+<li>断言可以作为交流与协调的辅助，帮助理解程序所做的假设和定位bug。</li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/11/09/《重构-改善既有代码的设计》系列读书笔记（四、重新组织数据）/" rel="next" title="《重构-改善既有代码的设计》系列读书笔记（四、重新组织数据）">
+                <i class="fa fa-chevron-left"></i> 《重构-改善既有代码的设计》系列读书笔记（四、重新组织数据）
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2019/11/15/《重构-改善既有代码的设计》系列读书笔记（五、重构条件表达式）/"
+           data-title="《重构-改善既有代码的设计》系列读书笔记（五、重构条件表达式）" data-url="http://yoursite.com/2019/11/15/《重构-改善既有代码的设计》系列读书笔记（五、重构条件表达式）/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/head.png"
+               alt="lly" />
+          <p class="site-author-name" itemprop="name">lly</p>
+          <p class="site-description motion-element" itemprop="description">耿直的一Boy</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">56</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#简化条件表达式"><span class="nav-number">1.</span> <span class="nav-text">简化条件表达式</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Decompose-Conditional-分解条件表达式"><span class="nav-number">1.1.</span> <span class="nav-text">Decompose Conditional(分解条件表达式)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机"><span class="nav-number">1.1.1.</span> <span class="nav-text">动机</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#做法"><span class="nav-number">1.1.2.</span> <span class="nav-text">做法</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Consolidate-Conditional-Expression-合并条件表达式"><span class="nav-number">1.2.</span> <span class="nav-text">Consolidate Conditional Expression(合并条件表达式)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-1"><span class="nav-number">1.2.1.</span> <span class="nav-text">动机</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#做法-1"><span class="nav-number">1.2.2.</span> <span class="nav-text">做法</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Consolidate-Duplicate-Conditional-Fragments-合并重复的条件片段"><span class="nav-number">1.3.</span> <span class="nav-text">Consolidate Duplicate Conditional Fragments(合并重复的条件片段)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-2"><span class="nav-number">1.3.1.</span> <span class="nav-text">动机</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#做法-2"><span class="nav-number">1.3.2.</span> <span class="nav-text">做法</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Remove-Control-Flag-移除控制标记"><span class="nav-number">1.4.</span> <span class="nav-text">Remove Control Flag (移除控制标记)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-3"><span class="nav-number">1.4.1.</span> <span class="nav-text">动机</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#做法-3"><span class="nav-number">1.4.2.</span> <span class="nav-text">做法</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Replace-Nested-Conditional-with-Guard-Clauses-以卫语句取代嵌套条件表达式"><span class="nav-number">1.5.</span> <span class="nav-text">Replace Nested Conditional with Guard Clauses(以卫语句取代嵌套条件表达式)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-4"><span class="nav-number">1.5.1.</span> <span class="nav-text">动机</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#做法-4"><span class="nav-number">1.5.2.</span> <span class="nav-text">做法</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#以多态取代条件表达式"><span class="nav-number">1.6.</span> <span class="nav-text">以多态取代条件表达式</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-5"><span class="nav-number">1.6.1.</span> <span class="nav-text">动机</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#做法-5"><span class="nav-number">1.6.2.</span> <span class="nav-text">做法</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Introduce-Null-Object-引入Null对象"><span class="nav-number">1.7.</span> <span class="nav-text">Introduce Null Object(引入Null对象)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-6"><span class="nav-number">1.7.1.</span> <span class="nav-text">动机</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#做法-6"><span class="nav-number">1.7.2.</span> <span class="nav-text">做法</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Introduce-Assertion-引入断言"><span class="nav-number">1.8.</span> <span class="nav-text">Introduce Assertion(引入断言)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-7"><span class="nav-number">1.8.1.</span> <span class="nav-text">动机</span></a></li></ol></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lly</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"llyblog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
