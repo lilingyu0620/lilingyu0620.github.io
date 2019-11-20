@@ -1,0 +1,617 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="处理概括关系（继承关系）Pull Up Field(字段上移)两个子类拥有相同的字段 动机 本重构从两方面减少重复，首先去除了重复的数据声明，其次去除了重复的行为。  Pull Up Method (函数上移)有些函数，在各个子类中产生完全相同的结果 动机 如果系统中出现重复，意味着以后你修改一处代码时需要同时修改另一个。 子类函数覆盖了超类的函数，确做的相同的工作。  Pull Up Const">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《重构-改善既有代码的设计》系列读书笔记（七、处理概括关系（继承关系））">
+<meta property="og:url" content="http://yoursite.com/2019/11/20/《重构-改善既有代码的设计》系列读书笔记（七、处理概括关系（继承关系））/index.html">
+<meta property="og:site_name" content="lly&#39;s Blog">
+<meta property="og:description" content="处理概括关系（继承关系）Pull Up Field(字段上移)两个子类拥有相同的字段 动机 本重构从两方面减少重复，首先去除了重复的数据声明，其次去除了重复的行为。  Pull Up Method (函数上移)有些函数，在各个子类中产生完全相同的结果 动机 如果系统中出现重复，意味着以后你修改一处代码时需要同时修改另一个。 子类函数覆盖了超类的函数，确做的相同的工作。  Pull Up Const">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-11-20T03:46:14.741Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="《重构-改善既有代码的设计》系列读书笔记（七、处理概括关系（继承关系））">
+<meta name="twitter:description" content="处理概括关系（继承关系）Pull Up Field(字段上移)两个子类拥有相同的字段 动机 本重构从两方面减少重复，首先去除了重复的数据声明，其次去除了重复的行为。  Pull Up Method (函数上移)有些函数，在各个子类中产生完全相同的结果 动机 如果系统中出现重复，意味着以后你修改一处代码时需要同时修改另一个。 子类函数覆盖了超类的函数，确做的相同的工作。  Pull Up Const">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/11/20/《重构-改善既有代码的设计》系列读书笔记（七、处理概括关系（继承关系））/"/>
+
+  <title> 《重构-改善既有代码的设计》系列读书笔记（七、处理概括关系（继承关系）） | lly's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">lly's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">用心记录点滴</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                《重构-改善既有代码的设计》系列读书笔记（七、处理概括关系（继承关系））
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-11-20T11:38:51+08:00" content="2019-11-20">
+              2019-11-20
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2019/11/20/《重构-改善既有代码的设计》系列读书笔记（七、处理概括关系（继承关系））/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2019/11/20/《重构-改善既有代码的设计》系列读书笔记（七、处理概括关系（继承关系））/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="处理概括关系（继承关系）"><a href="#处理概括关系（继承关系）" class="headerlink" title="处理概括关系（继承关系）"></a>处理概括关系（继承关系）</h3><h4 id="Pull-Up-Field-字段上移"><a href="#Pull-Up-Field-字段上移" class="headerlink" title="Pull Up Field(字段上移)"></a>Pull Up Field(字段上移)</h4><p>两个子类拥有相同的字段</p>
+<h5 id="动机"><a href="#动机" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>本重构从两方面减少重复，首先去除了重复的数据声明，其次去除了重复的行为。</li>
+</ul>
+<h4 id="Pull-Up-Method-函数上移"><a href="#Pull-Up-Method-函数上移" class="headerlink" title="Pull Up Method (函数上移)"></a>Pull Up Method (函数上移)</h4><p>有些函数，在各个子类中产生完全相同的结果</p>
+<h5 id="动机-1"><a href="#动机-1" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>如果系统中出现重复，意味着以后你修改一处代码时需要同时修改另一个。</li>
+<li>子类函数覆盖了超类的函数，确做的相同的工作。</li>
+</ul>
+<h4 id="Pull-Up-Constructor-Body-构造函数本体上移"><a href="#Pull-Up-Constructor-Body-构造函数本体上移" class="headerlink" title="Pull Up Constructor Body(构造函数本体上移)"></a>Pull Up Constructor Body(构造函数本体上移)</h4><p>你在各个子类中拥有一些构造函数，他们的本体几乎完全一致</p>
+<h5 id="动机-2"><a href="#动机-2" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>构造函数不能继承，所以如果有相同的构造逻辑，需要将具体逻辑上移到父类的构造函数中。</li>
+</ul>
+<h5 id="做法"><a href="#做法" class="headerlink" title="做法"></a>做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">// before </div><div class="line">class Employee...</div><div class="line">	protected String _name;</div><div class="line">	protected String _id;</div><div class="line">	</div><div class="line">class Manager extends Employee...</div><div class="line">	public Manager(String name,String id,int grade) &#123;</div><div class="line">		_name = name;</div><div class="line">		_id = id;</div><div class="line">		_grade = grade;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	private int _grade;</div><div class="line">	</div><div class="line">//after</div><div class="line">class Employee...</div><div class="line">	public Employee(String name,String id) &#123;</div><div class="line">		_name = name;</div><div class="line">		_id = id;</div><div class="line">	&#125;</div><div class="line">	protected String _name;</div><div class="line">	protected String _id;</div><div class="line">	</div><div class="line">class Manager extends Employee...</div><div class="line">	public Manager(String name,String id,int grade) &#123;</div><div class="line">		super (name,id);</div><div class="line">		_grade = grade;</div><div class="line">	&#125;</div><div class="line">	private int _grade;</div></pre></td></tr></table></figure>
+<h4 id="Pull-Down-Method-函数下移"><a href="#Pull-Down-Method-函数下移" class="headerlink" title="Pull Down Method(函数下移)"></a>Pull Down Method(函数下移)</h4><p>超类中某个函数只与部分子类有关</p>
+<h5 id="动机-3"><a href="#动机-3" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>使用完提炼子类后，你可能会需要用到这个手段。</li>
+</ul>
+<h4 id="Pull-Down-Field-字段下移"><a href="#Pull-Down-Field-字段下移" class="headerlink" title="Pull Down Field(字段下移)"></a>Pull Down Field(字段下移)</h4><p>超类中的某个字段只被部分子类用到</p>
+<h5 id="动机-4"><a href="#动机-4" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>同上面的函数下移</li>
+</ul>
+<h4 id="Extract-Subclass-提炼子类"><a href="#Extract-Subclass-提炼子类" class="headerlink" title="Extract Subclass (提炼子类)"></a>Extract Subclass (提炼子类)</h4><p>类中的某些特性只被某些实例用到（这个有点勉强吧，不可能每个实例都会用到所有特性，当然，将关联性比较强的特性组成一个新的类是可以的）</p>
+<h4 id="Extract-Superclass-提炼超类"><a href="#Extract-Superclass-提炼超类" class="headerlink" title="Extract Superclass (提炼超类)"></a>Extract Superclass (提炼超类)</h4><p>两个类有相似特性</p>
+<h5 id="动机-5"><a href="#动机-5" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>重复代码的危害。</li>
+</ul>
+<h4 id="Extract-Interface-提炼接口"><a href="#Extract-Interface-提炼接口" class="headerlink" title="Extract Interface (提炼接口)"></a>Extract Interface (提炼接口)</h4><p>若干客户使用类接口中的同一个子集，或者有部分接口相同。</p>
+<h5 id="动机-6"><a href="#动机-6" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>分离出公用的接口可以使系统的用法更清晰，同时也更容易看清楚系统的责任划分。</li>
+<li>接口或者多继承可以实现这种模块分离需求。</li>
+</ul>
+<h4 id="Collapse-Hierarchy-折叠集成关系"><a href="#Collapse-Hierarchy-折叠集成关系" class="headerlink" title="Collapse Hierarchy(折叠集成关系)"></a>Collapse Hierarchy(折叠集成关系)</h4><p>超类和子类之间无太大区别</p>
+<h5 id="动机-7"><a href="#动机-7" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>消除无谓的集成关系，简化代码结构。</li>
+</ul>
+<h4 id="Form-Template-Method（塑造模板函数）"><a href="#Form-Template-Method（塑造模板函数）" class="headerlink" title="Form Template Method（塑造模板函数）"></a>Form Template Method（塑造模板函数）</h4><p>你有一些子类，其中相应的某些函数以相同顺序执行类似的操作，但各个操作的细节上有所不同</p>
+<h5 id="动机-8"><a href="#动机-8" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>将执行操作的顺序移至超类，并借多态保证各操作仍得以保持差异性，这样的函数称为模板函数。</li>
+</ul>
+<h5 id="做法-1"><a href="#做法-1" class="headerlink" title="做法"></a>做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">// before</div><div class="line">class Customer...</div><div class="line"></div><div class="line">public String statement() &#123;</div><div class="line">	String result = textHeaderString();</div><div class="line">	while(...)&#123;</div><div class="line">		result += textEachRentalString();</div><div class="line">	&#125; </div><div class="line">	result += textFooterString();</div><div class="line">	return result;</div><div class="line">&#125;</div><div class="line"></div><div class="line">public String htmlStatement() &#123;</div><div class="line">	String result = htmlHeaderString();</div><div class="line">	while(...)&#123;</div><div class="line">		result += htmlEachRentalString();</div><div class="line">	&#125; </div><div class="line">	result += htmlFooterString();</div><div class="line">	return result;</div><div class="line">&#125;</div><div class="line"></div><div class="line">// step 1</div><div class="line"></div><div class="line">class Statement &#123;&#125;</div><div class="line">class TextStatement extends Statement &#123;&#125;</div><div class="line">class HtmlStatement extends Statement &#123;&#125;</div><div class="line"></div><div class="line">class Customer...</div><div class="line">public String statement() &#123;</div><div class="line">	return new TextStatement().value(this);</div><div class="line">&#125;</div><div class="line">public String htmlStatsment() &#123;</div><div class="line">	return new HtmlStatement().value(this);</div><div class="line">&#125;</div><div class="line"></div><div class="line">class TextStatement &#123;</div><div class="line">	public String value(Customer aCustomer) &#123;</div><div class="line">		String result = headerString(aCustomer);</div><div class="line">		while(...)&#123;</div><div class="line">			result += eachRentalString();</div><div class="line">		&#125; </div><div class="line">		result += footerString(aCustomer);</div><div class="line">		return result;</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">class HtmlStatement &#123;</div><div class="line">	public String value(Customer aCustomer) &#123;</div><div class="line">		String result = headerString(aCustomer);</div><div class="line">		while(...)&#123;</div><div class="line">			result += eachRentalString();</div><div class="line">		&#125; </div><div class="line">		result += footerString(aCustomer);</div><div class="line">		return result;</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">// step 2</div><div class="line"></div><div class="line">class Statement &#123;</div><div class="line">	public String value(Customer aCustomer) &#123;</div><div class="line">		String result = headerString(aCustomer);</div><div class="line">		while(...)&#123;</div><div class="line">			result += eachRentalString();</div><div class="line">		&#125; </div><div class="line">		result += footerString(aCustomer);</div><div class="line">		return result;</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">abstract String headerString(Customer aCustomer)</div><div class="line">abstract String eachRentalString()</div><div class="line">abstract String footerString(Customer aCustomer)</div></pre></td></tr></table></figure>
+<h4 id="Replace-Inheritance-with-Delegation-以委托取代继承"><a href="#Replace-Inheritance-with-Delegation-以委托取代继承" class="headerlink" title="Replace Inheritance with Delegation(以委托取代继承)"></a>Replace Inheritance with Delegation(以委托取代继承)</h4><p>某个子类只使用超类接口中的一部分，或是根本不需要继承而来的数据。</p>
+<h5 id="动机-9"><a href="#动机-9" class="headerlink" title="动机"></a>动机</h5><ul>
+<li><p>当你从超类中继承了一堆并不需要的东西时，传达出的信息与你的意图南辕北辙，这是一种混淆，你应该将它去除。</p>
+</li>
+<li><p>所用委托取代继承时，你可以有目的的选择需要的接口。 </p>
+</li>
+</ul>
+<h4 id="Replace-Delegation-with-Inheritance-以继承取代委托"><a href="#Replace-Delegation-with-Inheritance-以继承取代委托" class="headerlink" title="Replace Delegation with Inheritance(以继承取代委托)"></a>Replace Delegation with Inheritance(以继承取代委托)</h4><p>你的两个子类之间使用委托关系，并且经常是全托。。。</p>
+<h5 id="动机-10"><a href="#动机-10" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>委托需要编写大量的委托代码，如果是全托，会增加大量的代码量。</li>
+<li>如果你没有使用受委托类的所有接口，那就不需要修改，如果需要使用所有的接口，请使用继承代替委托。</li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/11/19/《重构-改善既有代码的设计》系列读书笔记（六、简化函数调用）/" rel="next" title="《重构-改善既有代码的设计》系列读书笔记（六、简化函数调用）">
+                <i class="fa fa-chevron-left"></i> 《重构-改善既有代码的设计》系列读书笔记（六、简化函数调用）
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2019/11/20/《重构-改善既有代码的设计》系列读书笔记（七、处理概括关系（继承关系））/"
+           data-title="《重构-改善既有代码的设计》系列读书笔记（七、处理概括关系（继承关系））" data-url="http://yoursite.com/2019/11/20/《重构-改善既有代码的设计》系列读书笔记（七、处理概括关系（继承关系））/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/head.png"
+               alt="lly" />
+          <p class="site-author-name" itemprop="name">lly</p>
+          <p class="site-description motion-element" itemprop="description">耿直的一Boy</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">58</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#处理概括关系（继承关系）"><span class="nav-number">1.</span> <span class="nav-text">处理概括关系（继承关系）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Pull-Up-Field-字段上移"><span class="nav-number">1.1.</span> <span class="nav-text">Pull Up Field(字段上移)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机"><span class="nav-number">1.1.1.</span> <span class="nav-text">动机</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Pull-Up-Method-函数上移"><span class="nav-number">1.2.</span> <span class="nav-text">Pull Up Method (函数上移)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-1"><span class="nav-number">1.2.1.</span> <span class="nav-text">动机</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Pull-Up-Constructor-Body-构造函数本体上移"><span class="nav-number">1.3.</span> <span class="nav-text">Pull Up Constructor Body(构造函数本体上移)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-2"><span class="nav-number">1.3.1.</span> <span class="nav-text">动机</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#做法"><span class="nav-number">1.3.2.</span> <span class="nav-text">做法</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Pull-Down-Method-函数下移"><span class="nav-number">1.4.</span> <span class="nav-text">Pull Down Method(函数下移)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-3"><span class="nav-number">1.4.1.</span> <span class="nav-text">动机</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Pull-Down-Field-字段下移"><span class="nav-number">1.5.</span> <span class="nav-text">Pull Down Field(字段下移)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-4"><span class="nav-number">1.5.1.</span> <span class="nav-text">动机</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Extract-Subclass-提炼子类"><span class="nav-number">1.6.</span> <span class="nav-text">Extract Subclass (提炼子类)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Extract-Superclass-提炼超类"><span class="nav-number">1.7.</span> <span class="nav-text">Extract Superclass (提炼超类)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-5"><span class="nav-number">1.7.1.</span> <span class="nav-text">动机</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Extract-Interface-提炼接口"><span class="nav-number">1.8.</span> <span class="nav-text">Extract Interface (提炼接口)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-6"><span class="nav-number">1.8.1.</span> <span class="nav-text">动机</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Collapse-Hierarchy-折叠集成关系"><span class="nav-number">1.9.</span> <span class="nav-text">Collapse Hierarchy(折叠集成关系)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-7"><span class="nav-number">1.9.1.</span> <span class="nav-text">动机</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Form-Template-Method（塑造模板函数）"><span class="nav-number">1.10.</span> <span class="nav-text">Form Template Method（塑造模板函数）</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-8"><span class="nav-number">1.10.1.</span> <span class="nav-text">动机</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#做法-1"><span class="nav-number">1.10.2.</span> <span class="nav-text">做法</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Replace-Inheritance-with-Delegation-以委托取代继承"><span class="nav-number">1.11.</span> <span class="nav-text">Replace Inheritance with Delegation(以委托取代继承)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-9"><span class="nav-number">1.11.1.</span> <span class="nav-text">动机</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Replace-Delegation-with-Inheritance-以继承取代委托"><span class="nav-number">1.12.</span> <span class="nav-text">Replace Delegation with Inheritance(以继承取代委托)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机-10"><span class="nav-number">1.12.1.</span> <span class="nav-text">动机</span></a></li></ol></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lly</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"llyblog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

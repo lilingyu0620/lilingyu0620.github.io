@@ -229,6 +229,135 @@
             
               
                 
+                <a class="post-title-link" href="/2018/03/20/IP地址与协议详解/" itemprop="url">
+                  IP地址与协议详解
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-03-20T18:29:57+08:00" content="2018-03-20">
+              2018-03-20
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/03/20/IP地址与协议详解/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/03/20/IP地址与协议详解/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="基本的ip地址结构"><a href="#基本的ip地址结构" class="headerlink" title="基本的ip地址结构"></a>基本的ip地址结构</h3><p>ipv4:点分十进制，共32位</p>
+<p>ipv6:冒号隔开8个16位数，共128位</p>
+<h4 id="分类寻址"><a href="#分类寻址" class="headerlink" title="分类寻址"></a>分类寻址</h4><p>ip地址中一些连续的位称为网络号，其余位称为主机号。</p>
+<p>ip地址空间的划分涉及五大类：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/ip地址与协议详解/ipcategory.png" alt=""></p>
+<p>A,B,C为单播，D为组播。</p>
+<h4 id="子网寻址"><a href="#子网寻址" class="headerlink" title="子网寻址"></a>子网寻址</h4><p>在一个站点接入Internet后为其分配一个网络号，然后由站点管理员进一步划分本地的子网数。</p>
+<p>通过子网寻址，一个站点被分配一个A，B或C类的<strong>网络号</strong>，保留一些剩余主机号进一步用于站点内分配。该站点可能将基础地址中的主机部分进一步划分为一个<strong>子网号</strong>和一个<strong>主机号</strong>.</p>
+<p>如下图，该站点将每一个地址的前16位固定为网络号，后16位8位为子网号，8位为主机号。这个特殊配置允许站点支持256个子网，每个子网最多可包含254台主机。</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/ip地址与协议详解/subnet.png" alt=""></p>
+<p><strong>同一个子网中每台主机的IPv4地址拥有相同的子网号</strong></p>
+<h4 id="子网掩码"><a href="#子网掩码" class="headerlink" title="子网掩码"></a>子网掩码</h4><p>子网掩码是由一台主机或路由器使用的分配位，以确定如何从一台主机对应的IP地址中获取网络和子网信息。</p>
+<p>掩码由路由器和主机使用，以确认一个IP地址的网络/子网部分的结束和主机部分的开始。子网掩码中的一位设为1表示一个IP地址的对应位与一个地址的网络/子网部分的对应位相结合（位与）.并将结果作为转发数据报的基础。</p>
+<p>IP地址与子网掩码做（位与）运算，以形成用于路由的地址的网络/子网标识符。</p>
+<p>子网掩码纯粹是站点内部的局部问题。。。</p>
+<h3 id="IP协议"><a href="#IP协议" class="headerlink" title="IP协议"></a>IP协议</h3><p>IP协议是无连接的，这意味着IP不维护网络单元（路由器）中数据报相关的任何链接状态信息，每个数据报独立于其他数据报来处理。这也意味着IP数据报可不按顺序交付。</p>
+<p>当某些错误发生时，例如一台路由器临时用尽缓冲区，IP提供一个简单的错误处理方式：丢弃一些数据（通常是最后到达的数据报）。</p>
+<h4 id="协议头部结构"><a href="#协议头部结构" class="headerlink" title="协议头部结构"></a>协议头部结构</h4><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/ip地址与协议详解/ipv4head.png" alt=""></p>
+<h4 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h4><p>它包含IP数据报的版本号：IPV4是4，IPV6是6.</p>
+<p>IPV4和IPV6两个协议之间不能直接互操作。</p>
+<h4 id="IHL（头部长度）"><a href="#IHL（头部长度）" class="headerlink" title="IHL（头部长度）"></a>IHL（头部长度）</h4><p>保存IPV4头部中32位字的数量，包括任何选项。由于他是一个4位的字段，所以IPV4的头部被限制最多15个32位字（60个字节）.</p>
+<h4 id="DS-区分服务"><a href="#DS-区分服务" class="headerlink" title="DS(区分服务)"></a>DS(区分服务)</h4><p>前6位被称为区分服务字段，后两位是显示拥塞通知字段或指示位。</p>
+<h4 id="总长度"><a href="#总长度" class="headerlink" title="总长度"></a>总长度</h4><p>IPV4数据报的总长度。通过这个字段和IHL字段，我们知道数据报的数据部分从哪里开始，以及他的长度。由于它是一个16位的字段，所以IPV4数据报的最大长度是65535字节。</p>
+<p>由于一些携带IPV4数据报的低层协议不能精确表达自己封装数据的大小，所以需要在头部中给出总长度字段。例如，以太网会将短帧补充到最小长度（64字节）。虽然以太网最小有效载荷为46字节，单一个IPV4数据报也可能会更小（20字节）。如果没有提供总长度字段，IPV4实现将无法知道一个46字节的以太网帧是一个IP数据报，还是经过填充的IP数据报，这样可能会导致混淆。</p>
+<p>尽管可发送一个65535字节的IP数据报，但是大多数链路层不能携带这么大的数据，所以会对发数据进行<strong>分片</strong>。主机不接受大于576字节的IPV4数据报。</p>
+<h4 id="标识"><a href="#标识" class="headerlink" title="标识"></a>标识</h4><p>标识字段帮助标识由IPV4主机发送的数据报，为了避免将一个数据报分片和其他分片混淆，发送主机通常在每次发送数据报时都将一个内部计数器加1，并将该计算器值复制到IPV4标识字段。</p>
+<h4 id="生存期"><a href="#生存期" class="headerlink" title="生存期"></a>生存期</h4><p>TTL字段用于设置一个数据报可经过的路由器数量的上限。发送方将他初始化为某一个值（文档建议为64，但128或255也不少见），每台路由器在转发数据报时将该值减1.当这个字段值达到0时，改数据报被丢弃，并使用一个ICMP消息通知发送方。</p>
+<h4 id="协议"><a href="#协议" class="headerlink" title="协议"></a>协议</h4><p>IPV4头部中的协议字段包含一个数字，表示数据报有效载荷部分的数据类型。最常见的值为17（UDP）和6（TCP）。</p>
+<h4 id="头部校验和"><a href="#头部校验和" class="headerlink" title="头部校验和"></a>头部校验和</h4><p>头部校验和字段仅计算IPV4头部。理解这一点很重要，因为这意味着IP协议不检测IPV4数据报有效载荷的正确性。需要其他上层协议自己去实现（<strong>比如TCP的校验和字段</strong>）。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/03/05/TCP协议学习笔记/" itemprop="url">
                   TCP协议学习笔记
                 </a>
@@ -1849,170 +1978,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/04/01/DNS解析学习笔记/" itemprop="url">
-                  DNS解析学习笔记
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-04-01T17:57:48+08:00" content="2017-04-01">
-              2017-04-01
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2017/04/01/DNS解析学习笔记/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/04/01/DNS解析学习笔记/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="什么是域名解析"><a href="#什么是域名解析" class="headerlink" title="什么是域名解析"></a>什么是域名解析</h3><p>Internet上的计算机是通过IP地址来定位的，给出一个IP地址，就可以找到Internet上的某台主机。而因为IP地址难于记忆，又发明了域名来代替IP地址。但通过域名并不能直接找到要访问的主机，中间要加一个从域名查找IP地址的过程，这个过程就是域名解析。</p>
-<p>负责将域名解析成为IP地址的服务器，叫做域名解析服务器，英文简称是DNS。Internet上所有的DNS通过域的层次关系连接在一起。</p>
-<p>当Internet用户打开浏览器，输入一个网址的时候，比如<a href="http://www.google.com" target="_blank" rel="noopener">http://www.google.com</a> 用户的计算机并不知道www.google.com是哪一台主机，因此计算机向Internet的DNS发出查询请求，DNS将查询到的IP地址返回给用户的计算机，用户计算机就可以根据IP地址连接www.google.com主机，把网页下载下来。</p>
-<h3 id="相关名词"><a href="#相关名词" class="headerlink" title="相关名词"></a>相关名词</h3><h4 id="根域"><a href="#根域" class="headerlink" title="根域"></a>根域</h4><p>就是所谓的“.”，其实我们的网址www.google.com在配置当中应该是www.google.com.（最后有一点），一般我们在浏览器里输入时会省略后面的点，而这也已经成为了习惯。</p>
-<p>根域服务器我们知道有13台，但是这是错误的观点。</p>
-<p>根域服务器只是具有13个IP地址，但机器数量却不是13台，因为这些IP地址借助了任播的技术，所以我们可以在全球设立这些IP的镜像站点，你访问到的这个IP并不是唯一的那台主机。</p>
-<h4 id="域的划分"><a href="#域的划分" class="headerlink" title="域的划分"></a>域的划分</h4><p>根域下面就是顶级域或者叫一级域.</p>
-<p>有两种划分方式，一种互联网刚兴起时的按照行业性质划分的com. net.等，一种是按国家划分的如cn. jp.等。</p>
-<p>每个域都会有域名服务器，也叫权威域名服务器。</p>
-<p>google.com就是一个顶级域名，而www.google.com却不是顶级域名，是在google.com这个域里的一叫做www的主机。</p>
-<p>一级域之后还有二级域，三级域，只要我买了一个顶级域，并且我搭建了自己BIND服务器（或者其他软件搭建的）注册到互联网中，那么我就可以随意在前面多加几个域了（当然长度是有限制的）。</p>
-<p>比如lly.www.google.com，在这个网址中，www.google.com变成了一个二级域而不是一台主机，主机名是lly。</p>
-<h4 id="域名服务器"><a href="#域名服务器" class="headerlink" title="域名服务器"></a>域名服务器</h4><p>能提供域名解析的服务器，上面的记录类型可以是A(address)记录，NS记录（name server），MX（mail），CNAME等。</p>
-<p>A记录是什么意思呢，就是记录一个IP地址和一个主机名字，比如我这个域名服务器所在的域test.google.com，我们知道这是一个二级的域名，然后我在里面有一条A记录,记录了主机为lly的IP，查到了就返回给你了。</p>
-<p>如果我现在要想google.com这个域名服务器查询lly.test.google.com，那么这个顶级域名服务器就会发现你请求的这个网址在test.google.com这个域中，我这里记录了这个二级域的域名服务器test.google.com的NS的IP。我返回给你这个地址你再去查主机名为lly的主机。</p>
-<h3 id="DNS解析原理"><a href="#DNS解析原理" class="headerlink" title="DNS解析原理"></a>DNS解析原理</h3><p>DNS解析主要有递归查询，就是在某个DNS服务器缓存中查找不到相应的域名与IP地址对应关系时，自动跳转到到下一步骤通过下一个DNS服务器进行查找。具体可见如下两图：</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/dns/dnsflow.jpg" alt=""></p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/dns/dnssearchflow.jpg" alt=""></p>
-<h3 id="DNS解析过程"><a href="#DNS解析过程" class="headerlink" title="DNS解析过程"></a>DNS解析过程</h3><p>以下步骤中，当DNS缓存中存在域名对应IP时则DNS解析成功，用户计算机将直接访问服务器，若DNS服务器缓存中不存在域名对应IP，则自动进入下一步。</p>
-<ul>
-<li>浏览器缓存</li>
-</ul>
-<p>当用户通过浏览器访问某域名时，浏览器首先会在自己的缓存中查找是否有该域名对应的IP地址（若曾经访问过该域名且没有清空缓存便存在）；</p>
-<ul>
-<li>系统缓存</li>
-</ul>
-<p>当浏览器缓存中无域名对应IP则会自动检查用户计算机系统Hosts文件DNS缓存是否有该域名对应IP；</p>
-<ul>
-<li>路由器缓存</li>
-</ul>
-<p>当浏览器及系统缓存中均无域名对应IP则进入路由器缓存中检查，以上三步均为客服端的DNS缓存；</p>
-<ul>
-<li>ISP（互联网服务提供商）DNS缓存</li>
-</ul>
-<p>当在用户客服端查找不到域名对应IP地址，则将进入ISP DNS缓存中进行查询。比如你用的是电信的网络，则会进入电信的DNS缓存服务器中进行查找；</p>
-<ul>
-<li>根域名服务器</li>
-</ul>
-<p>当以上均未完成，则进入根服务器进行查询。全球仅有13台根域名服务器，1个主根域名服务器，其余12为辅根域名服务器。根域名收到请求后会查看区域文件记录，若无则将其管辖范围内顶级域名（如.com）服务器IP告诉本地DNS服务器；</p>
-<ul>
-<li>顶级域名服务器</li>
-</ul>
-<p>顶级域名服务器收到请求后查看区域文件记录，若无则将其管辖范围内主域名（如google.com）服务器的IP地址告诉本地DNS服务器；</p>
-<ul>
-<li>主域名服务器</li>
-</ul>
-<p>主域名服务器接受到请求后查询自己的缓存，如果没有则进入下一级域名服务器（www.google.com）进行查找，并重复该步骤直至找到正确纪录；</p>
-<ul>
-<li>保存结果至缓存</li>
-</ul>
-<p>本地域名服务器把返回的结果保存到缓存，以备下一次使用，同时将该结果反馈给客户端，客户端通过这个IP地址与web服务器建立链接。</p>
-<h3 id="DNS优化如何实现"><a href="#DNS优化如何实现" class="headerlink" title="DNS优化如何实现"></a>DNS优化如何实现</h3><p>一般域名商或服务器商都会提供免费的DNS服务，然而，很多情况下这些免费的DNS服务器速度较慢，故可做一定优化，具体可从以下几方面：</p>
-<ul>
-<li>增加DNS服务器数量</li>
-</ul>
-<p>减小服务器压力，当单位服务器需要处理的DNS请求数量较少时速度会更快；</p>
-<ul>
-<li>全国多地分布DNS服务器</li>
-</ul>
-<p>用户网络访问速度跟用户计算机到服务器的距离有关，若可以让用户就近访问所在省份的服务器便可以加速DNS解析速度；</p>
-<ul>
-<li>识别用户线路反馈相应线路IP</li>
-</ul>
-<p>当用户网络线路跟服务器网络线路一致时速度较快，而不一致时则较慢，如：用户使用电信的线路但服务器是联通的线路，这样就会造成用户访问网站速度下降，如果可以识别用户访问线路并反馈相应IP则会加速网站访问。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2058,7 +2023,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">57</span>
+              <span class="site-state-item-count">58</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
