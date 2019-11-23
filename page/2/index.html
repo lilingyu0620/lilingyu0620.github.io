@@ -229,6 +229,106 @@
             
               
                 
+                <a class="post-title-link" href="/2019/05/29/操作系统原理-内存管理/" itemprop="url">
+                  操作系统原理--内存管理
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-05-29T10:56:23+08:00" content="2019-05-29">
+              2019-05-29
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2019/05/29/操作系统原理-内存管理/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2019/05/29/操作系统原理-内存管理/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="内存结构"><a href="#内存结构" class="headerlink" title="内存结构"></a>内存结构</h3><h3 id="虚拟内存与物理内存"><a href="#虚拟内存与物理内存" class="headerlink" title="虚拟内存与物理内存"></a>虚拟内存与物理内存</h3><h3 id="内存的分配与回收"><a href="#内存的分配与回收" class="headerlink" title="内存的分配与回收"></a>内存的分配与回收</h3>
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2019/05/29/操作系统原理-线程/" itemprop="url">
                   操作系统原理--线程
                 </a>
@@ -2165,151 +2265,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/07/20/UIViewController的内存泄露检测实践/" itemprop="url">
-                  UIViewController的内存泄露检测实践
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-07-20T11:02:55+08:00" content="2018-07-20">
-              2018-07-20
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2018/07/20/UIViewController的内存泄露检测实践/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/07/20/UIViewController的内存泄露检测实践/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>内存泄露在性能优化中一直是一个老生常谈的问题，而且最常出现在UIViewController的使用过程中。一般当VC退出UI堆栈后，如果使用过的内存没有被释放，就会产生内存泄露。所以在使用UIViewController的时候需要特别注意。</p>
-<h3 id="内存泄露原理及解决方案"><a href="#内存泄露原理及解决方案" class="headerlink" title="内存泄露原理及解决方案"></a>内存泄露原理及解决方案</h3><p>一般在VC中出现内存泄露主要原理是产生了循环引用导致内存得不到释放，而循环引用产生的主要case大概了以下三种情况：</p>
-<h4 id="NSTimer"><a href="#NSTimer" class="headerlink" title="NSTimer"></a>NSTimer</h4><p>在使用NSTimer的时候一般会把target设置为self，而timer本身又是self的成员变量，这样就会产生循环引用的问题。</p>
-<p>打破循环的方式是在VC退出时停掉timer并将timer成员变量置空。</p>
-<h4 id="delegate"><a href="#delegate" class="headerlink" title="delegate"></a>delegate</h4><p>delegate产生循环引用的原理和timer类同，一般我们会将delegate修饰为weak来打破循环</p>
-<h4 id="block"><a href="#block" class="headerlink" title="block"></a>block</h4><p>block也是最容易产生循环引用的地方，稍不注意就会造成内存泄露。所以在使用block的时候也需要格外留神。block产生循环引用的原理主要还得从它的内存说起，这里不细说（网上讲这个case的情况不要太多）。</p>
-<p>有2中方法可以打破block的循环引用：</p>
-<ol>
-<li>使用weak修饰self</li>
-<li>使用__block修饰self，在block内部将self置空</li>
-</ol>
-<p>不过方案2有个小问题，如果该block没有被调用的话这个循环引用就没法被打破了，所以通常我们都使用第一种方案。</p>
-<p>但是在开发业务的过程中难免会有疏漏的地方，经验丰富的老鸟还好，如果组内有小萌新的话，这种问题就很可能会出现，这里写这个工具也是做一个保护。</p>
-<h3 id="内存泄露检测原理"><a href="#内存泄露检测原理" class="headerlink" title="内存泄露检测原理"></a>内存泄露检测原理</h3><p>当VC被pop或者dismiss后，正常的流程是走到dealloc，然后使用的内存会被释放，self会为nil,如果有循环引用，则不会走dealloc,内存得不到释放，self也不会为nil.</p>
-<p>这里我们就利用了释放后self会被置空，而不释放self不会为nil的原理来实现内存泄露的警告。</p>
-<h3 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h3><p>首先我们需要hook UIViewController的下面几个方法：</p>
-<ul>
-<li>viewWillAppear</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">+ (void)swizzledViewWillAppear&#123;</div><div class="line">    </div><div class="line">    Class class = [self class];</div><div class="line">    </div><div class="line">    SEL originalSelector = @selector(viewWillAppear:);</div><div class="line">    SEL swizzledSelector = @selector(ocn_viewWillAppear:);</div><div class="line">    </div><div class="line">    Method originalMethod = class_getInstanceMethod(class, originalSelector);</div><div class="line">    Method swizzledMethod = class_getInstanceMethod(class, swizzledSelector);</div><div class="line">    </div><div class="line">    BOOL success = class_addMethod(class, originalSelector, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod));</div><div class="line">    if (success) &#123;</div><div class="line">        class_replaceMethod(class, swizzledSelector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod));</div><div class="line">    &#125;</div><div class="line">    else&#123;</div><div class="line">        method_exchangeImplementations(originalMethod, swizzledMethod);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<ul>
-<li>viewDidDisappear</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">+ (void)swizzledViewDidDisappear&#123;</div><div class="line">    </div><div class="line">    Class class = [self class];</div><div class="line">    </div><div class="line">    SEL originalSelector = @selector(viewDidDisappear:);</div><div class="line">    SEL swizzledSelector = @selector(ocn_viewDidDisappear:);</div><div class="line">    </div><div class="line">    Method originalMethod = class_getInstanceMethod(class, originalSelector);</div><div class="line">    Method swizzledMethod = class_getInstanceMethod(class, swizzledSelector);</div><div class="line">    </div><div class="line">    BOOL success = class_addMethod(class, originalSelector, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod));</div><div class="line">    if (success) &#123;</div><div class="line">        class_replaceMethod(class, swizzledSelector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod));</div><div class="line">    &#125;</div><div class="line">    else&#123;</div><div class="line">        method_exchangeImplementations(originalMethod, swizzledMethod);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<ul>
-<li>dismissViewControllerAnimated</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">+ (void)swizzledDismissViewController&#123;</div><div class="line">    </div><div class="line">    Class class = [self class];</div><div class="line">    </div><div class="line">    SEL originalSelector = @selector(dismissViewControllerAnimated:completion:);</div><div class="line">    SEL swizzledSelector = @selector(ocn_dismissViewControllerAnimated:completion:);</div><div class="line">    </div><div class="line">    Method originalMethod = class_getInstanceMethod(class, originalSelector);</div><div class="line">    Method swizzledMethod = class_getInstanceMethod(class, swizzledSelector);</div><div class="line">    </div><div class="line">    BOOL success = class_addMethod(class, originalSelector, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod));</div><div class="line">    if (success) &#123;</div><div class="line">        class_replaceMethod(class, swizzledSelector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod));</div><div class="line">    &#125;</div><div class="line">    else&#123;</div><div class="line">        method_exchangeImplementations(originalMethod, swizzledMethod);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>同时我们还需要hook 一下UINavigationController的pop方法:</p>
-<ul>
-<li>popViewControllerAnimated</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">+ (void)swizzledPopViewControllerAnimated&#123;</div><div class="line">    </div><div class="line">    Class class = [self class];</div><div class="line">    </div><div class="line">    SEL originalSelector = @selector(popViewControllerAnimated:);</div><div class="line">    SEL swizzledSelector = @selector(ocn_popViewControllerAnimated:);</div><div class="line">    </div><div class="line">    Method originalMethod = class_getInstanceMethod(class, originalSelector);</div><div class="line">    Method swizzledMethod = class_getInstanceMethod(class, swizzledSelector);</div><div class="line">    </div><div class="line">    BOOL success = class_addMethod(class, originalSelector, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod));</div><div class="line">    if (success) &#123;</div><div class="line">        class_replaceMethod(class, swizzledSelector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod));</div><div class="line">    &#125;</div><div class="line">    else&#123;</div><div class="line">        method_exchangeImplementations(originalMethod, swizzledMethod);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>这里当然选择在分类中进行hook最方便了。我们把hook的代码放在load函数中执行，具体原因参考<a href="https://nshipster.cn/method-swizzling/" target="_blank" rel="noopener">这里</a>.</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">+ (void)load&#123;</div><div class="line">    </div><div class="line">#if defined(DATAONLINE) &amp;&amp; DATAONLINE == 0</div><div class="line">    static dispatch_once_t onceToken;</div><div class="line">    dispatch_once(&amp;onceToken, ^&#123;</div><div class="line">        </div><div class="line">        [self swizzledViewWillAppear];</div><div class="line">        [self swizzledViewDidDisappear];</div><div class="line">        [self swizzledDismissViewController];</div><div class="line">        </div><div class="line">    &#125;);</div><div class="line">#endif</div><div class="line">    </div><div class="line">&#125;</div><div class="line"></div><div class="line">+ (void)load&#123;</div><div class="line">    </div><div class="line">#if defined(DATAONLINE) &amp;&amp; DATAONLINE == 0 </div><div class="line">    static dispatch_once_t onceToken;</div><div class="line">    dispatch_once(&amp;onceToken, ^&#123;</div><div class="line">        [self swizzledPopViewControllerAnimated];</div><div class="line">    &#125;);</div><div class="line">#endif</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>这里的宏表示是测试环境。</p>
-<p>在viewWillAppear中，我们记录一下当前VC的状态。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">- (void)ocn_viewWillAppear:(BOOL)animated&#123;</div><div class="line">    </div><div class="line">    [self ocn_viewWillAppear:animated];</div><div class="line">    </div><div class="line">    [self setOcn_hasBeenPopped:NO];</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>然后在viewDidDisappear时，我们判断一下当前VC的状态，如果VC被pop或者dismiss了，我们调用一下内存泄露提醒的方法</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">- (void)ocn_viewDidDisappear:(BOOL)animated&#123;</div><div class="line">    </div><div class="line">    [self ocn_viewDidDisappear:animated];</div><div class="line"></div><div class="line">    __weak __typeof(self)weakSelf = self;</div><div class="line">    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^&#123;</div><div class="line">        if ([weakSelf ocn_hasBeenPopped]) &#123;</div><div class="line">            [weakSelf alertWithClassName:NSStringFromClass([weakSelf class])];</div><div class="line">        &#125;</div><div class="line">    &#125;);</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>这里我们做了一个延时调用，前面已经说过，如果VC走正常流程，内存被释放，self会被置空，所以这里如果没有内存泄露的话，weakself应该是为nil，我们使用nil对象调用这两个方法不会有提醒，而如果发生了内存泄露，weakself不会为nil，这时调用者这2个方法就会弹出内存泄露的警告了。</p>
-<p>当然，我们还需要再dismiss和pop的时候设置当前vc的状态为已pop的状态，只有是已经被pop了，才会去尝试调用提醒事件。因为当vc的调用栈被push到下一级，也就是上面有新的vc时，viewDidDisappear也会被调用，但是此时vc的内存还会保存在内存中，只有在被pop或者dismiss后，vc的内存才有可能被释放。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">- (void)ocn_dismissViewControllerAnimated:(BOOL)flag completion:(void (^)(void))completion &#123;</div><div class="line">    </div><div class="line">    [self ocn_dismissViewControllerAnimated:flag completion:completion];</div><div class="line">    [self setOcn_hasBeenPopped:YES];</div><div class="line">    </div><div class="line">&#125;</div><div class="line"></div><div class="line">- (UIViewController *)ocn_popViewControllerAnimated:(BOOL)animated &#123;</div><div class="line">    UIViewController *poppedViewController = [self ocn_popViewControllerAnimated:animated];</div><div class="line">    </div><div class="line">    if (!poppedViewController) &#123;</div><div class="line">        return nil;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    objc_setAssociatedObject(poppedViewController, kHasBeenPoppedKey, @(YES), OBJC_ASSOCIATION_RETAIN);</div><div class="line">    </div><div class="line">    return poppedViewController;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h3 id="后续"><a href="#后续" class="headerlink" title="后续"></a>后续</h3><p>这个工具目前只能检测UIViewController的内存泄露问题，后续还可以再加上其他类型的检测方法。写这个工具也算是对runtime学习的一个实践。</p>
-<p><a href="https://github.com/lilingyu0620/LLYMemoryLeakDetector" target="_blank" rel="noopener">这里是demo</a></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2355,7 +2310,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">59</span>
+              <span class="site-state-item-count">60</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

@@ -229,6 +229,191 @@
             
               
                 
+                <a class="post-title-link" href="/2018/04/08/AudioUnit学习笔记/" itemprop="url">
+                  AudioUnit学习笔记
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-04-08T16:15:43+08:00" content="2018-04-08">
+              2018-04-08
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/04/08/AudioUnit学习笔记/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/04/08/AudioUnit学习笔记/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="AudioUnit简介"><a href="#AudioUnit简介" class="headerlink" title="AudioUnit简介"></a>AudioUnit简介</h3><p>在iOS中，所有的上层音频技术都是基于AudioUnit和CoreMedia来实现的。<br>下图可以直观的反应出AudioUnit的层级关系。</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/AudioUnit/auidounit1-1.png" alt=""></p>
+<p>对于普通的音频播放功能可能不需要直接使用AudioUnit来实现，但是如果你需要实现比较高级的功能（比如录音，混音等），就需要使用AudioUnit了。</p>
+<p>根据不同的音频目的，iOS将AudioUnit共分为7类。如下图所示</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/AudioUnit/audiounit1-2.png" alt=""></p>
+<ul>
+<li><p>effect units 这个是用在ipod类app上的，比较少使用到。</p>
+</li>
+<li><p>mixer units 做混音的，有2个audio unit，3D mixer比较适合用来做游戏的3d音效。multichannel mixer提供混合任意数量的单声道或立体声流,立体声输出。</p>
+</li>
+<li><p>i/o units  远程I/O单元是最常用的。它连接到输入和输出音频硬件和给你对传入和传出的低延迟访问音频样本值。它提供了硬件音频格式和应用程序之间的格式转换音频格式。声音处理I/O单元扩展了远程I/O单元，通过添加声学回声取消使用网络电话或者语音聊天应用程序。通用输出装置不连接到音频硬件,而是提供了一个机制来处理链的输出发送到您的应用程序。</p>
+</li>
+<li><p>Format Converter Unit 用来处理音频格式的转换。</p>
+</li>
+</ul>
+<h3 id="iOS提供了2种创建AudioUnit方式，一种是直接创建AudioUnit-另一种是通过AUGraph来使用AudioUnit"><a href="#iOS提供了2种创建AudioUnit方式，一种是直接创建AudioUnit-另一种是通过AUGraph来使用AudioUnit" class="headerlink" title="iOS提供了2种创建AudioUnit方式，一种是直接创建AudioUnit,另一种是通过AUGraph来使用AudioUnit."></a>iOS提供了2种创建AudioUnit方式，一种是直接创建AudioUnit,另一种是通过AUGraph来使用AudioUnit.</h3><h4 id="通过AudioComponentDescription-amp-AudioComponent音频组件创建AudioUnit"><a href="#通过AudioComponentDescription-amp-AudioComponent音频组件创建AudioUnit" class="headerlink" title="通过AudioComponentDescription&amp;AudioComponent音频组件创建AudioUnit"></a>通过AudioComponentDescription&amp;AudioComponent音频组件创建AudioUnit</h4><p>在创建一个AudioUnit实例之前，需要先创建一个audiocomponent 创建方式如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">//组件描述</div><div class="line">AudioComponentDescription ioUnitDescription;</div><div class="line">//组件类型</div><div class="line">ioUnitDescription.componentType          = kAudioUnitType_Output;</div><div class="line">//组件子类型</div><div class="line">ioUnitDescription.componentSubType       = kAudioUnitSubType_RemoteIO;</div><div class="line">//默认值</div><div class="line">ioUnitDescription.componentManufacturer  = kAudioUnitManufacturer_Apple;</div><div class="line">ioUnitDescription.componentFlags         = 0;</div><div class="line">ioUnitDescription.componentFlagsMask     = 0;</div><div class="line"></div><div class="line">AudioComponent foundIoUnitReference = AudioComponentFindNext (NULL,&amp;ioUnitDescription);</div><div class="line">AudioUnit ioUnitInstance;</div><div class="line">AudioComponentInstanceNew (</div><div class="line">    foundIoUnitReference,</div><div class="line">    &amp;ioUnitInstance</div><div class="line">);</div></pre></td></tr></table></figure>
+<h4 id="使用AUGraph创建AudioUnit"><a href="#使用AUGraph创建AudioUnit" class="headerlink" title="使用AUGraph创建AudioUnit"></a>使用AUGraph创建AudioUnit</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">AUGraph processingGraph;</div><div class="line">NewAUGraph (&amp;processingGraph);</div><div class="line"> </div><div class="line">// Add an audio unit node to the graph, then instantiate the audio unit</div><div class="line">AUNode ioNode;</div><div class="line">AUGraphAddNode (</div><div class="line">    processingGraph,</div><div class="line">    &amp;ioUnitDescription,</div><div class="line">    &amp;ioNode</div><div class="line">);</div><div class="line">AUGraphOpen (processingGraph); // indirectly performs audio unit instantiation</div><div class="line"> </div><div class="line">// Obtain a reference to the newly-instantiated I/O unit</div><div class="line">AudioUnit ioUnit;</div><div class="line">AUGraphNodeInfo (</div><div class="line">    processingGraph,</div><div class="line">    ioNode,</div><div class="line">    NULL,</div><div class="line">    &amp;ioUnit</div><div class="line">);</div></pre></td></tr></table></figure>
+<h3 id="使用Scopes和Elements来指定AudioUnit"><a href="#使用Scopes和Elements来指定AudioUnit" class="headerlink" title="使用Scopes和Elements来指定AudioUnit"></a>使用Scopes和Elements来指定AudioUnit</h3><p>Scope和Elements的关系如下图所示：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/AudioUnit/audiounit1-3.png" alt=""></p>
+<p>对于通用的audioUnit,可以有1-2条输入输出流，输入和输出不一定相等，比如mixer,可以两个音频输入，混音合成一个音频流输出。每个element表示一个音频处理上下文(context), 也称为bus。每个element有输出和输出部分，称为scope，分别是input scope和Output scope。Global scope确定只有一个element，就是element0，有些属性只能在Global scope上设置。</p>
+<p>inputbus = Element1 = 1,outputbus = Element0 = 0</p>
+<h3 id="使用Property来config-AudioUnit"><a href="#使用Property来config-AudioUnit" class="headerlink" title="使用Property来config AudioUnit"></a>使用Property来config AudioUnit</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">UInt32 busCount = 2;</div><div class="line"> </div><div class="line">OSStatus result = AudioUnitSetProperty (</div><div class="line">    mixerUnit,</div><div class="line">    kAudioUnitProperty_ElementCount,   // the property key</div><div class="line">    kAudioUnitScope_Input,             // the scope to set the property on</div><div class="line">    0,                                 // the element to set the property on</div><div class="line">    &amp;busCount,                         // the property value</div><div class="line">    sizeof (busCount)</div><div class="line">);</div></pre></td></tr></table></figure>
+<p>一个普通的播放行为可能需要设置的属性有 <em>kAudioOutputUnitProperty_EnableIO</em>，<em>kAudioUnitProperty_StreamFormat</em>，<em>kAudioUnitProperty_SetRenderCallback</em> 三个，不同行为需要设置不同的属性。</p>
+<h3 id="I-O-Unit的基本特征"><a href="#I-O-Unit的基本特征" class="headerlink" title="I/O Unit的基本特征"></a>I/O Unit的基本特征</h3><p>i/o unit是最常见的一种AudioUnit</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/AudioUnit/audiounit1-4.png" alt=""></p>
+<p>对于remote_IO类型audioUnit，即从硬件采集和输出到硬件的audioUnit,它的逻辑是固定的：固定2个element,麦克风经过element1到APP，APP经element0到扬声器。</p>
+<p>我们能把控的是中间的“APP内处理”部分，结合上图，淡黄色的部分就是APP可控的，Element1这个组件负责链接麦克风和APP，它的输入部分是系统控制，输出部分是APP控制；Element0负责连接APP和扬声器，输入部分APP控制，输出部分系统控制。</p>
+<h3 id="使用AUGraph来管理AudioUnit"><a href="#使用AUGraph来管理AudioUnit" class="headerlink" title="使用AUGraph来管理AudioUnit"></a>使用AUGraph来管理AudioUnit</h3><h3 id="Render-Callback-Functions-Feed-Audio-to-Audio-Units"><a href="#Render-Callback-Functions-Feed-Audio-to-Audio-Units" class="headerlink" title="Render Callback Functions Feed Audio to Audio Units"></a>Render Callback Functions Feed Audio to Audio Units</h3><p>当音频数据是由内存或者磁盘提供的话，数据都需要从渲染回调函数这里提供给inputbus，当你想要对音频数据进行自定义的处理的话，就在这里进行吧。</p>
+<p>渲染回调函数格式如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">static OSStatus MyAURenderCallback (</div><div class="line">    void                        *inRefCon,</div><div class="line">    AudioUnitRenderActionFlags  *ioActionFlags,</div><div class="line">    const AudioTimeStamp        *inTimeStamp,</div><div class="line">    UInt32                      inBusNumber,</div><div class="line">    UInt32                      inNumberFrames,</div><div class="line">    AudioBufferList             *ioData</div><div class="line">) &#123; /* callback body */ &#125;</div></pre></td></tr></table></figure>
+<p>各参数的关系如下图：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/AudioUnit/audiounit1-5.png" alt=""></p>
+<h3 id="Working-with-the-AudioStreamBasicDescription-structure"><a href="#Working-with-the-AudioStreamBasicDescription-structure" class="headerlink" title="Working with the AudioStreamBasicDescription structure"></a>Working with the AudioStreamBasicDescription structure</h3><p>AudioStreamBasicDescription 这个结构体表示当前音频的格式，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">struct AudioStreamBasicDescription &#123;</div><div class="line">    Float64 mSampleRate;//采样率</div><div class="line">    UInt32  mFormatID;//格式ID</div><div class="line">    UInt32  mFormatFlags;//存储标识</div><div class="line">    UInt32  mBytesPerPacket;//每个packet的字节数</div><div class="line">    UInt32  mFramesPerPacket;//每个packet包含几个frame</div><div class="line">    UInt32  mBytesPerFrame;//每个frame的字节数</div><div class="line">    UInt32  mChannelsPerFrame;//每个frame的声道数</div><div class="line">    UInt32  mBitsPerChannel;//每个声道的位数</div><div class="line">    UInt32  mReserved;</div><div class="line">&#125;;</div><div class="line">typedef struct AudioStreamBasicDescription  AudioStreamBasicDescription;</div></pre></td></tr></table></figure>
+<h3 id="Understanding-Where-and-How-to-Set-Stream-Formats"><a href="#Understanding-Where-and-How-to-Set-Stream-Formats" class="headerlink" title="Understanding Where and How to Set Stream Formats"></a>Understanding Where and How to Set Stream Formats</h3><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/AudioUnit/audiounit1-6.png" alt=""></p>
+<p>这个图展示了一个完整的录音+混音+播放的流程，在组件两边设置stream的格式，在代码里的概念是scope。</p>
+<h3 id="在使用AUGraph时选择不同的设计模式"><a href="#在使用AUGraph时选择不同的设计模式" class="headerlink" title="在使用AUGraph时选择不同的设计模式"></a>在使用AUGraph时选择不同的设计模式</h3><h4 id="I-O-Pass-Through"><a href="#I-O-Pass-Through" class="headerlink" title="I/O Pass Through"></a>I/O Pass Through</h4><p>简单的音频输入输出场景，直接使用AudioUnit链接两端，不需要设置渲染回调.</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/AudioUnit/audiounit2-1.png" alt=""></p>
+<h4 id="I-O-Without-a-Render-Callback-Function"><a href="#I-O-Without-a-Render-Callback-Function" class="headerlink" title="I/O Without a Render Callback Function"></a>I/O Without a Render Callback Function</h4><p>需要多个AudioUnit来处理的场景，使用AudioUnit链接各部分，不需要设置回调。</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/AudioUnit/audiounit2-2.png" alt=""></p>
+<h4 id="I-O-with-a-Render-Callback-Function"><a href="#I-O-with-a-Render-Callback-Function" class="headerlink" title="I/O with a Render Callback Function"></a>I/O with a Render Callback Function</h4><p>设置渲染回调的方式来处理输入输出的链接。</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/AudioUnit/audiounit2-3.png" alt=""></p>
+<h4 id="Output-Only-with-a-Render-Callback-Function"><a href="#Output-Only-with-a-Render-Callback-Function" class="headerlink" title="Output-Only with a Render Callback Function"></a>Output-Only with a Render Callback Function</h4><p>只有输出没有输入的场景，设置渲染回调来链接输出端。</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/AudioUnit/audiounit2-4.png" alt=""></p>
+<p>复杂的场景，需要设置多个渲染回调。同时需要多个AudioUnit来处理链接。</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/AudioUnit/audiounit2-5.png" alt=""></p>
+<h3 id="构建AudioUnit-app的流程"><a href="#构建AudioUnit-app的流程" class="headerlink" title="构建AudioUnit app的流程"></a>构建AudioUnit app的流程</h3><p>无论选择上面的哪种设计，构建app的基本流程如下：</p>
+<ul>
+<li><p>Configure your audio session.</p>
+</li>
+<li><p>Specify audio units.</p>
+</li>
+<li><p>Create an audio processing graph, then obtain the<br>audio units.</p>
+</li>
+<li><p>Configure the audio units.</p>
+</li>
+<li><p>Connect the audio unit nodes.</p>
+</li>
+<li><p>Provide a user interface.</p>
+</li>
+<li><p>Initialize and then start the audio processing graph.</p>
+</li>
+</ul>
+<h3 id="使用指定的AudioUnit"><a href="#使用指定的AudioUnit" class="headerlink" title="使用指定的AudioUnit"></a>使用指定的AudioUnit</h3><h4 id="Using-I-O-Units"><a href="#Using-I-O-Units" class="headerlink" title="Using I/O Units"></a>Using I/O Units</h4><ul>
+<li>Remote I/O Unit</li>
+</ul>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/AudioUnit/audiounit3-1.png" alt=""></p>
+<ul>
+<li><p>Voice-Processing I/O Unit</p>
+</li>
+<li><p>Generic Output Unit</p>
+</li>
+</ul>
+<h4 id="Using-Mixer-Units"><a href="#Using-Mixer-Units" class="headerlink" title="Using Mixer Units"></a>Using Mixer Units</h4><ul>
+<li>Multichannel Mixer Unit</li>
+</ul>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/AudioUnit/audiounit3-2.png" alt=""></p>
+<ul>
+<li>3D Mixer Unit</li>
+</ul>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/AudioUnit/audiounit3-3.png" alt=""></p>
+<h4 id="Using-Effect-Units"><a href="#Using-Effect-Units" class="headerlink" title="Using Effect Units"></a>Using Effect Units</h4><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/AudioUnit/audiounit3-4.png" alt=""></p>
+<h3 id="Identifier-Keys-for-Audio-Units"><a href="#Identifier-Keys-for-Audio-Units" class="headerlink" title="Identifier Keys for Audio Units"></a>Identifier Keys for Audio Units</h3><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/AudioUnit/audiounit3-5.png" alt=""></p>
+<p><a href="https://developer.apple.com/library/content/documentation/MusicAudio/Conceptual/AudioUnitHostingGuide_iOS/AudioUnitHostingFundamentals/AudioUnitHostingFundamentals.html" target="_blank" rel="noopener">参考文档</a></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/04/08/flv格式和seek原理/" itemprop="url">
                   flv格式和seek原理
                 </a>
@@ -1756,145 +1941,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/04/26/RTMP拉流播放详解/" itemprop="url">
-                  RTMP拉流播放详解
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-04-26T17:05:12+08:00" content="2017-04-26">
-              2017-04-26
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2017/04/26/RTMP拉流播放详解/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/04/26/RTMP拉流播放详解/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>前面已经介绍了RTMP推流的整个流程，今天我们再来梳理一下拉流端以及播放的整个过程。</p>
-<p>我们先来看一下拉流端整个流程的抓包数据，然后分析一下每一个数据包的具体内容。</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/rtmp拉流/rtmppull.png" alt=""></p>
-<p>从上面的抓包数据可以看出，和推流端的整个流程基本上是一致的，只是在connect结束之后有一点不一样的操作，推流端是发送publish命令，而拉流端发送的是play命令。</p>
-<h3 id="play"><a href="#play" class="headerlink" title="play"></a>play</h3><p>既然如此，那其他的数据包我在这里就不再一一分析，可以参考我之前写的<a href="http://llyblog.com/2017/03/24/RTMP推流流程详解/" target="_blank" rel="noopener">推流详解</a>这篇博客，现在我主要来解析一样play这个命令。</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/rtmp拉流/rtmpplay.png" alt=""></p>
-<p>结合下面的代码来说明一下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">//play</div><div class="line">- (void)sendPlay&#123;</div><div class="line"></div><div class="line">    RTMPChunk_0 metadata = &#123;0&#125;;</div><div class="line">    metadata.msg_stream_id = LLYStreamIDPlay;</div><div class="line">    metadata.msg_type_id = LLYMSGTypeID_INVOKE;</div><div class="line">    </div><div class="line">    NSMutableData *buff = [NSMutableData data];</div><div class="line">    [buff appendString:@&quot;play&quot;];</div><div class="line">    [buff appendDouble:(++_numOfInvokes)];</div><div class="line">    self.trackedCommands[@(_numOfInvokes)] = @&quot;play&quot;;</div><div class="line">    [buff appendByte:kAMFNull];</div><div class="line">    [buff appendString:_url.playPath];</div><div class="line">    </div><div class="line">    metadata.msg_length.data = (int)buff.length;</div><div class="line">    [self sendPacket:buff :metadata];</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>其实和publish命令差不多的 ，只是将关键字改为 play.</p>
-<h3 id="SetBufferTime"><a href="#SetBufferTime" class="headerlink" title="SetBufferTime"></a>SetBufferTime</h3><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/rtmp拉流/playsettime.png" alt=""></p>
-<p>代码如下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">- (void)sendSetBufferTime:(int)milliseconds&#123;</div><div class="line">    dispatch_sync(_packageQueue, ^&#123;</div><div class="line">        int streamId = 0;</div><div class="line">        </div><div class="line">        NSMutableData *data = [NSMutableData data];</div><div class="line">        [data appendByte:2];</div><div class="line">        [data appendByte24:0];</div><div class="line">        [data appendByte24:10];</div><div class="line">        [data appendByte:LLYMSGTypeID_PING];</div><div class="line">        [data appendBytes:(uint8_t*)&amp;streamId length:sizeof(int32_t)];</div><div class="line">        </div><div class="line">        [data appendByte16:3];</div><div class="line">        [data appendByte32:_streamID];</div><div class="line">        [data appendByte32:milliseconds];</div><div class="line">        </div><div class="line">        [self writeData:data];</div><div class="line">    &#125;);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>在收到play的回调消息，我们还需要设置一下发送时间，这一句很重要哦，设置不成功或者不设置的话服务器是不会给你推音视频的数据的。</p>
-<h3 id="视频流的解析"><a href="#视频流的解析" class="headerlink" title="视频流的解析"></a>视频流的解析</h3><p>ok 现在我们开始收到源源不断的视频流数据，那么我们怎么把他们解析成原始的数据格式播放出来呢，下面来分析一下这个过程。</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/rtmp拉流/rtmpvideo.png" alt=""></p>
-<p>如上图，我们先来看一下一帧视频流数据长啥样吧。</p>
-<p>首先是头部信息，在rtmp格式中已经详细的分析了，这里不再介绍。</p>
-<p>重点来看一下Body中的数据：</p>
-<h4 id="Control-0x17-keyframe-H-264"><a href="#Control-0x17-keyframe-H-264" class="headerlink" title="Control : 0x17(keyframe H.264)"></a>Control : 0x17(keyframe H.264)</h4><p>这个0X17是个啥呢，如果还记得推流时我们怎么封装数据的应该对这个有印象</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">body[index++] = 0x17;//RTMP Body Control FrameType:1表示key frame  CodecID:7: AVC</div></pre></td></tr></table></figure>
-<p>就是这行代码所表示的数据了。</p>
-<p>通过这个数据，我们就能分析当前帧是不是关键帧，需不需要解析里面的SPS和PPS信息。</p>
-<h4 id="video-data"><a href="#video-data" class="headerlink" title="video data"></a>video data</h4><p>这个里面就是我们想要的视频数据了，但是又并不全是我们想要的视频数据，因为我们在推流封装的时候，是根据AVC格式来，所以其实这个body data里面还有一部分AVC的数据，我们需要把这一部分的数据剔除掉，剩下的才是我们需要的原始的视频流数据（好复杂的感觉有木有）。</p>
-<p>先把代码贴上来</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div></pre></td><td class="code"><pre><div class="line">- (void)updateFrame&#123;</div><div class="line"></div><div class="line">    dispatch_sync(mDecodeQueue, ^&#123;</div><div class="line">        if(packetBuffer == NULL) &#123;</div><div class="line">            return ;</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        uint8_t avcType = packetBuffer[0];</div><div class="line">        long totalLength = packetSize;</div><div class="line">        </div><div class="line">        while (avcType == 0x17 || avcType == 0x27) &#123;</div><div class="line">            </div><div class="line">            uint8_t type = packetBuffer[1];</div><div class="line">            if (type == 0) &#123;</div><div class="line">                </div><div class="line">                //获取sps</div><div class="line">//                int spsnum = packetBuffer[10]&amp;0x1f;</div><div class="line">                int number_sps = 11;</div><div class="line">                int count_sps = 1;</div><div class="line">                int spsTotalLen = 0;</div><div class="line">                uint8_t *spsTmp;</div><div class="line">                </div><div class="line">//                if (count_sps &lt;= spsnum)</div><div class="line">                &#123;</div><div class="line">                    int spslen =(packetBuffer[number_sps]&amp;0x000000FF)&lt;&lt;8 | (packetBuffer[number_sps+1]&amp;0x000000FF);</div><div class="line">                    number_sps += 2;</div><div class="line">                    </div><div class="line">                    spsTmp = malloc(spslen + 4);</div><div class="line">                    memcpy(spsTmp, lyStartCode, 4);</div><div class="line">                    spsTotalLen += 4;</div><div class="line">                    </div><div class="line">                    memcpy(spsTmp+4,packetBuffer + number_sps , spslen);</div><div class="line">                    spsTotalLen += spslen;</div><div class="line">                    </div><div class="line">                    number_sps += spslen;</div><div class="line">                    </div><div class="line">                    totalLength -= number_sps;</div><div class="line">                    count_sps ++;</div><div class="line">                &#125;</div><div class="line">                [self decodeNalu:spsTmp withSize:spsTotalLen];</div><div class="line">                </div><div class="line">                packetBuffer += number_sps+1;</div><div class="line">                //获取pps</div><div class="line">//                int ppsnum = packetBuffer[number_sps]&amp;0x1f;</div><div class="line">                int number_pps = 0;</div><div class="line">                int count_pps = 1;</div><div class="line">                int ppsTotalLen = 0;</div><div class="line">                uint8_t *ppsTmp;</div><div class="line">//                if (count_pps &lt;= ppsnum)</div><div class="line">                &#123;</div><div class="line">                    int ppslen =(packetBuffer[number_pps]&amp;0x000000FF)&lt;&lt;8 | (packetBuffer[number_pps+1]&amp;0x000000FF);</div><div class="line">                    number_pps += 2;</div><div class="line">                    </div><div class="line">                    ppsTmp = malloc(ppslen + 4);</div><div class="line">                    memcpy(ppsTmp, lyStartCode, 4);</div><div class="line">                    ppsTotalLen += 4;</div><div class="line">                    memcpy(ppsTmp +  4,packetBuffer + number_pps,ppslen);</div><div class="line">                    ppsTotalLen += ppslen;</div><div class="line">                    number_pps += ppslen;</div><div class="line">                    </div><div class="line">                    totalLength -= number_pps;</div><div class="line">                    count_pps ++;</div><div class="line">                &#125;</div><div class="line">                [self decodeNalu:ppsTmp withSize:ppsTotalLen];</div><div class="line">                </div><div class="line">                packetBuffer += number_pps;</div><div class="line">                avcType = packetBuffer[0];</div><div class="line">            &#125;</div><div class="line">            else if(type == 1)&#123;</div><div class="line">                </div><div class="line">                BOOL isNalu = YES;</div><div class="line">                </div><div class="line">                //获取avc nalu</div><div class="line">                int len =0;</div><div class="line">                int num =5;</div><div class="line">                int naluTotalLen = 0;</div><div class="line">                </div><div class="line">                while (isNalu)</div><div class="line">                &#123;</div><div class="line">                    </div><div class="line">                    len = (packetBuffer[num]&amp;0x000000FF)&lt;&lt;24 | (packetBuffer[num+1]&amp;0x000000FF)&lt;&lt;16</div><div class="line">                    | (packetBuffer[num+2]&amp;0x000000FF)&lt;&lt;8 | (packetBuffer[num+3]&amp;0x000000FF);</div><div class="line">                    </div><div class="line">                    naluBuffer = malloc(len + 4);</div><div class="line">                    naluTotalLen += 4;</div><div class="line">                    naluTotalLen += len;</div><div class="line"></div><div class="line">                    memcpy(naluBuffer,packetBuffer + num,len + 4);</div><div class="line">                    </div><div class="line">                    num = num + len + 4;</div><div class="line">                    totalLength -= num;</div><div class="line">                    </div><div class="line">                    [self decodeNalu:naluBuffer withSize:naluTotalLen];</div><div class="line">                    packetBuffer += num;</div><div class="line">                    num = 0;</div><div class="line">                    naluTotalLen = 0;</div><div class="line">                    free(naluBuffer);</div><div class="line">                    </div><div class="line">                    //可能存在下一个NALU</div><div class="line">                    if (totalLength &gt; 4) &#123;</div><div class="line">                        avcType = packetBuffer[0];</div><div class="line">                        if (avcType == 0x17 || avcType == 0x27) &#123;</div><div class="line">                            isNalu = NO;</div><div class="line">                        &#125;</div><div class="line">                        else&#123;</div><div class="line">                            len = (packetBuffer[num]&amp;0x000000FF)&lt;&lt;24 | (packetBuffer[num+1]&amp;0x000000FF)&lt;&lt;16</div><div class="line">                            | (packetBuffer[num+2]&amp;0x000000FF)&lt;&lt;8 | (packetBuffer[num+3]&amp;0x000000FF);</div><div class="line">                            </div><div class="line">                            if (len &gt;= (totalLength - 4)) &#123;</div><div class="line">                                return;</div><div class="line">                            &#125;</div><div class="line">                        &#125;</div><div class="line">                    &#125;</div><div class="line">                    else&#123;</div><div class="line">                        return;</div><div class="line">                    &#125;</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">            </div><div class="line">        &#125;</div><div class="line">    &#125;);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>从最上面开始分析</p>
-<p>packetBuffer 即为上图中的RTMP Body数据，注意这里是剔除了RTMP Head的哦。</p>
-<p>怎么剔除Head可以参考我的demo中下面这个方法。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">- (void)parseData:(NSData *)data</div></pre></td></tr></table></figure>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">//RTMP Body Control FrameType:1表示key frame  CodecID:7: AVC</div><div class="line">uint8_t avcType = packetBuffer[0];</div></pre></td></tr></table></figure>
-<p>然后我们取出Control信息 它可能包括0x17或者是0x27,其中17是关键帧，27不是关键帧。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">//    IF AVCPacketType ==0 AVCDecoderConfigurationRecord（AVC sequence header）</div><div class="line">//    IF AVCPacketType == 1 One or more NALUs (Full frames are required)</div><div class="line"></div><div class="line">uint8_t type = packetBuffer[1];</div></pre></td></tr></table></figure>
-<p>然后是AVCType字段。</p>
-<p>如果Type = 0 ，我们需要取出的是SPS和PPS信息，如果没有这部分信息是无法将H.264文件解码的。</p>
-<p>当Type = 1，我们获取当前avc的NALU单元信息，这个数据就是我们需要显示的视频数据了。</p>
-<p>然后我把取到的数据用下面方法解码为CVPixelBufferRef数据进行显示(播放)。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div></pre></td><td class="code"><pre><div class="line">-(void) decodeNalu:(uint8_t *)frame withSize:(uint32_t)frameSize</div><div class="line">&#123;</div><div class="line">    //    NSLog(@&quot;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;开始解码&quot;);</div><div class="line">    int nalu_type = (frame[4] &amp; 0x1F);</div><div class="line">    CVPixelBufferRef pixelBuffer = NULL;</div><div class="line">    </div><div class="line">//    uint32_t nalSize = (uint32_t)(frameSize - 4);</div><div class="line">//    uint8_t *pNalSize = (uint8_t*)(&amp;nalSize);</div><div class="line">//    frame[0] = *(pNalSize + 3);</div><div class="line">//    frame[1] = *(pNalSize + 2);</div><div class="line">//    frame[2] = *(pNalSize + 1);</div><div class="line">//    frame[3] = *(pNalSize);</div><div class="line">    //传输的时候。关键帧不能丢数据 否则绿屏   B/P可以丢  这样会卡顿</div><div class="line">    switch (nalu_type)</div><div class="line">    &#123;</div><div class="line">        case 0x05:</div><div class="line">            //NSLog(@&quot;nalu_type:%d Nal type is IDR frame&quot;,nalu_type);  //关键帧</div><div class="line">            &#123;</div><div class="line">                uint32_t dataLength32 = htonl (frameSize - 4);</div><div class="line">                memcpy (frame, &amp;dataLength32, sizeof (uint32_t));</div><div class="line">                </div><div class="line">                [self initVideoToolBox];</div><div class="line">                pixelBuffer = [self decode:frame withSize:frameSize];</div><div class="line">                [self displayDecodedFrame:pixelBuffer];</div><div class="line">            &#125;</div><div class="line">            break;</div><div class="line">        case 0x07:</div><div class="line">            //NSLog(@&quot;nalu_type:%d Nal type is SPS&quot;,nalu_type);   //sps</div><div class="line">            mSPSSize = frameSize - 4;</div><div class="line">            mSPS = malloc(mSPSSize);</div><div class="line">            memcpy(mSPS, frame + 4, mSPSSize);</div><div class="line">            break;</div><div class="line">        case 0x08:</div><div class="line">        &#123;</div><div class="line">            //NSLog(@&quot;nalu_type:%d Nal type is PPS&quot;,nalu_type);   //pps</div><div class="line">            mPPSSize = frameSize - 4;</div><div class="line">            mPPS = malloc(mPPSSize);</div><div class="line">            memcpy(mPPS, frame + 4, mPPSSize);</div><div class="line">            break;</div><div class="line">        &#125;</div><div class="line">        default:</div><div class="line">        &#123;</div><div class="line">            //NSLog(@&quot;Nal type is B/P frame&quot;);//其他帧</div><div class="line">            &#123;</div><div class="line">                uint32_t dataLength32 = htonl (frameSize - 4);</div><div class="line">                memcpy (frame, &amp;dataLength32, sizeof (uint32_t));</div><div class="line">                </div><div class="line">                [self initVideoToolBox];</div><div class="line">                pixelBuffer = [self decode:frame withSize:frameSize];</div><div class="line">                [self displayDecodedFrame:pixelBuffer];</div><div class="line"></div><div class="line">            &#125;</div><div class="line">            break;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">//    if(pixelBuffer)</div><div class="line">//    &#123;</div><div class="line">//        dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">//            [self.mOpenGLView displayPixelBuffer:pixelBuffer];</div><div class="line">//            CVPixelBufferRelease(pixelBuffer);</div><div class="line">//        &#125;);</div><div class="line">//    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h4 id="播放"><a href="#播放" class="headerlink" title="播放"></a>播放</h4><p>这里我用的是苹果官网给的一个类AAPLEAGLLayer。</p>
-<p><a href="https://github.com/lilingyu0620/LLYRtmpDemo" target="_blank" rel="noopener">我是demo</a></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1940,7 +1986,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">59</span>
+              <span class="site-state-item-count">60</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
