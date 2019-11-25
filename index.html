@@ -355,6 +355,25 @@
 <li>继承关系中，实现关系是继承的抽象类，泛化关系是继承的非抽象类。</li>
 <li>依赖关系是动态关系，而关联关系是静态关系。</li>
 </ul>
+<h3 id="创建型设计模式"><a href="#创建型设计模式" class="headerlink" title="创建型设计模式"></a>创建型设计模式</h3><p>创建型设计模式主要用来创建相关对象，将创建和使用解耦，同时隐藏创建的细节等。创建型设计模式的优势是将原本硬编码的创建过程分散到其他类，使创建行为易于扩展。</p>
+<h4 id="Factory-Method（工厂方法）"><a href="#Factory-Method（工厂方法）" class="headerlink" title="Factory Method（工厂方法）"></a>Factory Method（工厂方法）</h4><p>工厂方法将对象创建的过程进行了封装，使用者不用关心具体返回的对象类型。在工厂方法中，父类负责定义创建对象的方法，而具体的创建逻辑则放到了子类中完成，这也方便了新类型的扩展，在不修改旧代码的情况下就能正常使用新的类型。</p>
+<p>工厂方法各类的关系大致如下图：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/FactoryMethod.jpg" alt=""></p>
+<h4 id="Abstract-Factory（抽象工厂）"><a href="#Abstract-Factory（抽象工厂）" class="headerlink" title="Abstract Factory（抽象工厂）"></a>Abstract Factory（抽象工厂）</h4><p>使用抽象工厂模式时，每个子工厂往往需要生产一个产品族的产品，而不单只生产一种产品。这是抽象工厂和工厂的主要区别。</p>
+<p>抽象工厂各类的关系大致如下图：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/AbatractFactory.jpg" alt=""></p>
+<p>其中，每个子工厂都至少生产了2类产品。而且这2类产品应该是有比较强的关联。比如Factory1是生产apple旗下的iPhone和iPad,而Factory2是生产华为旗下的P30和华为Pad。</p>
+<h4 id="Builder（生成器）"><a href="#Builder（生成器）" class="headerlink" title="Builder（生成器）"></a>Builder（生成器）</h4><p>生成器比较适合一些需要分步创建的对象，一个生成器会将对象创建过程中的所有需要步骤都抽象出来，并在子类中一一实现，并提供一个返回对象实例的方法。在使用生成器时，我们往往需要一个导演类去帮我们选择生成对象的步骤。</p>
+<p>生成器类图：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/Builder.jpg" alt=""></p>
+<p>对于一个比较复杂的对象，创建的过程可能依赖很多上下文，这种对象的创建就比较适合使用生成器来创建。下面是KFC点餐系统应用生成器模式创建订单的例子：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/KFCBuilder.jpg" alt=""></p>
+<h4 id="Prototype（原型）"><a href="#Prototype（原型）" class="headerlink" title="Prototype（原型）"></a>Prototype（原型）</h4><p>原型模式使用频率并不高，主要是这种模式比较奇葩，会先将对象创建一份在内存中，然后通过拷贝构造的方式生成一个新的对象并返回。</p>
+<p>原型模式的好处是它可以简化创建对象的过程，并将创建的细节隐藏。</p>
+<h4 id="Singleton（单例）"><a href="#Singleton（单例）" class="headerlink" title="Singleton（单例）"></a>Singleton（单例）</h4><p>单例模式原理简单，对于数据共享和同步是较好的实现方式，所以应用比较广泛。但是容易被滥用导致内存问题等。</p>
+<p>单例类图：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/Singleton.jpg" alt=""></p>
+<p>单例一旦创建了就不会被释放，所以除非必要，还是不要滥用。不能只图一时方便就选择一种并不适合的设计模式，这样其实是违背了设计模式的初衷。</p>
 
           
         
