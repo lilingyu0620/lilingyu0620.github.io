@@ -301,12 +301,30 @@
 <li>可复用</li>
 <li>易理解</li>
 </ul>
+<h4 id="设计模式如何解决问题"><a href="#设计模式如何解决问题" class="headerlink" title="设计模式如何解决问题"></a>设计模式如何解决问题</h4><ul>
+<li>寻找合适的对象</li>
+<li>决定对象的粒度</li>
+<li>指定对象接口</li>
+<li>描述对象的实现</li>
+<li>运用复用机制</li>
+<li>关联运行时刻和编译时刻的结构</li>
+<li>设计应支持变化</li>
+</ul>
+<h4 id="怎样使用设计模式"><a href="#怎样使用设计模式" class="headerlink" title="怎样使用设计模式"></a>怎样使用设计模式</h4><ul>
+<li>1.大致浏览一遍模式</li>
+<li>2.回头研究结构部分，参与者部分和协作部分</li>
+<li>3.看代码示例部分，看看这个模式代码的具体例子</li>
+<li>4.选择模式参与者的名字，使它们在应用上下文中有意义</li>
+<li>5.定义类</li>
+<li>6.定义模式中专用于应用的操作名称</li>
+<li>7.实现执行模式中责任和协作的操作</li>
+</ul>
 <h4 id="设计模式的分类"><a href="#设计模式的分类" class="headerlink" title="设计模式的分类"></a>设计模式的分类</h4><h5 id="创建型"><a href="#创建型" class="headerlink" title="创建型"></a>创建型</h5><ul>
-<li>Abstract Factory</li>
-<li>Factory Method</li>
-<li>Builder</li>
-<li>Prototype</li>
-<li>Singleton</li>
+<li>Abstract Factory（抽象工厂）</li>
+<li>Factory Method（工厂方法）</li>
+<li>Builder（生成器）</li>
+<li>Prototype（原型）</li>
+<li>Singleton（单例）</li>
 </ul>
 <h5 id="结构型"><a href="#结构型" class="headerlink" title="结构型"></a>结构型</h5><ul>
 <li>Adapter</li>
@@ -330,23 +348,12 @@
 <li>Strategy</li>
 <li>Visitor</li>
 </ul>
-<h4 id="设计模式如何解决问题"><a href="#设计模式如何解决问题" class="headerlink" title="设计模式如何解决问题"></a>设计模式如何解决问题</h4><ul>
-<li>寻找合适的对象</li>
-<li>决定对象的粒度</li>
-<li>指定对象接口</li>
-<li>描述对象的实现</li>
-<li>运用复用机制</li>
-<li>关联运行时刻和编译时刻的结构</li>
-<li>设计应支持变化</li>
-</ul>
-<h4 id="怎样使用设计模式"><a href="#怎样使用设计模式" class="headerlink" title="怎样使用设计模式"></a>怎样使用设计模式</h4><ul>
-<li>1.大致浏览一遍模式</li>
-<li>2.回头研究结构部分，参与者部分和协作部分</li>
-<li>3.看代码示例部分，看看这个模式代码的具体例子</li>
-<li>4.选择模式参与者的名字，使它们在应用上下文中有意义</li>
-<li>5.定义类</li>
-<li>6.定义模式中专用于应用的操作名称</li>
-<li>7.实现执行模式中责任和协作的操作</li>
+<h4 id="UML类图关系"><a href="#UML类图关系" class="headerlink" title="UML类图关系"></a>UML类图关系</h4><p>在详解各个设计模式之前，先来复现一下UML中怎么表示类的各种关系。</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/UML类的关系.png" alt=""></p>
+<ul>
+<li>聚合关系是非强依赖的，而组合关系是强依赖的。</li>
+<li>继承关系中，实现关系是继承的抽象类，泛化关系是继承的非抽象类。</li>
+<li>依赖关系是动态关系，而关联关系是静态关系。</li>
 </ul>
 
           
