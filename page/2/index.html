@@ -229,6 +229,127 @@
             
               
                 
+                <a class="post-title-link" href="/2019/08/22/iOS性能检测工具总结/" itemprop="url">
+                  iOS性能检测工具总结
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-08-22T17:51:37+08:00" content="2019-08-22">
+              2019-08-22
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2019/08/22/iOS性能检测工具总结/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2019/08/22/iOS性能检测工具总结/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>作为一个资深的iOS开发，除了专业能力要过硬，还应该具有一些产品scene,关注一些技术之外的内容，学会发现问题然后利用技术去解决这些问题。比如用户体验问题，用户在使用app的过程中，可能会遇到哪些体验不佳的问题，我们要做的就是利用技术手段找出这些问题，然后一一解决，尽我们所能为用户提供最后的用户体验。排除交互设计本身外，最可能出现用户体验问题的原因就是手机在性能上出现了一些瓶颈，因此，找出这些性能瓶颈的时间节点和当前实时数据能很大程度上帮助我们定位到最终原因。</p>
+<p>基于以上的出发点，我们就需要开发一套自己的性能检测工具和上报机制，在app出现性能问题时拿到一手的数据，帮助我们定位问题和解决问题。</p>
+<h3 id="工具介绍"><a href="#工具介绍" class="headerlink" title="工具介绍"></a>工具介绍</h3><p>app的性能主要受两部分内容的影响，一个是手机本身的硬件设备，还有一个就是当前网络状况。这里分两部分分别介绍检测工具的功能点。</p>
+<h4 id="设备性能"><a href="#设备性能" class="headerlink" title="设备性能"></a>设备性能</h4><h5 id="fps"><a href="#fps" class="headerlink" title="fps"></a>fps</h5><p>fps主要用来检测当前页面的卡顿情况，如果fps降到50帧以下，页面卡顿就会比较明显，这个时候就需要具体再去分析卡顿原因。</p>
+<h5 id="cpu-usage"><a href="#cpu-usage" class="headerlink" title="cpu usage"></a>cpu usage</h5><p>cpu利用率主要有三个可以参考的指标，分别是用户使用率，系统使用率和空闲率。</p>
+<h5 id="disk"><a href="#disk" class="headerlink" title="disk"></a>disk</h5><p>磁盘空间有已用空间和可用空间。</p>
+<h5 id="memory"><a href="#memory" class="headerlink" title="memory"></a>memory</h5><p>内存使用情况有总内存，总可用内存和当前app已用内存。这里都是指的物理内存。因为虚拟内存的检测并没有什么意义。</p>
+<h5 id="battery"><a href="#battery" class="headerlink" title="battery"></a>battery</h5><p>当前电量。</p>
+<p>以上这些指标，大部分需要调用mach内核的相关api才能成功获取，而且需要轮询获取才能保证数据的时效性。</p>
+<h4 id="网络性能"><a href="#网络性能" class="headerlink" title="网络性能"></a>网络性能</h4><h5 id="DNS"><a href="#DNS" class="headerlink" title="DNS"></a>DNS</h5><p>包括当前域名对应的ip,解析总耗时和失败情况。</p>
+<h5 id="Ping"><a href="#Ping" class="headerlink" title="Ping"></a>Ping</h5><p>当前网络延时，一个RTT时长。</p>
+<h5 id="Reachability"><a href="#Reachability" class="headerlink" title="Reachability"></a>Reachability</h5><p>当前网络状态，包括wifi，4G或者无网。</p>
+<h5 id="Metrics-iOS10"><a href="#Metrics-iOS10" class="headerlink" title="Metrics(iOS10)"></a>Metrics(iOS10)</h5><p>Metrics包括了下面这张图中的相关时长：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/iOS性能监控工具/zfgdZ.png" alt=""></p>
+<p>iOS10以后，可以直接从URLSession的回调中拿到这些耗时指标。</p>
+<h5 id="TraceRoute"><a href="#TraceRoute" class="headerlink" title="TraceRoute"></a>TraceRoute</h5><p>一个完整的请求的路径，包括数据经过的每一个节点和耗时。该数据可以完整反映出一个数据报的传输过程。</p>
+<h5 id="Traffic-I-O"><a href="#Traffic-I-O" class="headerlink" title="Traffic(I/O)"></a>Traffic(I/O)</h5><p>网络I/O</p>
+<h3 id="上报格式"><a href="#上报格式" class="headerlink" title="上报格式"></a>上报格式</h3><p>为了方便上报和数据分析，需要统一各项数据的上报格式，以上面的Metrics为例，将各项数据按统一的格式一同上报，定义格式如下：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/iOS性能监控工具/Metrics.png" alt=""></p>
+<p>上报格式如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">NetworkMetrics: 450,50,80,60,100,120,Network Load</div><div class="line">NetworkMetrics: 220,0,0,0,100,120,Loacl Cache</div></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2019/05/29/操作系统原理-内存管理/" itemprop="url">
                   操作系统原理--内存管理
                 </a>
@@ -1993,283 +2114,11 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/08/09/HLS协议详解/" itemprop="url">
-                  HLS协议详解
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-08-09T15:54:42+08:00" content="2018-08-09">
-              2018-08-09
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2018/08/09/HLS协议详解/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/08/09/HLS协议详解/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="HLS协议详解"><a href="#HLS协议详解" class="headerlink" title="HLS协议详解"></a>HLS协议详解</h3><p>HLS （HTTP Live Streaming）, 是由 Apple 公司实现的基于 HTTP 的媒体流传输协议。Apple 的全系列产品支持，由于 HLS 是苹果提出的， 所以在 Apple 的全系列产品包括 iphone、 ipad、safari 都不需要安装任何插件就可以原生支持播放 HLS， 现在Android 也加入了对 HLS 的支持。但PC端目前除了Microsoft Edge外，Chrome、Firefox等浏览器均不支持该协议的播放。</p>
-<p>HLS跟 DASH 协议的原理非常类似，<strong>通过将整条流切割成一个小的可以通过 HTTP 下载的媒体文件，然后提供一个配套的媒体列表文件给客户端，让客户端顺序地拉取这些媒体文件播放, 来实现看上去是在播放一条流的效果。</strong> HLS 目前广泛地应用于点播和直播领域</p>
-<h4 id="HLS-的优势"><a href="#HLS-的优势" class="headerlink" title="HLS 的优势"></a>HLS 的优势</h4><ul>
-<li><p>客户端支持简单，只需要支持 HTTP 请求即可，HTTP 协议无状态，只需要按顺序下载媒体片段即可。</p>
-</li>
-<li><p>使用 HTTP 协议网络兼容性好， HTTP 数据包也可以方便地通过防火墙或者代理服务器，CDN 支持良好。</p>
-</li>
-<li><p>自带多码率自适应，Apple 在提出 HLS 时，就已经考虑了码率自适应的问题。</p>
-</li>
-</ul>
-<h4 id="HLS-的劣势"><a href="#HLS-的劣势" class="headerlink" title="HLS 的劣势"></a>HLS 的劣势</h4><ul>
-<li><p>相比 RTMP 这类长连接协议，延时较高，难以用到互动直播场景。</p>
-</li>
-<li><p>对于点播服务来说，由于 TS 切片通常较小，海量碎片在文件分发、一致性缓存、存储等方面都有较大挑战。</p>
-</li>
-</ul>
-<h3 id="协议详解"><a href="#协议详解" class="headerlink" title="协议详解"></a>协议详解</h3><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/hls01.png" alt=""></p>
-<p>上图可以看出，HLS总共有三个部分: Serve、CDN、Client。HLS 协议的主要内容是关于 M3U8 这个文本协议，其实生成与解析都非常简单，示例如下：</p>
-<p>简单的Media Playlist:</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/hls02.png" alt=""></p>
-<p>包含多种比特率的 Master Playlist:</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/hls03.png" alt=""></p>
-<ul>
-<li>HLS 通过 URI(RFC3986) 指向的一个 Playlist 来表示一个媒体流.</li>
-<li>一个 Playlist 可以是一个 Media Playlist 或者 Master Playlist, 使用 UTF-8 编码的文本文件, 包含一些 URI 跟描述性的 tags.</li>
-<li>一个 Media Playlist 包含一个 Media Segments 列表,当顺序播放时, 能播放整个完整的流.</li>
-<li>要想播放这个 Playlist, 客户端需要首先下载他, 然后播放里面的每一个 Media Segment.</li>
-<li>更加复杂的情况是, Playlist 是一个 Master Playlist, 包含一个 Variant Stream 集合, 通常每个 Variant Stream 里面是同一个流的多个不同版本(如: 分辨率, 码率不同).</li>
-</ul>
-<h4 id="HLS-Media-Segments"><a href="#HLS-Media-Segments" class="headerlink" title="HLS Media Segments"></a>HLS Media Segments</h4><ul>
-<li>每一个 Media Segment 通过一个 URI 指定, 可能包含一个 byte range.</li>
-<li>每一个 Media Segment 的 duration 通过 EXTINF tag 指定.</li>
-<li>每一个 Media Segment 有一个唯一的整数 Media Segment Number.</li>
-<li>有些媒体格式需要一个 format-specific sequence 来初始化一个 parser, 在 Media Segment 被 parse 之前. 这个字段叫做 Media Initialization Section, 通过 EXT-X-MAP tag 来指定. </li>
-</ul>
-<h4 id="支持的Media-Segment格式"><a href="#支持的Media-Segment格式" class="headerlink" title="支持的Media Segment格式"></a>支持的Media Segment格式</h4><h5 id="MPEG-2-Transport-Streams"><a href="#MPEG-2-Transport-Streams" class="headerlink" title="MPEG-2 Transport Streams"></a>MPEG-2 Transport Streams</h5><ul>
-<li>即最常见的 TS 文件.</li>
-<li>RFC: ISO_13818.</li>
-<li>Media Initialization Section: PAT(Program Association Table) 跟 PMT(Program Map Table).</li>
-<li>每个 TS segment 必须值含一个 MPEG-2 Program.</li>
-<li>每个 TS segment 包含一个 PAT 和 PMT, 最好在 segment 的开始处, 或者通过一个 EXT-X-MAP tag 来指定.</li>
-</ul>
-<h5 id="Fragmented-MPEG-4"><a href="#Fragmented-MPEG-4" class="headerlink" title="Fragmented MPEG-4"></a>Fragmented MPEG-4</h5><ul>
-<li>即常提到的 fMP4.</li>
-<li>RFC: ISOBMFF.</li>
-<li>Media Initialization Section: ftyp box(包含一个高于 ios6 的 brand), ftyp box 必须紧跟在 moov box 之后. moov box 必须包含一个 trak box(对于每个 fMP4 segment 里面的 traf box, 包含匹配的 track_ID). 每个 trak box 应该包含一个 sample table, 但是他的 sample count 必须为 0. mvhd box 跟 tkhd 的 duration 必须为 0. mvex box 必须跟在上一个 trak box 后面.</li>
-<li>不像普通的 MP4 文件包含一个 moov box(包含 sample tables) 和一个 mdat box(包含对应的 samples), 一个 fMP4 包含一个 moof box (包含 sample table 的子集), 和一个 mdat box(包含对应的 samples).</li>
-<li>在每一个 fMP4 segment 里面, 每一个 traf box 必须包含一个 tfdt box, fMP4 segment 必须使用 movie-fragment relative addressing. fMP4 segments 绝对不能使用外部的 data references.</li>
-<li>每一个 fMP4 segment 必须有一个 EXT-X-MAP tag.</li>
-</ul>
-<h5 id="Packed-Audio"><a href="#Packed-Audio" class="headerlink" title="Packed Audio"></a>Packed Audio</h5><ul>
-<li>一个 Packed Audio Segment 包含编码的 audio samples 和 ID3 tags. 简单的打包到一起, 包含最小的 framing, 并且没有 per-sample timestamp.</li>
-<li>支持的 Packed Audio: AAC with ADTS framing [ISO_13818_7], MP3 [ISO_13818_3], AC-3 [AC_3], Enhanced AC-3 [AC_3].</li>
-<li>一个 Packed Audio Segment 没有 Media Initialization Section.</li>
-<li>每一个 Packed Audio Segment 必须在他的第一个 sample 指定 timestamp 通过一个 ID3 PRIV tag.</li>
-<li>ID3 PRIV owner identifier 必须是 com.apple.streaming.transportStreamTimestamp.</li>
-<li>ID3 payload 必须是一个 33-bit MPEG-2 Program Elementary Stream timestamp 的大端 eight-octet number, 高 31 为设置为 0.</li>
-</ul>
-<h5 id="WebVTT"><a href="#WebVTT" class="headerlink" title="WebVTT"></a>WebVTT</h5><ul>
-<li>一个 WebVTT Segment 是一个 WebVTT 文件的一个 section, WebVTT Segment 包含 subtitles.</li>
-<li>Media Initialization Section: WebVTT header.</li>
-<li>每一个 WebVTT Segment 必须有以一个 WebVTT header 开始, 或者有一个 EXT-X-MAP tag 来指定.</li>
-<li>每一个 WebVTT header 应该有一个 X-TIMESTAMP-MAP 来保证音视频同步.</li>
-</ul>
-<h4 id="HLS-Playlists"><a href="#HLS-Playlists" class="headerlink" title="HLS Playlists"></a>HLS Playlists</h4><ul>
-<li>Playlist 文件的格式是起源于 M3U, 并且继承两个 tag: EXTM3U 和 EXTINF</li>
-<li>下面的 tags 通过 BNF-style 语法来指定.</li>
-<li>一个 Playlist 文件必须通过 URI(.m3u8 或 m3u) 或者 HTTP Content-Type 来识别(application/vnd.apple.mpegurl 或 audio/mpegurl).</li>
-<li>换行符可以用 \n 或者 \r\n.</li>
-<li>以 # 开头的是 tag 或者注释, 以 #EXT 开头的是 tag, 其余的为注释, 在解析时应该忽略.</li>
-<li>Playlist 里面的 URI 可以用绝对地址或者相对地址, 如果使用相对地址, 那么是相对于 Playlist 文件的地址.</li>
-</ul>
-<h5 id="Attribute-Lists"><a href="#Attribute-Lists" class="headerlink" title="Attribute Lists"></a>Attribute Lists</h5><ul>
-<li>有的 tags 的值是 Attribute Lists.</li>
-<li>一个 Attribute List 是一个用逗号分隔的 attribute/value 对列表.</li>
-<li>格式为: AttributeName=AttributeValue.</li>
-</ul>
-<h5 id="Basic-Tags"><a href="#Basic-Tags" class="headerlink" title="Basic Tags"></a>Basic Tags</h5><p>Basic Tags 可以用在 Media Playlist 和 Master Playlist 里面.</p>
-<ul>
-<li>EXTM3U: 必须在文件的第一行, 标识是一个 Extended M3U Playlist 文件.</li>
-<li>EXT-X-VERSION: 表示 Playlist 兼容的版本.</li>
-</ul>
-<h5 id="Media-Segment-Tags"><a href="#Media-Segment-Tags" class="headerlink" title="Media Segment Tags"></a>Media Segment Tags</h5><p>每一个 Media Segment 通过一系列的 Media Segment tags 跟一个 URI 来指定. 有的 Media Segment tags 只应用与下一个 segment, 有的则是应用所有下面的 segments. 一个 Media Segment tag 只能出现在 Media Playlist 里面.</p>
-<ul>
-<li>EXTINF: 用于指定 Media Segment 的 duration</li>
-<li>EXT-X-BYTERANGE: 用于指定 URI 的 sub-range</li>
-<li>EXT-X-DISCONTINUITY: 表示不连续.</li>
-<li>EXT-X-KEY: 表示 Media Segment 已加密, 该值用于解密.</li>
-<li>EXT-X-MAP: 用于指定 Media Initialization Section.</li>
-<li>EXT-X-PROGRAM-DATE-TIME: 和 Media Segment 的第一个 sample 一起来确定时间戳.</li>
-<li>EXT-X-DATERANGE: 将一个时间范围和一组属性键值对结合到一起.</li>
-</ul>
-<h5 id="Media-Playlist-Tags"><a href="#Media-Playlist-Tags" class="headerlink" title="Media Playlist Tags"></a>Media Playlist Tags</h5><p>Media Playlist tags 描述 Media Playlist 的全局参数. 同样地, Media Playlist tags 只能出现在 Media Playlist 里面.</p>
-<ul>
-<li>EXT-X-TARGETDURATION: 用于指定最大的 Media Segment duration.</li>
-<li>EXT-X-MEDIA-SEQUENCE: 用于指定第一个 Media Segment 的 Media Sequence Number.</li>
-<li>EXT-X-DISCONTINUITY-SEQUENCE: 用于不同 Variant Stream 之间同步.</li>
-<li>EXT-X-ENDLIST: 表示结束.</li>
-<li>EXT-X-PLAYLIST-TYPE: 可选, 指定整个 Playlist 的类型.</li>
-<li>EXT-X-I-FRAMES-ONLY: 表示每个 Media Segment 描述一个单一的 I-frame.</li>
-</ul>
-<h5 id="Master-Playlist-Tags"><a href="#Master-Playlist-Tags" class="headerlink" title="Master Playlist Tags"></a>Master Playlist Tags</h5><p>Master Playlist tags 定义 Variant Streams, Renditions 和 其他显示的全局参数. Master Playlist tags 只能出现在 Master Playlist 中.</p>
-<ul>
-<li>EXT-X-MEDIA: 用于关联同一个内容的多个 Media Playlist 的多种 renditions.</li>
-<li>EXT-X-STREAM-INF: 用于指定一个 Variant Stream.</li>
-<li>EXT-X-I-FRAME-STREAM-INF: 用于指定一个 Media Playlist 包含媒体的 I-frames.</li>
-<li>EXT-X-SESSION-DATA: 存放一些 session 数据.</li>
-<li>EXT-X-SESSION-KEY: 用于解密.</li>
-</ul>
-<h5 id="Media-or-Master-Playlist-Tags"><a href="#Media-or-Master-Playlist-Tags" class="headerlink" title="Media or Master Playlist Tags"></a>Media or Master Playlist Tags</h5><p>这里的 tags 可以出现在 Media Playlist 或者 Master Playlist 中. 但是如果同时出现在同一个 Master Playlist 和 Media Playlist 中时, 必须为相同值.</p>
-<ul>
-<li>EXT-X-INDEPENDENT-SEGMENTS: 表示每个 Media Segment 可以独立解码.</li>
-<li>EXT-X-START: 标识一个优选的点来播放这个 Playlist.</li>
-</ul>
-<h3 id="服务器端与客户端逻辑"><a href="#服务器端与客户端逻辑" class="headerlink" title="服务器端与客户端逻辑"></a>服务器端与客户端逻辑</h3><p>以下流程仅供参考, 其实不同的播放器客户端以及服务器端的拉取规则都有很多细节差异.</p>
-<h4 id="服务器端逻辑"><a href="#服务器端逻辑" class="headerlink" title="服务器端逻辑"></a>服务器端逻辑</h4><ul>
-<li>将媒体源切片成 Media Segment, 应该优先从可以高效解码的时间点来进行切片(如: I-frame).</li>
-<li>为每一个 Media Segment 生成 URI.</li>
-<li>Server 需要支持 “gzip” 方式压缩文本内容.</li>
-<li>创建一个 Media Playlist 索引文件, EXT-X-VERSION 不要高于他需要的版本, 来提供更好的兼容性.</li>
-<li>Server 不能随便修改 Media Playlist, 除了 Append 文本到文件末尾, 按顺序移除 Media Segment URIs, 增长 EXT-X-MEDIA-SEQUENCE 和 EXT-X-DISCONTINUITY-SEQUENCE, 添加 EXT-X-ENDLIST 到文件尾.</li>
-<li>在最后添加 EXT-X-ENDLIST tag, 来减少 Client reload Playlist 的次数.</li>
-<li>注意点播与直播服务器不同的地方是, 直播的 m3u8 文件会不断更新, 而点播的 m3u8 文件是不会变的, 只需要客户端在开始时请求一次即可.</li>
-</ul>
-<h4 id="客户端逻辑"><a href="#客户端逻辑" class="headerlink" title="客户端逻辑"></a>客户端逻辑</h4><ul>
-<li>客户端通过 URI 获取 Playlist. 如果是 Master Playlist, 客户端可以选择一个 Variant Stream 来播放.</li>
-<li>客户端检查 EXT-X-VERSION 版本是否满足.</li>
-<li>客户端应该忽略不可识别的 tags, 忽略不可识别的属性键值对.</li>
-<li>加载 Media Playlist file.</li>
-<li>播放 Media Playlist file.</li>
-<li>重加载 Media Playlist file.</li>
-<li>决定下一次要加载的 Media Segment.</li>
-</ul>
-<h3 id="HLS优化技术"><a href="#HLS优化技术" class="headerlink" title="HLS优化技术"></a>HLS优化技术</h3><p>由于客户端每次请求 TS 或 M3U8 有可能都是一个新的连接请求，所以,我们无法有效的标识客户端，一旦出现问题，基本无法有效的定位问题，因此一般工业级的服务器都会对传统的 HLS 做一些改进。</p>
-<h4 id="302"><a href="#302" class="headerlink" title="302"></a>302</h4><p>首先在客户端第一次进行拉流请求的时候，服务器会做一个302的跳转。</p>
-<h4 id="uuid"><a href="#uuid" class="headerlink" title="uuid"></a>uuid</h4><p>在302跳转后产生的新的url上，服务器会给url加上一个uuid，用来定位可能的问题。</p>
-<h3 id="TS文件详解"><a href="#TS文件详解" class="headerlink" title="TS文件详解"></a>TS文件详解</h3><p>m3u8只是一个传输格式，一个典型的m3u8文件，最终的音视频数据流都是封装在.ts文件中，ts文件的全称是<strong>MPEG-2 Transport Streams</strong>，下面来分析一下这个文件的具体结构。</p>
-<h4 id="文件结构"><a href="#文件结构" class="headerlink" title="文件结构"></a>文件结构</h4><p>视频编码主要格式是h264/mpeg4,音频编码格式主要是acc/mp3</p>
-<p>ts文件分为三层：</p>
-<ul>
-<li>ts(TransportStream)主要是音视频数据</li>
-<li>pes(PacketElementalStream)在音视频数据（ts）上加了时间戳等数据说明信息</li>
-<li>es(ElementaryStream)在（pes）上加入数据流的识别和传输必须信息</li>
-</ul>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/hlsts.png" alt=""></p>
-<p>下面来分析一下每一层具体的格式。</p>
-<h4 id="ts-TransportStream"><a href="#ts-TransportStream" class="headerlink" title="ts(TransportStream)"></a>ts(TransportStream)</h4><p>ts数据大小固定为188个字节，ts又分为三个组成部分，分别是 <strong>ts header</strong>,<strong>adaptation field</strong>和<strong>payload</strong>.<br>其中ts header固定为4个字节，adaptation field可能存在也可能不存在，主要作用是给不足188字节的数据做填充，payload是pes数据。</p>
-<h5 id="ts-header"><a href="#ts-header" class="headerlink" title="ts header"></a>ts header</h5><p>ts header中包含一下字段：</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/hlstsheader.png" alt=""></p>
-<p>ts层的内容是通过<strong>pid</strong>值来标识的，主要内容包括：PAT表、PMT表、音频流、视频流。解析ts流要先找到PAT表，只要找到PAT就可以找到PMT，然后就可以找到音视频流了。<strong>PAT表的pid值固定为0</strong>。PAT表和PMT表需要定期插入ts流，因为用户随时可能加入ts流，这个间隔比较小，通常每隔几个视频帧就要加入PAT和PMT。PAT和PMT表是必须的，还可以加入其它表如SDT（业务描述表）等，不过hls流只要有PAT和PMT就可以播放了。</p>
-<h5 id="adaptation-field"><a href="#adaptation-field" class="headerlink" title="adaptation field"></a>adaptation field</h5><p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/tsadaptation.png" alt=""></p>
-<p>自适应区的长度要包含传输错误指示符标识的一个字节。pcr是节目时钟参考，pcr、dts、pts都是对同一个系统时钟的采样值，pcr是递增的，因此可以将其设置为dts值，音频数据不需要pcr。如果没有字段，ipad是可以播放的，但vlc无法播放。打包ts流时PAT和PMT表是没有adaptation field的，不够的长度直接补0xff即可。视频流和音频流都需要加adaptation field，通常加在一个帧的第一个ts包和最后一个ts包里，中间的ts包不加。</p>
-<h5 id="PAT-amp-PMT"><a href="#PAT-amp-PMT" class="headerlink" title="PAT &amp; PMT"></a>PAT &amp; PMT</h5><p>这2个类型都是ts的一种，通过pid来区分。</p>
-<p><strong>PAT主要的作用就是指明了PMT表的pid值</strong>，下图是PAT包含的字段：</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/tspat.png" alt=""></p>
-<p><strong>PMT主要的作用就是指明了音视频流的pid值</strong>，下图是PMT包含的字段：</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/tspmt.png" alt=""></p>
-<h4 id="pes-PacketElementalStream"><a href="#pes-PacketElementalStream" class="headerlink" title="pes(PacketElementalStream)"></a>pes(PacketElementalStream)</h4><p>pes层是在每一个视频/音频帧上加入了时间戳等信息，pes包内容很多，我们只留下最常用的字段，如下：</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/hlspes.png" alt=""></p>
-<p><strong>pts是显示时间戳</strong>、<strong>dts是解码时间戳</strong>，视频数据两种时间戳都需要，音频数据的pts和dts相同，所以只需要pts。<strong>有pts和dts两种时间戳是B帧引起的</strong>，I帧和P帧的pts等于dts。如果一个视频没有B帧，则pts永远和dts相同。从文件中顺序读取视频帧，取出的帧顺序和dts顺序相同。dts算法比较简单，初始值 + 增量即可，pts计算比较复杂，需要在dts的基础上加偏移量。</p>
-<p>音频的pes中只有pts（同dts），视频的I、P帧两种时间戳都要有，视频B帧只要pts（同dts）。打包pts和dts就需要知道视频帧类型，但是通过容器格式我们是无法判断帧类型的，必须解析h.264内容才可以获取帧类型。</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/HLS/ptsdts.png" alt=""></p>
-<p>点播视频dts算法：</p>
-<p>dts = 初始值 + 90000 / video_frame_rate，初始值可以随便指定，但是最好不要取0，video_frame_rate就是帧率，比如23、30。</p>
-<p>pts和dts是以timescale为单位的，1s = 90000 time scale , 一帧就应该是90000/video_frame_rate 个timescale。</p>
-<p>用一帧的timescale除以采样频率就可以转换为一帧的播放时长</p>
-<p>点播音频dts算法：</p>
-<p>dts = 初始值 + (90000 <em> audio_samples_per_frame) / audio_sample_rate，audio_samples_per_frame这个值与编解码相关，aac取值1024，mp3取值1158，audio_sample_rate是采样率，比如24000、41000。AAC一帧解码出来是每声道1024个sample，也就是说一帧的时长为1024/sample_rate秒。所以每一帧时间戳依次0，1024/sample_rate，…，1024</em>n/sample_rate秒。</p>
-<p>直播视频的dts和pts应该直接用直播数据流中的时间，不应该按公式计算。</p>
-<h4 id="es-ElementaryStream"><a href="#es-ElementaryStream" class="headerlink" title="es(ElementaryStream)"></a>es(ElementaryStream)</h4><p>es层指的就是音视频数据，我们只介绍h.264视频和aac音频。</p>
-<h5 id="h-264"><a href="#h-264" class="headerlink" title="h.264"></a>h.264</h5><p>打包h.264数据我们必须给视频数据加上一个nalu（Network Abstraction Layer unit），nalu包括nalu header和nalu type，nalu header固定为0x00000001（帧开始）或0x000001（帧中）。h.264的数据是由slice组成的，slice的内容包括：视频、sps、pps等。nalu type决定了后面的h.264数据内容。</p>
-<p>对h264格式不太了解可以参考<a href="http://llyblog.com/2017/03/16/H-264文件结构学习笔记/" target="_blank" rel="noopener">h.264文件结构学习笔记</a></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/6/">6</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/7/">7</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -2310,7 +2159,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">60</span>
+              <span class="site-state-item-count">61</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

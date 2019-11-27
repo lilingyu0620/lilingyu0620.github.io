@@ -229,6 +229,119 @@
             
               
                 
+                <a class="post-title-link" href="/2060/11/27/记录自己写的线上bug/" itemprop="url">
+                  记录自己写的线上bug
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2060-11-27T16:17:25+08:00" content="2060-11-27">
+              2060-11-27
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2060/11/27/记录自己写的线上bug/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2060/11/27/记录自己写的线上bug/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="给NSDictionary设置nil值导致线上崩溃"><a href="#给NSDictionary设置nil值导致线上崩溃" class="headerlink" title="给NSDictionary设置nil值导致线上崩溃"></a>给NSDictionary设置nil值导致线上崩溃</h3><h4 id="崩溃描述"><a href="#崩溃描述" class="headerlink" title="崩溃描述"></a>崩溃描述</h4><p>这个问题是昨天新版本上线后firebase开始报的，当时正在扫线上的崩溃问题（因为老板注意到我们的崩溃率比其他产品线高很多），所以在崩溃刚出现时就发现了。崩溃原因并不复杂，以下是出现崩溃的代码片段：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">- (void)p_recordMetrics:(NSURLSessionTaskMetrics *)metrics&#123;</div><div class="line">    </div><div class="line">    if (metrics.transactionMetrics &gt; 0) &#123;</div><div class="line">        </div><div class="line">        NSMutableDictionary * track = [NSMutableDictionary dictionary];</div><div class="line">    </div><div class="line">        NSURLSessionTaskTransactionMetrics *tm = metrics.transactionMetrics.lastObject;</div><div class="line">        [track setObject:@(metrics.taskInterval.duration * 1000) forKey:@&quot;duration&quot;];</div><div class="line">        [track setObject:tm.request.URL.absoluteString forKey:@&quot;uri&quot;];</div><div class="line"></div><div class="line">        NSTimeInterval domain = [tm.domainLookupEndDate timeIntervalSinceDate:tm.domainLookupStartDate] * 1000;</div><div class="line">        NSTimeInterval connect = [tm.connectEndDate timeIntervalSinceDate:tm.connectStartDate] * 1000;</div><div class="line">        NSTimeInterval tls = [tm.secureConnectionEndDate timeIntervalSinceDate:tm.secureConnectionStartDate] * 1000;</div><div class="line">        NSTimeInterval request = [tm.requestEndDate timeIntervalSinceDate:tm.requestStartDate] * 1000;</div><div class="line">        NSTimeInterval response = [tm.responseEndDate timeIntervalSinceDate:tm.responseStartDate] * 1000;</div><div class="line">        </div><div class="line">        NSString *str = [NSString stringWithFormat:@&quot;dns:%f,connect:%f,tls:%f,request:%f,response:%f&quot;,domain,connect,tls,request,response];</div><div class="line">        [track setObject:str forKey:@&quot;metrics&quot;];</div><div class="line">        </div><div class="line">        [[FMBMonitor shareManager] trackData:track type:FMBMonitorTrackerTypeAPISample];</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>崩溃发生在给track设置uri的时候，在iOS13上，这个tm.request.URL.absoluteString字段有可能为nil，其他版本下暂时未发现崩溃。</p>
+<h4 id="造成的影响"><a href="#造成的影响" class="headerlink" title="造成的影响"></a>造成的影响</h4><p>线上的崩溃数增加了一倍，又提高了整体崩溃率。。。</p>
+<h4 id="解决过程"><a href="#解决过程" class="headerlink" title="解决过程"></a>解决过程</h4><p>发现问题后，马上对代码进行了修改，增加了非空的判断，本来准备跟下个版本一起发，后来发现崩溃数增长有点快，受影响用户会比较多，所以临时发了个bugfix版本。</p>
+<h4 id="槽点"><a href="#槽点" class="headerlink" title="槽点"></a>槽点</h4><p>万万想不到啊，这个字段居然可能为空，那这个tm的意义何在，就算我拿到下面的耗时数据了也没有任何用啊。</p>
+<p>而且只在13上出现这个问题，果然是bugOS啊。。。</p>
+<h4 id="经验教训"><a href="#经验教训" class="headerlink" title="经验教训"></a>经验教训</h4><p>以后再给字典赋值时，只要不是基本数据类型，一律进行为空判断，管你是从哪里搞的数据，这个社会除了自己，谁也靠不住啊。</p>
+<h3 id="使用高版本的api导致线上崩溃"><a href="#使用高版本的api导致线上崩溃" class="headerlink" title="使用高版本的api导致线上崩溃"></a>使用高版本的api导致线上崩溃</h3><h4 id="崩溃描述-1"><a href="#崩溃描述-1" class="headerlink" title="崩溃描述"></a>崩溃描述</h4><p>这个崩溃是之前做开屏广告时写的一个崩溃，当时是重构之前的代码，在新增计时器时为了图方便，用了个iOS10以后的api,当时开发环境都是10以上的设备，所以没有发现问题。</p>
+<h4 id="造成的影响-1"><a href="#造成的影响-1" class="headerlink" title="造成的影响"></a>造成的影响</h4><p>每天新增几千个崩溃。。。</p>
+<h4 id="解决过程-1"><a href="#解决过程-1" class="headerlink" title="解决过程"></a>解决过程</h4><p>发版后第二天才发现问题，然后马上替换了api，发了bugfix版本。</p>
+<h4 id="槽点-1"><a href="#槽点-1" class="headerlink" title="槽点"></a>槽点</h4><p>这个完全是自己的锅。</p>
+<h4 id="经验教训-1"><a href="#经验教训-1" class="headerlink" title="经验教训"></a>经验教训</h4><p>以后在使用系统api，特别是一个api簇的时候，一定要注意api版本兼容性。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2019/11/23/《设计模式-可复用面向对象软件的基础》读书笔记/" itemprop="url">
                   《设计模式-可复用面向对象软件的基础》读书笔记
                 </a>
@@ -1666,132 +1779,11 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2019/08/22/iOS性能检测工具总结/" itemprop="url">
-                  iOS性能检测工具总结
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2019-08-22T17:51:37+08:00" content="2019-08-22">
-              2019-08-22
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2019/08/22/iOS性能检测工具总结/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2019/08/22/iOS性能检测工具总结/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>作为一个资深的iOS开发，除了专业能力要过硬，还应该具有一些产品scene,关注一些技术之外的内容，学会发现问题然后利用技术去解决这些问题。比如用户体验问题，用户在使用app的过程中，可能会遇到哪些体验不佳的问题，我们要做的就是利用技术手段找出这些问题，然后一一解决，尽我们所能为用户提供最后的用户体验。排除交互设计本身外，最可能出现用户体验问题的原因就是手机在性能上出现了一些瓶颈，因此，找出这些性能瓶颈的时间节点和当前实时数据能很大程度上帮助我们定位到最终原因。</p>
-<p>基于以上的出发点，我们就需要开发一套自己的性能检测工具和上报机制，在app出现性能问题时拿到一手的数据，帮助我们定位问题和解决问题。</p>
-<h3 id="工具介绍"><a href="#工具介绍" class="headerlink" title="工具介绍"></a>工具介绍</h3><p>app的性能主要受两部分内容的影响，一个是手机本身的硬件设备，还有一个就是当前网络状况。这里分两部分分别介绍检测工具的功能点。</p>
-<h4 id="设备性能"><a href="#设备性能" class="headerlink" title="设备性能"></a>设备性能</h4><h5 id="fps"><a href="#fps" class="headerlink" title="fps"></a>fps</h5><p>fps主要用来检测当前页面的卡顿情况，如果fps降到50帧以下，页面卡顿就会比较明显，这个时候就需要具体再去分析卡顿原因。</p>
-<h5 id="cpu-usage"><a href="#cpu-usage" class="headerlink" title="cpu usage"></a>cpu usage</h5><p>cpu利用率主要有三个可以参考的指标，分别是用户使用率，系统使用率和空闲率。</p>
-<h5 id="disk"><a href="#disk" class="headerlink" title="disk"></a>disk</h5><p>磁盘空间有已用空间和可用空间。</p>
-<h5 id="memory"><a href="#memory" class="headerlink" title="memory"></a>memory</h5><p>内存使用情况有总内存，总可用内存和当前app已用内存。这里都是指的物理内存。因为虚拟内存的检测并没有什么意义。</p>
-<h5 id="battery"><a href="#battery" class="headerlink" title="battery"></a>battery</h5><p>当前电量。</p>
-<p>以上这些指标，大部分需要调用mach内核的相关api才能成功获取，而且需要轮询获取才能保证数据的时效性。</p>
-<h4 id="网络性能"><a href="#网络性能" class="headerlink" title="网络性能"></a>网络性能</h4><h5 id="DNS"><a href="#DNS" class="headerlink" title="DNS"></a>DNS</h5><p>包括当前域名对应的ip,解析总耗时和失败情况。</p>
-<h5 id="Ping"><a href="#Ping" class="headerlink" title="Ping"></a>Ping</h5><p>当前网络延时，一个RTT时长。</p>
-<h5 id="Reachability"><a href="#Reachability" class="headerlink" title="Reachability"></a>Reachability</h5><p>当前网络状态，包括wifi，4G或者无网。</p>
-<h5 id="Metrics-iOS10"><a href="#Metrics-iOS10" class="headerlink" title="Metrics(iOS10)"></a>Metrics(iOS10)</h5><p>Metrics包括了下面这张图中的相关时长：</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/iOS性能监控工具/zfgdZ.png" alt=""></p>
-<p>iOS10以后，可以直接从URLSession的回调中拿到这些耗时指标。</p>
-<h5 id="TraceRoute"><a href="#TraceRoute" class="headerlink" title="TraceRoute"></a>TraceRoute</h5><p>一个完整的请求的路径，包括数据经过的每一个节点和耗时。该数据可以完整反映出一个数据报的传输过程。</p>
-<h5 id="Traffic-I-O"><a href="#Traffic-I-O" class="headerlink" title="Traffic(I/O)"></a>Traffic(I/O)</h5><p>网络I/O</p>
-<h3 id="上报格式"><a href="#上报格式" class="headerlink" title="上报格式"></a>上报格式</h3><p>为了方便上报和数据分析，需要统一各项数据的上报格式，以上面的Metrics为例，将各项数据按统一的格式一同上报，定义格式如下：</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/iOS性能监控工具/Metrics.png" alt=""></p>
-<p>上报格式如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">NetworkMetrics: 450,50,80,60,100,120,Network Load</div><div class="line">NetworkMetrics: 220,0,0,0,100,120,Loacl Cache</div></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/6/">6</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/7/">7</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -1832,7 +1824,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">60</span>
+              <span class="site-state-item-count">61</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

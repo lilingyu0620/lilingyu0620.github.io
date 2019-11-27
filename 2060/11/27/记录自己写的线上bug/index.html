@@ -1,0 +1,577 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="给NSDictionary设置nil值导致线上崩溃崩溃描述这个问题是昨天新版本上线后firebase开始报的，当时正在扫线上的崩溃问题（因为老板注意到我们的崩溃率比其他产品线高很多），所以在崩溃刚出现时就发现了。崩溃原因并不复杂，以下是出现崩溃的代码片段： 1234567891011121314151617181920212223- (void)p_recordMetrics:(NSURLSess">
+<meta property="og:type" content="article">
+<meta property="og:title" content="记录自己写的线上bug">
+<meta property="og:url" content="http://yoursite.com/2060/11/27/记录自己写的线上bug/index.html">
+<meta property="og:site_name" content="lly&#39;s Blog">
+<meta property="og:description" content="给NSDictionary设置nil值导致线上崩溃崩溃描述这个问题是昨天新版本上线后firebase开始报的，当时正在扫线上的崩溃问题（因为老板注意到我们的崩溃率比其他产品线高很多），所以在崩溃刚出现时就发现了。崩溃原因并不复杂，以下是出现崩溃的代码片段： 1234567891011121314151617181920212223- (void)p_recordMetrics:(NSURLSess">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-11-27T08:20:45.421Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="记录自己写的线上bug">
+<meta name="twitter:description" content="给NSDictionary设置nil值导致线上崩溃崩溃描述这个问题是昨天新版本上线后firebase开始报的，当时正在扫线上的崩溃问题（因为老板注意到我们的崩溃率比其他产品线高很多），所以在崩溃刚出现时就发现了。崩溃原因并不复杂，以下是出现崩溃的代码片段： 1234567891011121314151617181920212223- (void)p_recordMetrics:(NSURLSess">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2060/11/27/记录自己写的线上bug/"/>
+
+  <title> 记录自己写的线上bug | lly's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">lly's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">用心记录点滴</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                记录自己写的线上bug
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2060-11-27T16:17:25+08:00" content="2060-11-27">
+              2060-11-27
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2060/11/27/记录自己写的线上bug/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2060/11/27/记录自己写的线上bug/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="给NSDictionary设置nil值导致线上崩溃"><a href="#给NSDictionary设置nil值导致线上崩溃" class="headerlink" title="给NSDictionary设置nil值导致线上崩溃"></a>给NSDictionary设置nil值导致线上崩溃</h3><h4 id="崩溃描述"><a href="#崩溃描述" class="headerlink" title="崩溃描述"></a>崩溃描述</h4><p>这个问题是昨天新版本上线后firebase开始报的，当时正在扫线上的崩溃问题（因为老板注意到我们的崩溃率比其他产品线高很多），所以在崩溃刚出现时就发现了。崩溃原因并不复杂，以下是出现崩溃的代码片段：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">- (void)p_recordMetrics:(NSURLSessionTaskMetrics *)metrics&#123;</div><div class="line">    </div><div class="line">    if (metrics.transactionMetrics &gt; 0) &#123;</div><div class="line">        </div><div class="line">        NSMutableDictionary * track = [NSMutableDictionary dictionary];</div><div class="line">    </div><div class="line">        NSURLSessionTaskTransactionMetrics *tm = metrics.transactionMetrics.lastObject;</div><div class="line">        [track setObject:@(metrics.taskInterval.duration * 1000) forKey:@&quot;duration&quot;];</div><div class="line">        [track setObject:tm.request.URL.absoluteString forKey:@&quot;uri&quot;];</div><div class="line"></div><div class="line">        NSTimeInterval domain = [tm.domainLookupEndDate timeIntervalSinceDate:tm.domainLookupStartDate] * 1000;</div><div class="line">        NSTimeInterval connect = [tm.connectEndDate timeIntervalSinceDate:tm.connectStartDate] * 1000;</div><div class="line">        NSTimeInterval tls = [tm.secureConnectionEndDate timeIntervalSinceDate:tm.secureConnectionStartDate] * 1000;</div><div class="line">        NSTimeInterval request = [tm.requestEndDate timeIntervalSinceDate:tm.requestStartDate] * 1000;</div><div class="line">        NSTimeInterval response = [tm.responseEndDate timeIntervalSinceDate:tm.responseStartDate] * 1000;</div><div class="line">        </div><div class="line">        NSString *str = [NSString stringWithFormat:@&quot;dns:%f,connect:%f,tls:%f,request:%f,response:%f&quot;,domain,connect,tls,request,response];</div><div class="line">        [track setObject:str forKey:@&quot;metrics&quot;];</div><div class="line">        </div><div class="line">        [[FMBMonitor shareManager] trackData:track type:FMBMonitorTrackerTypeAPISample];</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>崩溃发生在给track设置uri的时候，在iOS13上，这个tm.request.URL.absoluteString字段有可能为nil，其他版本下暂时未发现崩溃。</p>
+<h4 id="造成的影响"><a href="#造成的影响" class="headerlink" title="造成的影响"></a>造成的影响</h4><p>线上的崩溃数增加了一倍，又提高了整体崩溃率。。。</p>
+<h4 id="解决过程"><a href="#解决过程" class="headerlink" title="解决过程"></a>解决过程</h4><p>发现问题后，马上对代码进行了修改，增加了非空的判断，本来准备跟下个版本一起发，后来发现崩溃数增长有点快，受影响用户会比较多，所以临时发了个bugfix版本。</p>
+<h4 id="槽点"><a href="#槽点" class="headerlink" title="槽点"></a>槽点</h4><p>万万想不到啊，这个字段居然可能为空，那这个tm的意义何在，就算我拿到下面的耗时数据了也没有任何用啊。</p>
+<p>而且只在13上出现这个问题，果然是bugOS啊。。。</p>
+<h4 id="经验教训"><a href="#经验教训" class="headerlink" title="经验教训"></a>经验教训</h4><p>以后再给字典赋值时，只要不是基本数据类型，一律进行为空判断，管你是从哪里搞的数据，这个社会除了自己，谁也靠不住啊。</p>
+<h3 id="使用高版本的api导致线上崩溃"><a href="#使用高版本的api导致线上崩溃" class="headerlink" title="使用高版本的api导致线上崩溃"></a>使用高版本的api导致线上崩溃</h3><h4 id="崩溃描述-1"><a href="#崩溃描述-1" class="headerlink" title="崩溃描述"></a>崩溃描述</h4><p>这个崩溃是之前做开屏广告时写的一个崩溃，当时是重构之前的代码，在新增计时器时为了图方便，用了个iOS10以后的api,当时开发环境都是10以上的设备，所以没有发现问题。</p>
+<h4 id="造成的影响-1"><a href="#造成的影响-1" class="headerlink" title="造成的影响"></a>造成的影响</h4><p>每天新增几千个崩溃。。。</p>
+<h4 id="解决过程-1"><a href="#解决过程-1" class="headerlink" title="解决过程"></a>解决过程</h4><p>发版后第二天才发现问题，然后马上替换了api，发了bugfix版本。</p>
+<h4 id="槽点-1"><a href="#槽点-1" class="headerlink" title="槽点"></a>槽点</h4><p>这个完全是自己的锅。</p>
+<h4 id="经验教训-1"><a href="#经验教训-1" class="headerlink" title="经验教训"></a>经验教训</h4><p>以后在使用系统api，特别是一个api簇的时候，一定要注意api版本兼容性。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/11/23/《设计模式-可复用面向对象软件的基础》读书笔记/" rel="next" title="《设计模式-可复用面向对象软件的基础》读书笔记">
+                <i class="fa fa-chevron-left"></i> 《设计模式-可复用面向对象软件的基础》读书笔记
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2060/11/27/记录自己写的线上bug/"
+           data-title="记录自己写的线上bug" data-url="http://yoursite.com/2060/11/27/记录自己写的线上bug/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/head.png"
+               alt="lly" />
+          <p class="site-author-name" itemprop="name">lly</p>
+          <p class="site-description motion-element" itemprop="description">耿直的一Boy</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">61</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#给NSDictionary设置nil值导致线上崩溃"><span class="nav-number">1.</span> <span class="nav-text">给NSDictionary设置nil值导致线上崩溃</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#崩溃描述"><span class="nav-number">1.1.</span> <span class="nav-text">崩溃描述</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#造成的影响"><span class="nav-number">1.2.</span> <span class="nav-text">造成的影响</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#解决过程"><span class="nav-number">1.3.</span> <span class="nav-text">解决过程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#槽点"><span class="nav-number">1.4.</span> <span class="nav-text">槽点</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#经验教训"><span class="nav-number">1.5.</span> <span class="nav-text">经验教训</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用高版本的api导致线上崩溃"><span class="nav-number">2.</span> <span class="nav-text">使用高版本的api导致线上崩溃</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#崩溃描述-1"><span class="nav-number">2.1.</span> <span class="nav-text">崩溃描述</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#造成的影响-1"><span class="nav-number">2.2.</span> <span class="nav-text">造成的影响</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#解决过程-1"><span class="nav-number">2.3.</span> <span class="nav-text">解决过程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#槽点-1"><span class="nav-number">2.4.</span> <span class="nav-text">槽点</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#经验教训-1"><span class="nav-number">2.5.</span> <span class="nav-text">经验教训</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lly</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"llyblog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
