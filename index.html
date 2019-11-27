@@ -490,7 +490,18 @@
 <p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/Singleton.jpg" alt=""></p>
 <p>单例一旦创建了就不会被释放，所以除非必要，还是不要滥用。不能只图一时方便就选择一种并不适合的设计模式，这样其实是违背了设计模式的初衷。</p>
 <h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>工厂方法使用比较简单，但是扩展性不太强，而抽象工厂有更好的灵活性，同时又增加了系统的复杂度和类的层级。生成器模式适合创建复杂对象，原型模式则更适合创建同时存在多个子类的对象。最后的单例模式使用最方便，但是可能会因为滥用导致一些系统资源问题。通常，一个创建型模式会以工厂模式开始，然后在迭代过程中慢慢进化为更适合自身的模式。</p>
-
+<h3 id="结构型设计模式"><a href="#结构型设计模式" class="headerlink" title="结构型设计模式"></a>结构型设计模式</h3><p>结构型模式所做的事情是关于如何组合类和对象以获得更大的结构。它们不是对接口和实现进行组合，而是描述如何对一些对象进行组合，从而实现新功能的一些方法。</p>
+<h4 id="Adapter（适配器）"><a href="#Adapter（适配器）" class="headerlink" title="Adapter（适配器）"></a>Adapter（适配器）</h4><p>适配器模式又叫Wrapper(包装器),主要用来扩展当前类的接口，适配器模式又分为类适配器和对象适配器两种实现方式，很显然，对象适配器是操作对象，而类适配器是操作类。</p>
+<p>对象适配器类图：<br><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/Adapter_object.jpg" alt=""></p>
+<p>类适配器类图：<br><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/Adapter_classModel.jpg" alt=""></p>
+<p>对于类适配器，可能依赖语言本身的继承体系，比如OC只支持单继承，则不能将多个类的接口统一为一个适配器，只能使用对象适配器或者使用协议去重构类的结构。对象适配器则相对更灵活，而且不会改变类本身的性质。</p>
+<h4 id="Bridge（桥接）"><a href="#Bridge（桥接）" class="headerlink" title="Bridge（桥接）"></a>Bridge（桥接）</h4><p>桥接模式的一个重要目的是将抽象接口和具体实现进行分离。这样就打破了抽象和具体实现的绑定关系，增强了抽象类的扩展性。而且对实现的修改并不会直接影响抽象类，符合ISP原则。</p>
+<p>桥接模式类图：<br><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/Bridge.jpg" alt=""></p>
+<p>设计模式中抽象的概念一直都比较重要，良好的抽象能力是掌握设计模式的基础。将抽象和具体实现进行解耦是设计模式的准则。</p>
+<h4 id="Composite（组合）"><a href="#Composite（组合）" class="headerlink" title="Composite（组合）"></a>Composite（组合）</h4><p>组合模式将对象组合成树形结构以表示部分和整理的层次结构。保证用户对单一和组合对象使用具有一致性。</p>
+<p>组合模式类图：<br><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/Composite.png" alt=""></p>
+<p>iOS中，UIView就是一个典型的组合模式的应用。UIView在渲染或者处理点击事件时，都会逐一遍历子视图，分别对单个子视图进行处理。</p>
+<h4 id="Decorator（装饰）"><a href="#Decorator（装饰）" class="headerlink" title="Decorator（装饰）"></a>Decorator（装饰）</h4>
           
         
       
