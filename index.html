@@ -522,6 +522,17 @@
 <p>在显示image时，会先创建ImageProxy作为一个占位对象，只有当真正调用draw时才会开始创建image实例。这也是一种延迟加载的策略，对于比较消耗资源的对象比较实用。</p>
 <h4 id="结构型模式总结"><a href="#结构型模式总结" class="headerlink" title="结构型模式总结"></a>结构型模式总结</h4><p>结构型设计模式的目的就是通过各种类和对象的组合，来扩展出一个拥有更多功能的新的类。<br>Adapter通过对象适配和类适配两种方式将多个类的功能集成到一个类中。Bridge则是通过给抽象接口增加具体的实现类来实现类的组合。Composite将一个类簇对象递归组合为一个集合类，统一了接口的调用。Decorator虽然和Composite有相似的递归结构，但这也就是两种唯一相似之处了，Decorator强调的是特殊问题特殊处理，可扩展性极强，这点上这正好和Composite相反。Facade将复杂对象组合起来，提供了简单的调用接口，单它和Composite又完全不同，Facade组合的类之间可能存在依赖，但不存在类簇的关系。Flyweight强调的是类的复用机制，Proxy则为类的调用提供了新的方式，即加一个中间层，这也是解决计算机科学中所有问题的终极法宝。</p>
 <p>以上七种结构型模式，各有各的优势，不足和适合的使用场景。我们在使用前，首先需要熟悉各个模式的优劣和使用场景，才能更好的去应用，当然，走出第一步才是最重要的，只有先用起来，至于是否是最优选择，可以在代码重构中慢慢优化，这样边用边优化，总结出使用心得，最终才可能真正的掌握，到达灵活使用，信手拈来的境界。</p>
+<h3 id="行为型设计模式"><a href="#行为型设计模式" class="headerlink" title="行为型设计模式"></a>行为型设计模式</h3><p>行为模式涉及到<strong>算法和对象间职责的分配</strong>。行为模式不仅描述对象或类的模式，还可以描述它们之间的通信模式。这些模式刻画了在运行时难以跟踪的复杂的控制流。模式模式的作用就是将注意力从控制流转移到<strong>对象之间的联系方式</strong>上来。</p>
+<h4 id="Chain-of-Responsibility-责任链模式"><a href="#Chain-of-Responsibility-责任链模式" class="headerlink" title="Chain of Responsibility(责任链模式)"></a>Chain of Responsibility(责任链模式)</h4><p>当多个相关联的类需要处理同一个事件请求，而请求发起者又不能依赖所有可能的接收者时，可以将所有的接收者组成一条链，使请求沿着这条链传递下去。责任链模式往往和上面的Composition模式同时使用，因为Composition模式很容易提供这种链式结构。</p>
+<p>责任链类图：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/责任链.png" alt=""></p>
+<p>iOS响应链正是这种设计模式的应用，hitTest方法就类似上图中的HandleRequest()方法，而Event对象则是一个Request，通过参数的形式传递给所有的响应者。每个响应者可以在自己内部重写hitTest方法，决定是否需要处理某个事件。</p>
+<h4 id="Command-命令模式"><a href="#Command-命令模式" class="headerlink" title="Command(命令模式)"></a>Command(命令模式)</h4><p>在软件设计中，我们经常需要向某些对象发送请求，但是并想依赖请求的接收者，我们只需在程序运行时指定具体的请求接收者即可，此时，可以使用命令模式来进行设计，使得请求发送者与请求接收者消除彼此之间的耦合，让对象之间的调用关系更加灵活。</p>
+<p>命令模式类图：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/Command.jpg" alt=""></p>
+<p>在实现命令模式时，我们一般会创建一个命令抽象类，然后继承出具体的命令子类，而命令的接收者我们会以参数的形式传递给各命令子类。在调用该命令时，我们通过使用命令子类创建一个Invoker操作类来发送命令，这样就将命令接收者和调用者成功解耦。</p>
+<p>电视遥控实例：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/Command_eg.jpg" alt=""></p>
 
           
         
