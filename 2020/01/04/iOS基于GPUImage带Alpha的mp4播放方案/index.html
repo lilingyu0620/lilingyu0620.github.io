@@ -1,0 +1,582 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="mp4本身并不带透明通道，使用普通的视频播放器（比如AVPlayerLayer）只能播放一个不透明的视频，如果我们需要播放带透明度的视频（比如直播中的大礼物动画），就需要自己去写一个视频播放器。 原理基于OPENGLES的渲染流程，我们拿到视频每一帧的数据，即每个像素的RGB值，然后再拿到该像素点对应的Alpha值，组成一个新的RGBA，通过shader渲染成新的视频。这里的关键点在怎么将每个像素">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iOS基于GPUImage带Alpha的mp4播放方案">
+<meta property="og:url" content="http://yoursite.com/2020/01/04/iOS基于GPUImage带Alpha的mp4播放方案/index.html">
+<meta property="og:site_name" content="lly&#39;s Blog">
+<meta property="og:description" content="mp4本身并不带透明通道，使用普通的视频播放器（比如AVPlayerLayer）只能播放一个不透明的视频，如果我们需要播放带透明度的视频（比如直播中的大礼物动画），就需要自己去写一个视频播放器。 原理基于OPENGLES的渲染流程，我们拿到视频每一帧的数据，即每个像素的RGB值，然后再拿到该像素点对应的Alpha值，组成一个新的RGBA，通过shader渲染成新的视频。这里的关键点在怎么将每个像素">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/GPUImage播放透明视频/9muuy-6x9z7.gif">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/GPUImage播放透明视频/pvert-k93lw.gif">
+<meta property="og:updated_time" content="2020-01-04T08:27:35.485Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="iOS基于GPUImage带Alpha的mp4播放方案">
+<meta name="twitter:description" content="mp4本身并不带透明通道，使用普通的视频播放器（比如AVPlayerLayer）只能播放一个不透明的视频，如果我们需要播放带透明度的视频（比如直播中的大礼物动画），就需要自己去写一个视频播放器。 原理基于OPENGLES的渲染流程，我们拿到视频每一帧的数据，即每个像素的RGB值，然后再拿到该像素点对应的Alpha值，组成一个新的RGBA，通过shader渲染成新的视频。这里的关键点在怎么将每个像素">
+<meta name="twitter:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/GPUImage播放透明视频/9muuy-6x9z7.gif">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/01/04/iOS基于GPUImage带Alpha的mp4播放方案/"/>
+
+  <title> iOS基于GPUImage带Alpha的mp4播放方案 | lly's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">lly's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">用心记录点滴</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                iOS基于GPUImage带Alpha的mp4播放方案
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2020-01-04T16:26:00+08:00" content="2020-01-04">
+              2020-01-04
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2020/01/04/iOS基于GPUImage带Alpha的mp4播放方案/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2020/01/04/iOS基于GPUImage带Alpha的mp4播放方案/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>mp4本身并不带透明通道，使用普通的视频播放器（比如AVPlayerLayer）只能播放一个不透明的视频，如果我们需要播放带透明度的视频（比如直播中的大礼物动画），就需要自己去写一个视频播放器。</p>
+<h4 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h4><p>基于OPENGLES的渲染流程，我们拿到视频每一帧的数据，即每个像素的RGB值，然后再拿到该像素点对应的Alpha值，组成一个新的RGBA，通过shader渲染成新的视频。这里的关键点在怎么将每个像素的Alpha值传给shader,这里采用的方式是在导出视频的时候导出两个视频，一个正常导出，另一个只导出透明度，同时为了避免取值的时候不同步，再将这两个视频合成为一个视频。最后播放的视频可能长下面这样：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/GPUImage播放透明视频/9muuy-6x9z7.gif" alt=""></p>
+<h4 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h4><p>GPUImage提供了很多的Filter，但是都不太满足这里的需求，所有需要自定义一个Filter,核心代码如下：</p>
+<h5 id="shader"><a href="#shader" class="headerlink" title="shader"></a>shader</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">NSString *const kGPUImageVideoAlphaShaderString = SHADER_STRING</div><div class="line">(</div><div class="line"> </div><div class="line"> varying highp vec2 textureCoordinate;//这个对应下面的ST坐标,即右边视频的坐标</div><div class="line"> uniform sampler2D inputImageTexture;//这个是完整视频的纹理</div><div class="line"> </div><div class="line"> const lowp vec2 leftW = vec2(-0.5,0.0);</div><div class="line"> </div><div class="line"> void main()</div><div class="line"> &#123;</div><div class="line">     //从右边的视频中拿RGB值，从左边的视频中拿Alpha值，然后返回一个新的RGBA.</div><div class="line">     lowp vec4 rightTextureColor = texture2D(inputImageTexture, textureCoordinate);</div><div class="line">     lowp vec2 leftTextureCoordinate = leftW + textureCoordinate;</div><div class="line">     lowp vec4 leftTextureColor = texture2D(inputImageTexture, leftTextureCoordinate);</div><div class="line">     gl_FragColor = vec4(rightTextureColor.rgb,leftTextureColor.r);</div><div class="line"> &#125;</div><div class="line"> );</div></pre></td></tr></table></figure>
+<h5 id="opengl相关设置"><a href="#opengl相关设置" class="headerlink" title="opengl相关设置"></a>opengl相关设置</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line">- (void)renderToTextureWithVertices:(const GLfloat *)vertices textureCoordinates:(const GLfloat *)textureCoordinates;</div><div class="line">&#123;</div><div class="line">    </div><div class="line">    static const GLfloat posVertices[] = &#123;</div><div class="line">        // x , y</div><div class="line">        -1, 1,</div><div class="line">        1, 1,</div><div class="line">        -1, -1,</div><div class="line">        1, -1,</div><div class="line">    &#125;;</div><div class="line">    static const GLfloat textVertices[] = &#123;</div><div class="line">        // s , t</div><div class="line">        0.5, 1.0,</div><div class="line">        1.0, 1.0,</div><div class="line">        0.5, 0.0,</div><div class="line">        1.0, 0.0</div><div class="line">    &#125;;</div><div class="line"></div><div class="line">    // 向缓冲区对象写入刚定义的顶点数据</div><div class="line">    glEnable(GL_BLEND);</div><div class="line">    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);</div><div class="line">//    glBlendFunc(GL_ONE, GL_ZERO);</div><div class="line">    </div><div class="line">    [super renderToTextureWithVertices:posVertices textureCoordinates:textVertices];</div><div class="line">    </div><div class="line">    glDisable(GL_BLEND);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>ST坐标这里，我们只取右边的部分进行展示，然后就是需要设置GL_BLEND和glBlendFunc的透明度混合模式，这里的模式有很多种，每个模式的具体含义参考<a href="https://www.cnblogs.com/ylwn817/archive/2012/09/07/2675285.html" target="_blank" rel="noopener">这篇文章</a></p>
+<h4 id="播放"><a href="#播放" class="headerlink" title="播放"></a>播放</h4><p>播放的代码比较简单，可以参考下面的demo,最后的播放效果大概是这样：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/GPUImage播放透明视频/pvert-k93lw.gif" alt=""></p>
+<p><a href="https://github.com/lilingyu0620/LLYGPUImageDemo" target="_blank" rel="noopener">demo</a></p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>这个方案需要对opengl和shader有一些了解，比如顶点坐标系和纹理坐标系之间如何映射，shader中如何获取每个像素点的RGB值，包括向量的偏移计算，shader的变量类型如何声明等等。。。使用视频播放大礼物比直接用序列帧播放在性能和内存占用上都有明显的优势，应该算一种不错的优化方案了。之前我在iOS性能优化中提起过，做性能优化需要程序员本身有一定的技术积累，所以，程序员学习的脚步不能停止，不知道哪天你现在学的东西就会体现出它的价值。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/11/23/《设计模式-可复用面向对象软件的基础》读书笔记/" rel="next" title="《设计模式-可复用面向对象软件的基础》读书笔记">
+                <i class="fa fa-chevron-left"></i> 《设计模式-可复用面向对象软件的基础》读书笔记
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2060/11/27/记录自己写的线上bug/" rel="prev" title="记录自己写的线上bug">
+                记录自己写的线上bug <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2020/01/04/iOS基于GPUImage带Alpha的mp4播放方案/"
+           data-title="iOS基于GPUImage带Alpha的mp4播放方案" data-url="http://yoursite.com/2020/01/04/iOS基于GPUImage带Alpha的mp4播放方案/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/head.png"
+               alt="lly" />
+          <p class="site-author-name" itemprop="name">lly</p>
+          <p class="site-description motion-element" itemprop="description">耿直的一Boy</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">62</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#原理"><span class="nav-number">1.</span> <span class="nav-text">原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#实现"><span class="nav-number">2.</span> <span class="nav-text">实现</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#shader"><span class="nav-number">2.1.</span> <span class="nav-text">shader</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#opengl相关设置"><span class="nav-number">2.2.</span> <span class="nav-text">opengl相关设置</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#播放"><span class="nav-number">3.</span> <span class="nav-text">播放</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lly</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"llyblog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
