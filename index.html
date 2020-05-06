@@ -342,6 +342,141 @@
             
               
                 
+                <a class="post-title-link" href="/2020/05/06/MBP搭建本地Https服务器实现ipa文件的下载/" itemprop="url">
+                  MBP搭建本地Https服务器实现ipa文件的下载
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2020-05-06T20:02:59+08:00" content="2020-05-06">
+              2020-05-06
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2020/05/06/MBP搭建本地Https服务器实现ipa文件的下载/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2020/05/06/MBP搭建本地Https服务器实现ipa文件的下载/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h4 id="起因"><a href="#起因" class="headerlink" title="起因"></a>起因</h4><p>2020年新春，本是阖家欢乐，走亲访友的好时节。没想到一场疫情改变了所有计划，本人刚好又处于风暴的中心湖北，按时返京是不太可能了，于是只得开启漫长的在家办公的旅程。回家时带了个mbp，没有带TypeC的装接头，没有办法真机调试，而我们的项目又不能在模拟器上运行，这样的工作环境想想就头大。只能是硬着头皮使用打包上传fir的方式进行开发和调试，但是村里的网络也不太给力，可能一次打包上传再到安装在真机上需要一个多小时，效率实在太低，于是开始思考有啥办法可能提高现在的效率，也就有了下面的实践经历。</p>
+<h4 id="经过"><a href="#经过" class="headerlink" title="经过"></a>经过</h4><h5 id="安装nginx"><a href="#安装nginx" class="headerlink" title="安装nginx"></a>安装nginx</h5><p>我是使用的nginx来搭建的https服务，因为之前也用它搭过rtmp服务，使用起来会比较顺手吧。推荐使用homebrew来安装。</p>
+<p>安装完后使用一下命令来进行nginx的相关操作：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">sudo nginx //启动Nginx</div><div class="line">sudo nginx -s reload //重启Nginx</div><div class="line">sudo nginx -s stop //快速停止Nginx</div></pre></td></tr></table></figure>
+<p>开启nginx成功后，在Safari里面输入<a href="http://127.0.0.1" target="_blank" rel="noopener">http://127.0.0.1</a> 应该就能正常访问到nginx自带的一个html了，接下来是支持https。</p>
+<h5 id="安装openssl"><a href="#安装openssl" class="headerlink" title="安装openssl"></a>安装openssl</h5><p>生成证书时需要使用openssl服务。同上，使用homebrew安装。</p>
+<h5 id="生成证书"><a href="#生成证书" class="headerlink" title="生成证书"></a>生成证书</h5><p>推荐使用下面的脚本来生成：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">cd /usr/local/etc/nginx # 进入希望生成证书和私钥的目录，这里我们选择nginx.conf所在目录</div><div class="line">openssl genrsa -des3 -out 172.20.10.9.key 1024   # 创建服务器私钥，该命令会让你输入一个口令</div><div class="line">openssl req -new -key 172.20.10.9.key -out 172.20.10.9.csr    # 创建签名请求的证书(CSR)</div><div class="line">cp 172.20.10.9.key 172.20.10.9.key.org    </div><div class="line">openssl rsa -in 172.20.10.9.key.org -out 172.20.10.9.key  # 在加载SSL支持的Nginx并使用上述私钥时除去必须的口令</div><div class="line">openssl x509 -req -days 365 -in 172.20.10.9.csr -signkey 172.20.10.9.key -out 172.20.10.9.crt  # 最后标记证书使用上述私钥和CSR</div></pre></td></tr></table></figure>
+<p>每一句的具体作用参考上面的注释，这里的<strong>172.20.10.9</strong>是我电脑的内网IP，用来做证书名方便识别，在生成证书时，会需要输入密码和一些企业信息，其他的信息都可以随意（密码需要一致），<strong>重点：有一个Common Name字段信息需要和你服务器地址（我这里也就是我的内网IP）保持一致，因为在下载ipa进行证书校验时需要校验这两个是否一致，如果不一致会报：无法连接到“xxx”的错误</strong></p>
+<p>下面是openssl生成几个文件</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/nginxipa/nginxopenssl.png" alt=""></p>
+<h5 id="配置nginx-conf"><a href="#配置nginx-conf" class="headerlink" title="配置nginx.conf"></a>配置nginx.conf</h5><p>nginx.conf目录地址：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">/usr/local/etc/nginx</div></pre></td></tr></table></figure>
+<p>具体配置项参考如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#user  nobody;</div><div class="line">worker_processes  1;</div><div class="line"></div><div class="line">#error_log  logs/error.log;</div><div class="line">#error_log  logs/error.log  notice;</div><div class="line">#error_log  logs/error.log  info;</div><div class="line"></div><div class="line">#pid        logs/nginx.pid;</div><div class="line"></div><div class="line"></div><div class="line">events &#123;</div><div class="line">    worker_connections  1024;</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line">http &#123;</div><div class="line">    include       mime.types;</div><div class="line">    default_type  application/octet-stream;</div><div class="line"></div><div class="line">    #log_format  main  &apos;$remote_addr - $remote_user [$time_local] &quot;$request&quot; &apos;</div><div class="line">    #                  &apos;$status $body_bytes_sent &quot;$http_referer&quot; &apos;</div><div class="line">    #                  &apos;&quot;$http_user_agent&quot; &quot;$http_x_forwarded_for&quot;&apos;;</div><div class="line"></div><div class="line">    #access_log  logs/access.log  main;</div><div class="line"></div><div class="line">    sendfile        on;</div><div class="line">    #tcp_nopush     on;</div><div class="line"></div><div class="line">    #keepalive_timeout  0;</div><div class="line">    keepalive_timeout  65;</div><div class="line"></div><div class="line">    #gzip  on;</div><div class="line"></div><div class="line">    server &#123;</div><div class="line"></div><div class="line">		listen       443 ssl;</div><div class="line">        server_name  localhost	;</div><div class="line"></div><div class="line">        ssl_certificate      172.20.10.9.crt;</div><div class="line">        ssl_certificate_key  172.20.10.9.key;</div><div class="line"></div><div class="line">        #charset koi8-r;</div><div class="line"></div><div class="line">        #access_log  logs/host.access.log  main;</div><div class="line"></div><div class="line">        location / &#123;</div><div class="line">            root   /usr/local/etc/nginx/doki;</div><div class="line">            index  download.html index.htm;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        #error_page  404              /404.html;</div><div class="line"></div><div class="line">        # redirect server error pages to the static page /50x.html</div><div class="line">        #</div><div class="line">        error_page   500 502 503 504  /50x.html;</div><div class="line">        location = /50x.html &#123;</div><div class="line">            root   html;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        # proxy the PHP scripts to Apache listening on 127.0.0.1:80</div><div class="line">        #</div><div class="line">        #location ~ \.php$ &#123;</div><div class="line">        #    proxy_pass   http://127.0.0.1;</div><div class="line">        #&#125;</div><div class="line"></div><div class="line">        # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000</div><div class="line">        #</div><div class="line">        #location ~ \.php$ &#123;</div><div class="line">        #    root           html;</div><div class="line">        #    fastcgi_pass   127.0.0.1:9000;</div><div class="line">        #    fastcgi_index  index.php;</div><div class="line">        #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;</div><div class="line">        #    include        fastcgi_params;</div><div class="line">        #&#125;</div><div class="line"></div><div class="line">        # deny access to .htaccess files, if Apache&apos;s document root</div><div class="line">        # concurs with nginx&apos;s one</div><div class="line">        #</div><div class="line">        #location ~ /\.ht &#123;</div><div class="line">        #    deny  all;</div><div class="line">        #&#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line"></div><div class="line">    # another virtual host using mix of IP-, name-, and port-based configuration</div><div class="line">    #</div><div class="line">    #server &#123;</div><div class="line">    #    listen       8000;</div><div class="line">    #    listen       somename:8080;</div><div class="line">    #    server_name  somename  alias  another.alias;</div><div class="line"></div><div class="line">    #    location / &#123;</div><div class="line">    #        root   html;</div><div class="line">    #        index  index.html index.htm;</div><div class="line">    #    &#125;</div><div class="line">    #&#125;</div><div class="line"></div><div class="line"></div><div class="line">    # HTTPS server</div><div class="line">    #</div><div class="line"></div><div class="line">    #server &#123;</div><div class="line">    #    listen       443 ssl;</div><div class="line">    #    server_name  localhost;</div><div class="line"></div><div class="line">    #   ssl_certificate      server.crt;</div><div class="line">    #    ssl_certificate_key  cert.key;</div><div class="line"></div><div class="line">    #    ssl_session_cache    shared:SSL:1m;</div><div class="line">    #    ssl_session_timeout  5m;</div><div class="line"></div><div class="line">    #    ssl_ciphers  HIGH:!aNULL:!MD5;</div><div class="line">    #    ssl_prefer_server_ciphers  on;</div><div class="line"></div><div class="line">    #    location / &#123;</div><div class="line">    #        root   html;</div><div class="line">    #        index  index.html index.htm;</div><div class="line">    #    &#125;</div><div class="line">    #&#125;</div><div class="line">    include servers/*;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>需要注意一下，上面的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">ssl_certificate      172.20.10.9.crt;</div><div class="line">ssl_certificate_key  172.20.10.9.key;</div></pre></td></tr></table></figure>
+<p>就是你之前使用openssl生成的证书和私钥。这个要保持一致，而且最好放在同一个目录下。</p>
+<h5 id="新建下载页html-配置plist-复制ipa文件和crt文件到指定目录。"><a href="#新建下载页html-配置plist-复制ipa文件和crt文件到指定目录。" class="headerlink" title="新建下载页html,配置plist,复制ipa文件和crt文件到指定目录。"></a>新建下载页html,配置plist,复制ipa文件和crt文件到指定目录。</h5><p>上面配置的location就是你的网页资源所有在的目录：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">location / &#123;</div><div class="line">    root   /usr/local/etc/nginx/doki;</div><div class="line">    index  download.html index.htm;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里我是在nginx目录下新建了一个doki（名字无要求）目录。可以参考一下我的目录结构：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/nginxipa/dokiipa.png" alt=""></p>
+<p>然后我们分别来看一下这几个文件的格式：</p>
+<p>html:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Transitional//EN&quot; &quot;http://     www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd&quot;&gt;</div><div class="line">&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;</div><div class="line">&lt;head&gt;</div><div class="line">&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=utf-8&quot; /&gt;</div><div class="line">&lt;title&gt;DokoDokiLive&lt;/title&gt;</div><div class="line">&lt;/head&gt;</div><div class="line">&lt;body&gt;</div><div class="line">&lt;h1 style=&quot;font-size:40pt&quot;&gt;iOS应用OTA安装&lt;h1/&gt;</div><div class="line">&lt;h1 style=&quot;font-size:40pt&quot;&gt;</div><div class="line">&lt;a title=&quot;iPhone&quot; href=&quot;itms-services://?action=download-manifest&amp;url=https://172.20.10.9/DokiDokiLive.plist&quot;&gt;点击安装&lt;/a&gt;</div><div class="line">&lt;h1/&gt;</div><div class="line">&lt;a title=&quot;iPhone&quot; href=&quot;https://172.20.10.9/172.20.10.9.crt&quot;&gt;ssl 证书安装&lt;/a&gt;</div><div class="line">&lt;h1/&gt;</div><div class="line">&lt;/body&gt;</div><div class="line">&lt;/html&gt;</div></pre></td></tr></table></figure>
+<p>plist:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</div><div class="line">&lt;!DOCTYPE plist PUBLIC &quot;-//Apple//DTD PLIST 1.0//EN&quot; &quot;http://www.apple.com/DTDs/PropertyList-1.0.dtd&quot;&gt;</div><div class="line">&lt;plist version=&quot;1.0&quot;&gt;</div><div class="line">&lt;dict&gt;</div><div class="line">	&lt;key&gt;items&lt;/key&gt;</div><div class="line">	&lt;array&gt;</div><div class="line">		&lt;dict&gt;</div><div class="line">			&lt;key&gt;assets&lt;/key&gt;</div><div class="line">			&lt;array&gt;</div><div class="line">				&lt;dict&gt;</div><div class="line">					&lt;key&gt;kind&lt;/key&gt;</div><div class="line">					&lt;string&gt;software-package&lt;/string&gt;</div><div class="line">					&lt;key&gt;url&lt;/key&gt;</div><div class="line">					&lt;string&gt;https://172.20.10.9/DokiDokiLive.ipa&lt;/string&gt;</div><div class="line">				&lt;/dict&gt;</div><div class="line">			&lt;/array&gt;</div><div class="line">			&lt;key&gt;metadata&lt;/key&gt;</div><div class="line">			&lt;dict&gt;</div><div class="line">				&lt;key&gt;title&lt;/key&gt;</div><div class="line">				&lt;string&gt;DokiDoki App download&lt;/string&gt;</div><div class="line">				&lt;key&gt;bundle-version&lt;/key&gt;</div><div class="line">				&lt;string&gt;1.0.0&lt;/string&gt;</div><div class="line">				&lt;key&gt;kind&lt;/key&gt;</div><div class="line">				&lt;string&gt;software&lt;/string&gt;</div><div class="line">				&lt;key&gt;bundle-identifier&lt;/key&gt;</div><div class="line">				&lt;string&gt;com.xxx.xxx&lt;/string&gt;</div><div class="line">			&lt;/dict&gt;</div><div class="line">		&lt;/dict&gt;</div><div class="line">	&lt;/array&gt;</div><div class="line">&lt;/dict&gt;</div><div class="line">&lt;/plist&gt;</div></pre></td></tr></table></figure>
+<p>把上面的IP地址和bundle-identifier做相应的替换即可。</p>
+<h4 id="成果"><a href="#成果" class="headerlink" title="成果"></a>成果</h4><p>reload一下nginx,然后在手机Safari上输入<a href="https://172.20.10.9" target="_blank" rel="noopener">https://172.20.10.9</a> 这个时候可能会提示网站安全，选择查看网站内容，出现下面的界面，说明环境搭建成功。</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/nginxipa/download.PNG" alt=""></p>
+<p>先安装ssl证书，记得在设置中信任证书（有两处地方需要信任），然后点击安装即可。</p>
+<h4 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h4><p>通过搭建本地服务，省去了上传fir的操作，局域网下载ipa速度也比从fir上下载快很多，之前重新安装一个包需要1个多小时的，现在只要十分钟不到就搞定了，所以，遇到问题还是应该多思考，争取能找到更好的解决方案。</p>
+<h4 id="后续"><a href="#后续" class="headerlink" title="后续"></a>后续</h4><p>原来可以直接把IPA文件通过AirDrop的方式安装到手机上，以上的步骤都可以省略了。不过也是一次好的学习经验。</p>
+<p>参考文档：</p>
+<p><a href="https://www.jianshu.com/p/75f01a638a07" target="_blank" rel="noopener">https://www.jianshu.com/p/75f01a638a07</a><br><a href="https://blog.csdn.net/shuaihj/article/details/49999529" target="_blank" rel="noopener">https://blog.csdn.net/shuaihj/article/details/49999529</a></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2020/01/04/iOS基于GPUImage带Alpha的mp4播放方案/" itemprop="url">
                   iOS基于GPUImage带Alpha的mp4播放方案
                 </a>
@@ -649,6 +784,49 @@
 <p>解释器模式类图:</p>
 <p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/解释器.png" alt=""></p>
 <p>解释器在正则表达式和编译器中都有大量的应用场景。比如编译器中的AST，就是一个语法解释器。而正则中对各种字符串模式的匹配算法，也是一个解释器应用。</p>
+<h4 id="Iterator-迭代器"><a href="#Iterator-迭代器" class="headerlink" title="Iterator(迭代器)"></a>Iterator(迭代器)</h4><p>迭代器主要用来进行列表的遍历，当需要访问列表中的元素而又不想暴露元素的具体内部结构时，就可以使用迭代器来实现。同时，迭代器也解决了访问不同类型对象需要不同判断条件的问题。</p>
+<p>迭代器依赖具体的列表实例。针对不同的遍历策略，可以生成不同的迭代器，而无需对具体列表实例进行任何操作。这样就分离了数据和具体的遍历操作。比如我们想要过滤列表则只需要创建一个具体的过滤迭代器。</p>
+<p>下图是一个多态迭代器类结构，即每一种列表类型对应一种迭代器模型，迭代器本身不需要再去判断当前聚合类型，这样迭代机制就与具体的聚合类无关。</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/polyiterator.png" alt=""></p>
+<p>下图是迭代器的具体创建逻辑，创建过程采用了工厂模式，每一种集合创建一种对应的迭代器。<br><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/createiterator.png" alt=""></p>
+<p>迭代器的具体控制方式又分为两种，即外部迭代器和内部迭代器。外部迭代器的控制条件需要通过参数传递给迭代器。外部迭代器比内部迭代器更灵活，比如外部迭代器可以很容易实现判断两个具体元素是否相等。</p>
+<h4 id="Mediator-中介者"><a href="#Mediator-中介者" class="headerlink" title="Mediator(中介者) *"></a>Mediator(中介者) *</h4><p>如果多个类之间存在各种依赖关系，而且这些类又可能存在各种扩展类，这种情况下如果在每个类中各自处理依赖关系，会导致各类之间的大量强关联，增加代码的复杂度和维护成本，降低了类和模块的可扩展性。这种情况下，可以引入中介者模式来处理类的依赖。</p>
+<p>中介者提供了一个中间人，其他各类如果需要相互调用，只需要调用中介者，而不需要调用具体的类，一切都交给中介者来操作。下图是中介者模式中各类之间的依赖关系：<br><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/mediator.png" alt=""></p>
+<p>需要注意的是中介者和调用它的类之间是可能存在相互依赖的关系，如果这种相互依赖最终导致了循环引用产生内存问题的话，可能需要想办法打破这种依赖，可以参考DIP原则，下图是一个中介者模式的类图：<br><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/Mediator.jpg" alt=""></p>
+<p>中介者模式是解决对象之间相互通信时好的选择，它减少了子类生成，将原本耦合的依赖关系解耦，将多对多的调用关系简化为一对多，并且对各对象的调用进行了抽象和封装，方便维护和扩展。</p>
+<h4 id="MEMENTO-备忘录"><a href="#MEMENTO-备忘录" class="headerlink" title="MEMENTO(备忘录)"></a>MEMENTO(备忘录)</h4><p>备忘录模式旨在对对象实例进行合理的保存，在不过度暴露对象内部实现的前提下，对对象行为进行取消或者恢复。备忘录模式可以理解为一种持久化对象的方式。从出发点来看，备忘录和命令模式有一定的相似性，都能取消和恢复对象的行为，但是命令模式强调的可能是一连串的操作，而且命令模式的优势是将命令的发送者和接受者做了解耦，而备忘录则更强调对象和备忘录的关联关系，即原发器和备忘录的关系。</p>
+<p>下图是备忘录模式的类图关系：<br><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/memento.png" alt=""></p>
+<h4 id="Observer-观察者"><a href="#Observer-观察者" class="headerlink" title="Observer(观察者) *"></a>Observer(观察者) *</h4><p>观察者模式提供了一种方式，保证了依赖同一个对象的多个类的一致性，当这个对象的状态改变时，可以很方便通知到这些依赖类。</p>
+<p>在面向对象的项目中，我们往往会将模块进行各种分割和封装，这样各个模块在共享数据时就会产生问题，如果每个模块都对数据进行各种强的依赖，则会破坏整个系统封装，扩展和重用性。这个时候就可以引入观察者模式来解决数据同步的问题。</p>
+<p>观察者模式类图：<br><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/Obeserver.jpg" alt=""></p>
+<p>在iOS系统中，观察者模式也是一种比较常用的和推荐的设计模式，因为它很好的解决了各模块之间的数据一致性问题，但是，也因此产生了比较多的问题，最常见的就是各种崩溃，比如观察者的重复删除问题，以及野指针问题，iOS中比较好的解决方案比如FB的KVOController,就是自己去维护一个观察者的弱引用列表，在进行观察者的添加，删除和触发通知时，先进行容错，避免崩溃。</p>
+<h4 id="State-状态"><a href="#State-状态" class="headerlink" title="State(状态)"></a>State(状态)</h4><p>当一个类的行为变化依赖于一种或者多种条件时，这些条件可以称为这个类的各种状态，这种场景也是状态模式的由来。</p>
+<p>比较典型的状态模式比如TCP的连接状态，我们先来复习一下TCP都有哪些连接状态。</p>
+<h5 id="建立连接时"><a href="#建立连接时" class="headerlink" title="建立连接时"></a>建立连接时</h5><p>主叫方的状态有：</p>
+<p>SYN_SENT -&gt; ESTABLISHED </p>
+<p>被叫方的状态有：</p>
+<p>LISTEN -&gt; SYN_RCVD -&gt; ESTABLISHED</p>
+<h5 id="断开连接时"><a href="#断开连接时" class="headerlink" title="断开连接时"></a>断开连接时</h5><p>主叫方的状态有：</p>
+<p>FIN_WAIT_1 -&gt; FIN_WAIT_2 -&gt; TIME_WAIT -&gt; CLOSED</p>
+<p>被叫方的状态有:</p>
+<p>CLOSE_WAIT -&gt; LAST_ACK -&gt; CLOSED</p>
+<p>一个TCP连接存在多种状态，当处于不同状态时，又将产生不同的行为，这里状态是tcp连接类的一个实例，tcp连接对外暴露的API，都依赖该状态实例，不同状态产生不同行为，具体类图如下：<br><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/State.png" alt=""></p>
+<p>除了上面的场景外，状态模式还有一个比较适用的场景是一个操作中有大量的条件判断或者switch分支，这时可以抽象一个状态类，将每一种分支封装为一种具体状态，条件执行语句则在各封装子类中去实现，这样外部只需调用统一的抽象接口即可。</p>
+<h4 id="STRATEGY-策略"><a href="#STRATEGY-策略" class="headerlink" title="STRATEGY(策略)"></a>STRATEGY(策略)</h4><p>当你在处理某种case时，有多种处理方法，这些处理方法可以被称为不同的算法，如果我们将这些算法硬编码到处理类中，该类就失去了扩展性，这些算法也没有了被复用的可能，所以，我们可以抽象出一个策略类，每种算法去实现具体的策略子类，处理类只需要根据情况调用不同的策略子类即可，这就是策略模式。</p>
+<p>下面是策略模式的类图结构：<br><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/Strategy.jpg" alt=""></p>
+<p>对比上面的状态模式，可以发现，这两个模式的类图结构基本一致,只是应用的场景不同，状态强调的是一种属性状态，而策略强调的是一种处理算法，两者在应用场景上还是有比较明显的差别。</p>
+<h4 id="Template-Method-模版方法"><a href="#Template-Method-模版方法" class="headerlink" title="Template Method(模版方法)"></a>Template Method(模版方法)</h4><p>在一个类簇中，子类可能需要共享一套API接口和调用逻辑，但是又需要有自己特定的行为，这种场景就可以使用模板方法来实现，可以将API的实现模板写在父类，而具体的逻辑分散到各个子类中去实现。下图为模板方法的类图：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/TemplateMwthod.png" alt=""></p>
+<p>模板方法是一种代码复用的基本技术，它们在面向对象语言和类簇中尤为重要，可以减少大量重复代码，简化代码逻辑。在子类中实现的逻辑，又称为<strong>钩子操作</strong>。模板方法也是我比较喜欢使用的一种设计模式。</p>
+<h4 id="Visitor-访问者"><a href="#Visitor-访问者" class="headerlink" title="Visitor(访问者)"></a>Visitor(访问者)</h4><p>当我们需要对一系列元素进行一系列操作，而且每一种操作不一样时，我们可以将这些操作抽象为访问者，每一种操作则为一个具体的访问者子类，该子类为每一个元素提供一个操作方法供元素调用。同时，我们还需要将元素也进行抽象，然后生成具体的元素子类，每一个子类根据自身需要接收不同的访问者。</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/设计模式/Vistor2.png" alt=""></p>
+<p>该模式将调用者和被调用者进行了解耦操作，对访问者进行了封装，方便了访问者的扩展。不过元素缺比较难被扩展，因为每扩展一个元素，需要对之前所有访问者进行修改。</p>
+<h4 id="行为型设计模式的几个出发点"><a href="#行为型设计模式的几个出发点" class="headerlink" title="行为型设计模式的几个出发点"></a>行为型设计模式的几个出发点</h4><ol>
+<li>对变化的封装（策略，状态，中介者，迭代器）</li>
+<li>使用对象作为参数（命令，备忘录）</li>
+<li>通信时被封装还是被分布（中介者，观察者）</li>
+<li>对发送者和接受者的解耦（命令，观察者，中介者，）</li>
+</ol>
 
           
         
@@ -1610,158 +1788,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2019/11/04/《重构-改善既有代码的设计》系列读书笔记（二、函数的重构）/" itemprop="url">
-                  《重构-改善既有代码的设计》系列读书笔记（二、函数的重构）
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2019-11-04T21:41:04+08:00" content="2019-11-04">
-              2019-11-04
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2019/11/04/《重构-改善既有代码的设计》系列读书笔记（二、函数的重构）/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2019/11/04/《重构-改善既有代码的设计》系列读书笔记（二、函数的重构）/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="重新组织函数"><a href="#重新组织函数" class="headerlink" title="重新组织函数"></a>重新组织函数</h3><p>过长的函数会带来一系列问题，所以想办法重构吧。</p>
-<h4 id="Extract-Method-提炼函数"><a href="#Extract-Method-提炼函数" class="headerlink" title="Extract Method(提炼函数)"></a>Extract Method(提炼函数)</h4><h5 id="提炼动机"><a href="#提炼动机" class="headerlink" title="提炼动机"></a>提炼动机</h5><ul>
-<li>如果函数内部有一段代码需要使用注释来解释，请把这段代码提炼为一个新的函数</li>
-<li>函数粒度越小，被复用的机会就越大</li>
-<li>如果一个函数内部调用的都是小颗粒函数，该函数阅读起来会更方便</li>
-<li>小颗粒函数的重写会更容易</li>
-<li>小颗粒函数需要精准的命名</li>
-<li>函数名的长度不是问题，和函数本体之间的语义距离才是，应该做到见字如面</li>
-</ul>
-<h5 id="具体做法"><a href="#具体做法" class="headerlink" title="具体做法"></a>具体做法</h5><ul>
-<li>创建一个新函数，以它做什么而不是怎么做来命名，如果你想不出一个合适的名称时，先不要提炼</li>
-<li>拷贝代码到新函数</li>
-<li>检查新函数是否引入作用域限于源函数的变量</li>
-<li>检查临时变量（是否引入，是否修改）</li>
-<li>替换新函数，测试新函数</li>
-</ul>
-<h4 id="Inline-Method-内联函数"><a href="#Inline-Method-内联函数" class="headerlink" title="Inline Method(内联函数)"></a>Inline Method(内联函数)</h4><h5 id="提炼动机-1"><a href="#提炼动机-1" class="headerlink" title="提炼动机"></a>提炼动机</h5><ul>
-<li>将函数调用替换成函数本身，如果函数本身已经清楚易懂的话</li>
-<li>间接性可能带来帮助，但非必要间接性总是让人不舒服</li>
-<li>如果你需要重构一个函数，该函数内部又调用了一组不太合理的函数，可以将这些函数先内联到该函数中，再进行重构。</li>
-</ul>
-<h4 id="Inline-Temp-内联临时变量"><a href="#Inline-Temp-内联临时变量" class="headerlink" title="Inline Temp(内联临时变量)"></a>Inline Temp(内联临时变量)</h4><h5 id="提炼动机-2"><a href="#提炼动机-2" class="headerlink" title="提炼动机"></a>提炼动机</h5><ul>
-<li>某个临时变量被赋予某个函数调用的返回值</li>
-</ul>
-<h5 id="具体做法-1"><a href="#具体做法-1" class="headerlink" title="具体做法"></a>具体做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">// before inline</div><div class="line"></div><div class="line">double basePrice = anOrder.basePrice();</div><div class="line">return (basePrice &gt; 1000)</div><div class="line"></div><div class="line">// after inline</div><div class="line"></div><div class="line">return (anOrder.basePrice() &gt; 1000)</div></pre></td></tr></table></figure>
-<h4 id="Replace-Temp-with-Query-以查询取代临时变量"><a href="#Replace-Temp-with-Query-以查询取代临时变量" class="headerlink" title="Replace Temp with Query(以查询取代临时变量)"></a>Replace Temp with Query(以查询取代临时变量)</h4><p>当函数中的临时变量保存了一组表达式的值，请将这段表达式代码提炼为一个新的函数。</p>
-<h5 id="提炼动机-3"><a href="#提炼动机-3" class="headerlink" title="提炼动机"></a>提炼动机</h5><ul>
-<li>临时变量存储表达式的方式会使你的代码越来越长，因为这段代码是不能被复用的。</li>
-</ul>
-<h5 id="具体做法-2"><a href="#具体做法-2" class="headerlink" title="具体做法"></a>具体做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">// before </div><div class="line"></div><div class="line">double getPrice() &#123;</div><div class="line">	int basePrice = _quantity * _itemPrice;</div><div class="line">	double discountFactor;</div><div class="line">	if (basePrice &gt; 1000) discountFactor = 0.95;</div><div class="line">	else discountFactor = 0.98;</div><div class="line">	return basePrice * discountFactor;</div><div class="line">&#125;</div><div class="line"></div><div class="line">// after</div><div class="line"></div><div class="line">private int basePrice() &#123;</div><div class="line">	return _quantity * _itemPrice;</div><div class="line">&#125;</div><div class="line"></div><div class="line">private double discountFactor() &#123;</div><div class="line">	if (basePrice() &gt; 1000) return 0.95;</div><div class="line">	else return 0.98;</div><div class="line">&#125;</div><div class="line"></div><div class="line">double getPrice() &#123;</div><div class="line">	return basePrice() * discountFactor();</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>重构有啥用啊，真。。。真香。。。</p>
-<h4 id="Introduce-Explaining-Variable-引用解释性变量"><a href="#Introduce-Explaining-Variable-引用解释性变量" class="headerlink" title="Introduce Explaining Variable(引用解释性变量)"></a>Introduce Explaining Variable(引用解释性变量)</h4><p>将复杂表达式中的某部分用临时变量来解释</p>
-<h5 id="提炼动机-4"><a href="#提炼动机-4" class="headerlink" title="提炼动机"></a>提炼动机</h5><ul>
-<li>复杂的表达式难以阅读，临时变量可以帮助理解，特别是在条件判断表达式上。</li>
-</ul>
-<h5 id="具体做法-3"><a href="#具体做法-3" class="headerlink" title="具体做法"></a>具体做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">// before</div><div class="line"></div><div class="line">double price() &#123;</div><div class="line">	return _quantity * _itemPrice -</div><div class="line">			Math.max(0,_quantity - 500) * _itemPrice * 0.05 +</div><div class="line">			Math.min(_quantity * _itemPrice * 0.1, 100.0);</div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line">// after</div><div class="line"></div><div class="line">double price() &#123;</div><div class="line">	//可以提炼为方法,看复用情况</div><div class="line">	final double basePrice = _quantity * _itemPrice;</div><div class="line">	final double quantityDiscount = Math.max(0,_quantity - 500) * _itemPrice * 0.05;</div><div class="line">	final double shipping = Math.min(basePrice * 0.1, 100.0);</div><div class="line">	return basePrice - quantityDiscount + shipping;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h4 id="Split-Temporary-Variable-分解临时变量"><a href="#Split-Temporary-Variable-分解临时变量" class="headerlink" title="Split Temporary Variable(分解临时变量)"></a>Split Temporary Variable(分解临时变量)</h4><p>临时变量被赋值多次，但它既不是循环变量，也不是计算结果收集变量。</p>
-<h5 id="提炼动机-5"><a href="#提炼动机-5" class="headerlink" title="提炼动机"></a>提炼动机</h5><ul>
-<li>临时变量被赋值多次，说明它承担了多个责任，应该被替换为多个临时变量，每个临时变量只承担一个责任。</li>
-<li>一个临时变量承担多件事情，会令代码阅读者懵圈。</li>
-</ul>
-<h4 id="Remove-Assignments-to-Parameters-移除对参数的赋值"><a href="#Remove-Assignments-to-Parameters-移除对参数的赋值" class="headerlink" title="Remove Assignments to Parameters(移除对参数的赋值)"></a>Remove Assignments to Parameters(移除对参数的赋值)</h4><p>在引用传递语言中，会改变该参数的值，在值传递语言中，不会影响外部继续使用该参数。</p>
-<h4 id="Replace-Method-with-Method-Object-以函数对象取代函数"><a href="#Replace-Method-with-Method-Object-以函数对象取代函数" class="headerlink" title="Replace Method with Method Object(以函数对象取代函数)"></a>Replace Method with Method Object(以函数对象取代函数)</h4><p>函数过大时，对其中局部变量的使用使你无法提炼出较小的函数</p>
-<h5 id="提炼动机-6"><a href="#提炼动机-6" class="headerlink" title="提炼动机"></a>提炼动机</h5><ul>
-<li>局部变量太多，无法一一提取。</li>
-<li>当使用对象时，所有局部变量就会成为成员变量，方便拆解</li>
-</ul>
-<h5 id="具体做法-4"><a href="#具体做法-4" class="headerlink" title="具体做法"></a>具体做法</h5><ul>
-<li>新建一个类，将需要的局部变量申明为对象的属性</li>
-<li>在新类建立一个构造方法，参数为所有需要的局部变量</li>
-<li>将源方法的实现拷贝过来，然后使用新建类替换源方法</li>
-</ul>
-<h4 id="Substitute-Algorithm-替换算法"><a href="#Substitute-Algorithm-替换算法" class="headerlink" title="Substitute Algorithm(替换算法)"></a>Substitute Algorithm(替换算法)</h4>
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1807,7 +1833,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">62</span>
+              <span class="site-state-item-count">63</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
