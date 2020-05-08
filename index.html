@@ -342,6 +342,114 @@
             
               
                 
+                <a class="post-title-link" href="/2020/05/08/直播项目总结/" itemprop="url">
+                  直播项目总结
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2020-05-08T20:04:34+08:00" content="2020-05-08">
+              2020-05-08
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2020/05/08/直播项目总结/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2020/05/08/直播项目总结/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h4 id="iOS音视频播放总结"><a href="#iOS音视频播放总结" class="headerlink" title="iOS音视频播放总结"></a>iOS音视频播放总结</h4><p>iOS音视频播放器主要分系统播放器和三方播放器，系统播放器以AVPlayer应用最为方便和广泛，三方播放器以IJK+FFMPEG使用作为常见。在直播项目中，很少有使用AVPlayer做拉流播放器的，因为AVPlayer不支持常见的推流协议RTMP，虽然AVPlayer支持苹果自家的HLS协议，但该协议在直播时延迟很高，一般不采用，只会在点播的时候采用。直播中常用的则是IJK+FFMPEG作为播放器。实际上FFMPEG本身并不具备播放视频的能力，它是一个音视频的编解码器，在iOS一个典型的播放流程中，会先使用FFMPEG对音视频进行解码，音频数据被解码为PCM，视频数据被解码为NSData(luma,chromaB,chromaR),解码数据被保存在缓冲区，会有一个音视频同步器去决定当前需要播放的数据，将音频数据丢给音频播放器（一般是AUGraph+AudioUnit）,视频数据丢给视频播放器（OPENGLES）。</p>
+<p>RTMP是一种直播流的传输协议，主要有BaseHeader,MessageHeader,ExtendedTimestamp和ChunkData四部分组成，其中BaseHeader中的type又决定了MessageHeader的类型，主要有4类。Type = 0时是完整数据，说明该数据帧是IDR或者I帧数据，应该是一个Gop的第一帧。其他type则代表p,b帧等数据。ExtendedTimestamp是扩展时间戳，只会在MessageHeader存储不下时间戳时才会有数据。扩展时间戳里面存的是完整的绝对时间，而MessageHeader里面存的是减去时间戳或时间差值。ChunkData里面存的就是被编码的音视频数据了，H.264使用NAL Uint来标示具体的一帧数据，可能是SPS（序列参数集），PPS（图像参数集）I，P，B帧等。一系列的NAL Uint组成一个GoP,当摄像头静止时，GoP可能会很长，而在运动中时，GoP应该尽量短，保证视频数据完整性。在提高直播秒开率上面，我们也需要从GoP上去做文章，如果GoP太长，当前连接的用户可能因为错过I帧而导致长时间等待的情况，解决这个问题的一种方案是服务器对上一个GoP做一个缓冲，有新用户连接时先推这个缓存的GoP,不过这种方案不太适合对延迟很敏感的场景，其他方案就是怎么去合适的设置GoP之间的时间间隔。</p>
+<p>一个完整的音视频播放器应该有以下几个模块：文件存取模块，解码模块，音视频同步模块，音频播放模块，视频播放模块，完整播放器模块（对以上模块的封装）。其中，文件存取主要用来拉取数据和缓存数据，比如我们如果使用硬解的话，就需要先使用Http协议中的Get方法拉取到数据，然后对数据进行解析和分发，其中如果我们还想实现边播边缓存的功能，还需要将数据缓存到本地。解码模块主要对数据进行解码，一般会新启一个解码线程，解码线程会是一个常驻线程，解码器内部会缓存以下数据：已解码音频列表，已解码视频列表，当前已解码未播放总时长，当已解码未播放总时长大于解码器的最大阈值，解码线程会被阻塞暂停解码以节约资源，当已解码未播放时长小于了最小阈值，解码器会抛出卡顿。音视频同步模块实际上控制了整个播放器的播放流程，比较常见的同步方案是使用音频的时间戳去同步视频的时间戳，因为人对音频比对视频更敏感，既先播放音频，然后用音频的当前进度从视频缓存列表中找到合适的帧进行播放。如果视频列表中有旧数据，还需要将旧数据移除，如果没有合适的数据，则继续展示上一帧的数据。音频播放模块负责播放音频，这里解码出来的就是PCM数据，每一个PCM的采样默认是2个字节的大小，音频通常还会有多个声道，我们需要计算出一个packet的总的字节数，才能够正常的播放数据，按一个packet里面只有一帧，每一帧里面有一个双声道来计算的话，一个packet的size就是4字节32bit。还有一点需要注意的是音频的数据存放有2种方式，既线性存放和交叉存放。线性存放时，每一个声道的数据是分开的，都只有2个字节。当交叉存放时，两个声道的数据会合并到一个声道，该声道的字节数会变成4个字节。视频播放模块主要负责视频数据的播放，一帧视频数据也就是一张图片，如果是使用的硬件解码，我们可以直接将编码数据转成CVImageBuffer,如果是使用FFMPEG解码，我们还需要手动的将YUV数据转成CVImageBuffer,然后丢给OpenGLES去渲染。</p>
+<h4 id="播放器优化部分总结"><a href="#播放器优化部分总结" class="headerlink" title="播放器优化部分总结"></a>播放器优化部分总结</h4><h5 id="秒开优化"><a href="#秒开优化" class="headerlink" title="秒开优化"></a>秒开优化</h5><h5 id="卡顿优化"><a href="#卡顿优化" class="headerlink" title="卡顿优化"></a>卡顿优化</h5><h4 id="对直播间整体架构的思考"><a href="#对直播间整体架构的思考" class="headerlink" title="对直播间整体架构的思考"></a>对直播间整体架构的思考</h4><h5 id="视图层级"><a href="#视图层级" class="headerlink" title="视图层级"></a>视图层级</h5><p>根据具体业务可以拆分出不同的业务层视图，比如常驻功能层，礼物层，弹幕层，活动层等。层的优先级可以预先和运用，产品约定好，根据业务重要程度确定优先级，保证高优的业务在上层，避免视图叠加导致的遮挡。<br>同层视图之间则应避免叠加，每层可按实践业务情况进行功能区的划分，保证各功能区互不干扰，各司其职。<br>同时，我们要保证各层的点击事件不被其他层影响，在处理完自己的事件后，应将该事件抛给下一层。<br>以上层级拆分的好处是如果有新的视图需要被添加到直播间时，可以很方便的添加到正确的坐标上。维护行和扩展性都比较好。</p>
+<h5 id="弹窗"><a href="#弹窗" class="headerlink" title="弹窗"></a>弹窗</h5><p>弹窗的触发时机一直是比较头疼的问题，特别是有多个弹窗需要同时展示时，处理不好的话就会出现弹窗叠加的现象，影响用户体验。这里借鉴线程的调度策略，思考出一种弹窗展示逻辑，使用队列和优先级对弹窗进行管理，比如首页弹窗队列，直播间弹窗队列等，每个弹窗又会有（高中低）不同的优先级和一些依赖关系等（比如需要登录）。这个方案的难点在于调度这些队列的时机和方式，这个我们可以参考iOS的runloop的实现机制，每一种队列可以抽象为一种mode,当程序在直播间时，运行在直播间的mode下，既只对直播间的队列进行调度，当程序在首页时，运行在首页mode下，只对首页的队列进行调度，如果是全局的弹窗，则可以添加到这两种队列中，当然全局弹窗还需要在展示完成后对可能存在其他队列中的相同对象进行移除，这样既能保证该弹窗不会被阻塞，又解决了可能重复弹出的问题。</p>
+<h5 id="直播间模块通信"><a href="#直播间模块通信" class="headerlink" title="直播间模块通信"></a>直播间模块通信</h5><p>由于直播间相关模块众多，代码肯定不可能都堆放在一起，会按业务模块或者功能模块进行封装，这时模块之间的通信就是一个问题，如果靠block和delegate去传递的话，层级可能会非常深，导致传递的链条会很长，出现大量重复代码。解决这个问题我们可以反向去思考，模块间的相互调用实际上就是获取其他模块的某种能力，那么我们可以把常用的一些能力（发送弹幕，送礼，点赞等）抽象为一种服务（server），然后在调度程序里面注册这些服务，同时我们需要去维护一个服务列表，其他模块如果需要某种服务，只需要通过调度程序添加这个服务到服务列表既可，对服务列表的调度会在调度程序内部去进行，不需要暴露给外界。这种方案的好处是解耦了各业务模块的依赖，简化了模块间的调用关系，方便代码的扩展。坏处是代码调试的关系链被断掉了，需要花更多的时间去理解代码逻辑和进行代码调试。</p>
+<h5 id="直播间大礼物播放方案"><a href="#直播间大礼物播放方案" class="headerlink" title="直播间大礼物播放方案"></a>直播间大礼物播放方案</h5><p>礼物系统是直播的重要部分，也是可能出现性能瓶颈的一个点，选取好的礼物播放方案对用户体验的提升有关键作用。礼物播放方案的优劣主要从cpu，memory和礼物资源大小这三方面去评价。目前比较常用的方案中直接使用序列帧去播放实现最简单，性能消耗和礼物资源也是最大，不是最优解。YYUED出品的SVGA使用Protobuf对数据进行编解码，所以礼物资源本身很小，礼物展示使用CALayer+多线程异步图片解码的方案使得cpu和memory的消耗都很小，是比较理想的实现方案，不过svga礼物对粒子的支持不太好。还有一种综合实力最优的方案是使用视频进行礼物的展示，该方案性能较好，支持多种礼物类型，礼物文件也很小，实现也不太复杂（基于GPUImage）。</p>
+<h5 id="直播间性能监控"><a href="#直播间性能监控" class="headerlink" title="直播间性能监控"></a>直播间性能监控</h5><p>直播间性能主要从推拉流播放器，设备性能指标和网络情况三方面来考量。播放器主要关注码率，延迟，卡顿，分辨率和帧率信息。设备性能有cpu使用率，内存情况，fps，电量几个方面。网络情况有ping，metrics和带宽。对于出现性能问题的设备，我们就可以根据上面这些指标的数据去定位可能的性能瓶颈，比如对于较低端的设备，可以适当降低推拉流的码率，帧率和分辨率，首先保证数据能正常传输。当设备性能出现瓶颈时，我们也可以根据设备出一套适配策略，将直播间比较消耗性能的模块做“降级”处理,比如减小礼物资源的分辨率和帧率，阉割部分直播间特效。对于出现网络瓶颈的用户，我们可以建议切换网络等。有一点要明确的是我们获取这些性能指标数据的作用就是为了更好的为用户服务，当用户有反馈性能问题的时候，我们能够及时的帮助定位和解决问题，增加用户好感度和粘性。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2020/05/06/MBP搭建本地Https服务器实现ipa文件的下载/" itemprop="url">
                   MBP搭建本地Https服务器实现ipa文件的下载
                 </a>
@@ -1629,165 +1737,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2019/11/06/《重构-改善既有代码的设计》系列读书笔记（三、类的重构）/" itemprop="url">
-                  《重构-改善既有代码的设计》系列读书笔记（三、类的重构）
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2019-11-06T15:17:12+08:00" content="2019-11-06">
-              2019-11-06
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2019/11/06/《重构-改善既有代码的设计》系列读书笔记（三、类的重构）/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2019/11/06/《重构-改善既有代码的设计》系列读书笔记（三、类的重构）/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="在对象之间搬移特性"><a href="#在对象之间搬移特性" class="headerlink" title="在对象之间搬移特性"></a>在对象之间搬移特性</h3><p>在对象的设计过程中，决定把责任放在哪里，即使不是最重要的事情，也是最重要的使用之一，虽然不能一开始就完全设计正确，但是我们可以使用重构去完善自己的设计</p>
-<h4 id="Move-Method-搬移函数"><a href="#Move-Method-搬移函数" class="headerlink" title="Move Method(搬移函数)"></a>Move Method(搬移函数)</h4><p>你的程序中，有个函数与其所在类之外的其他类进行更多的交流，调用后者，或者被后者调用</p>
-<h5 id="动机"><a href="#动机" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>如果一个类有太多行为，就会承担过多的责任，请为这个类减负</li>
-<li>如果一个类与另一个类有太多合作，会形成高度的耦合</li>
-<li>如果一个函数使用外部类的次数比使用所在类的次数还多，则应该被移出所在类</li>
-</ul>
-<h5 id="做法"><a href="#做法" class="headerlink" title="做法"></a>做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div></pre></td><td class="code"><pre><div class="line">// before</div><div class="line">class Account...</div><div class="line">	double overdraftCharge() &#123;</div><div class="line">		if (_type.isPremium() )&#123;</div><div class="line">			double result = 10;</div><div class="line">			if (_daysOverdrawn &gt; 7) result += (_daysOverdrawn - 7) * 0.85;</div><div class="line">			return result;</div><div class="line">		&#125;</div><div class="line">		else &#123;</div><div class="line">			return _daysOverdrawn * 1.75</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	double bankCharge() &#123;</div><div class="line">		double result = 4.5;</div><div class="line">		if (_daysOverdrawn &gt; 0) result += overdraftCharge();</div><div class="line">		return result;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	private AccountType _type;</div><div class="line">	private int _daysOverdrawn;</div><div class="line"></div><div class="line">// after</div><div class="line">class AccountType...</div><div class="line">	double overdraftCharge(Account account) &#123;</div><div class="line">		if (isPremium()) &#123;</div><div class="line">			double result = 10;</div><div class="line">			if (account.getDaysOverdrawn() - 7) &#123;</div><div class="line">				result += (account.getDaysOverdrawn() - 7) * 0.85;</div><div class="line">			&#125;</div><div class="line">			else &#123;</div><div class="line">				return result;</div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">		else &#123;</div><div class="line">			return account.getDaysOverdrawn() * 1.75;</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">class Account...</div><div class="line">		double bankCharge() &#123;</div><div class="line">		double result = 4.5;</div><div class="line">		if (_daysOverdrawn &gt; 0) </div><div class="line">			result += _type.overdraftCharge(self);</div><div class="line">		return result;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	private AccountType _type;</div><div class="line">	private int _daysOverdrawn;</div></pre></td></tr></table></figure>
-<h4 id="Move-Field-搬移字段"><a href="#Move-Field-搬移字段" class="headerlink" title="Move Field(搬移字段)"></a>Move Field(搬移字段)</h4><p>某个字段被其所在类之外的另一个类更多的用到，搬移它到正确的地方。</p>
-<h5 id="动机-1"><a href="#动机-1" class="headerlink" title="动机"></a>动机</h5><h5 id="做法-1"><a href="#做法-1" class="headerlink" title="做法"></a>做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line">// before</div><div class="line">class Account...</div><div class="line">	private AccountType _type;</div><div class="line">	private double _interestRate;//搬移到AccountType</div><div class="line"></div><div class="line">	double interestForAmount_days (double amount,int days) &#123;</div><div class="line">		return _interestRate * amount * days / 365;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">//after</div><div class="line">class AccountType...</div><div class="line">	private double _interestRate;</div><div class="line">	</div><div class="line">	void setInterestRate (double arg) &#123;</div><div class="line">		_interestRate = arg</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	double getInterestRate () &#123;</div><div class="line">		return _interestRate;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">class Account...	</div><div class="line">	private AccountType _type;</div><div class="line"></div><div class="line">	double interestForAmount_days (double amount,int days) &#123;</div><div class="line">		return getInterestRate() * amount * days / 365;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	private void setInterestRate(double arg)&#123;</div><div class="line">		_type.setInteresetRate(arg);</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	private double getInterestRate() &#123;</div><div class="line">		return _type.getInteresetRate();</div><div class="line">	&#125;</div></pre></td></tr></table></figure>
-<h4 id="Extract-Class-提炼类"><a href="#Extract-Class-提炼类" class="headerlink" title="Extract Class (提炼类)"></a>Extract Class (提炼类)</h4><p>某个类做了应该由两个类做的事。</p>
-<h5 id="动机-2"><a href="#动机-2" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>一个类应该是一个清楚的抽象，处理一些明确的责任。</li>
-<li>类的不断迭代，会导致体积不断增大，责任越来越多。</li>
-<li>如果某些数据和函数总是一起出现，某些数据经常同时变化甚至彼此依赖，这就表示你应该将它们分离出去</li>
-<li>如果一个类在子类化时出现分歧，则该类可能需要被分解。</li>
-</ul>
-<h5 id="做法-2"><a href="#做法-2" class="headerlink" title="做法"></a>做法</h5><ul>
-<li>新建类，将需要分离的代码拷贝过来。</li>
-<li>建立从旧类访问新类的连接关系。</li>
-<li>使用上面的Move Method 和 Move Field方法对新类进行重构。</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div></pre></td><td class="code"><pre><div class="line">// before</div><div class="line">class Person...</div><div class="line">	public String getName() &#123;</div><div class="line">		return _name;</div><div class="line">	&#125;</div><div class="line">	public String getTelephoneNumber() &#123;</div><div class="line">		return (&quot;(&quot; + _officeAreaCode + &quot;)&quot; + _officeNumber);</div><div class="line">	&#125;</div><div class="line">	String getOfficeAreaCode() &#123;</div><div class="line">		return _officeAreaCode;</div><div class="line">	&#125;</div><div class="line">	void setOfficeAreaCode(String arg) &#123;</div><div class="line">		_officeAreaCode = arg;</div><div class="line">	&#125;</div><div class="line">	String getOfficeNumber() &#123;</div><div class="line">		return _officeNumber;</div><div class="line">	&#125;</div><div class="line">	void setOfficeNumber(String arg) &#123;</div><div class="line">		_officeNumber = arg;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	private String _name;</div><div class="line">	private String _officeAreaCode;</div><div class="line">	private String _officeNumber;</div><div class="line">	</div><div class="line">//after</div><div class="line">class Person...</div><div class="line">	public String getName() &#123;</div><div class="line">		return _name;</div><div class="line">	&#125;</div><div class="line">	public String getTelephoneNumber() &#123;</div><div class="line">		return _officeTelephone.getTelephoneNumber();</div><div class="line">	&#125;</div><div class="line">	TelephoneNumber getOfficeTelephone() &#123;</div><div class="line">		return _officeTelephone;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	private String _name;</div><div class="line">	private TelephoneNumber _officeTelephone = new TelephoneNumber()</div><div class="line">	</div><div class="line">class TelephoneNumber...</div><div class="line">	public String getTelephoneNumber() &#123;</div><div class="line">		return (&quot;(&quot; + _officeAreaCode + &quot;)&quot; + _number);</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	String getAreaCode() &#123;</div><div class="line">		return _areaCode;</div><div class="line">	&#125;</div><div class="line">	void setAreaCode(String arg) &#123;</div><div class="line">		_areaCode = arg;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	String getNumber() &#123;</div><div class="line">		return _number;</div><div class="line">	&#125;</div><div class="line">	void setNumber(String arg) &#123;</div><div class="line">		_number = arg;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	private String _number;</div><div class="line">	private String _areaCode;</div></pre></td></tr></table></figure>
-<h4 id="Inline-Class-将类内联化"><a href="#Inline-Class-将类内联化" class="headerlink" title="Inline Class (将类内联化)"></a>Inline Class (将类内联化)</h4><p>某个类没有做太多事</p>
-<h5 id="动机-3"><a href="#动机-3" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>如果一个类不再承担足够的责任，不再有单独存在的理由，将它内联到另一个类中</li>
-</ul>
-<h5 id="做法-3"><a href="#做法-3" class="headerlink" title="做法"></a>做法</h5><ul>
-<li>Extract Class的逆过程</li>
-</ul>
-<h4 id="Hide-Delegate-隐藏委托关系"><a href="#Hide-Delegate-隐藏委托关系" class="headerlink" title="Hide Delegate(隐藏委托关系)"></a>Hide Delegate(隐藏委托关系)</h4><p>客户通过一个委托类来调用另外一个对象</p>
-<h5 id="动机-4"><a href="#动机-4" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>封装意味着每个对象应该尽量少的了解系统的其他部分，如果发生变化，需要了解这个变化的对象就会很少，这会使变化更容易</li>
-<li>针对上面的例子，如果委托关系发生变化，客户也得相应变化。</li>
-</ul>
-<h5 id="做法-4"><a href="#做法-4" class="headerlink" title="做法"></a>做法</h5><ul>
-<li>在委托类中加一个代理方法，将获取对象的逻辑留在这个类中，不要暴露给客户</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div></pre></td><td class="code"><pre><div class="line">// before</div><div class="line">class Person...</div><div class="line">	Department _department;</div><div class="line">	</div><div class="line">	public Department getDepartment() &#123;</div><div class="line">		return _department;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	public void setDepartment(Department arg) &#123;</div><div class="line">		_department = arg;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">class Department &#123;</div><div class="line">	private String _chargeCode;</div><div class="line">	private String _manager;</div><div class="line"></div><div class="line">	public Department(Person manager) &#123;</div><div class="line">		_manager = manager;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	public Person getManager() &#123;</div><div class="line">		return _manager;</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">//after</div><div class="line">class Person...	</div><div class="line">	Department _department;</div><div class="line">	</div><div class="line">	public void setDepartment(Department arg) &#123;</div><div class="line">		_department = arg;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	//新加一个代理方法</div><div class="line">	public Person getManager() &#123;</div><div class="line">		return _department.getManager();</div><div class="line">	&#125;</div><div class="line"></div><div class="line">class Department &#123;</div><div class="line">	private String _chargeCode;</div><div class="line">	private String _manager;</div><div class="line"></div><div class="line">	public Department(Person manager) &#123;</div><div class="line">		_manager = manager;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	public Person getManager() &#123;</div><div class="line">		return _manager;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h4 id="Remove-Middle-Man-移除中间人"><a href="#Remove-Middle-Man-移除中间人" class="headerlink" title="Remove Middle Man (移除中间人)"></a>Remove Middle Man (移除中间人)</h4><p>某个类做了过多的简单协议</p>
-<h5 id="动机-5"><a href="#动机-5" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>如果某个类的代理方法越来越多，变成了一个完全的中间人，此时你应该让客户直接调用委托对象本身</li>
-<li>Hide Delegate 和 Remove Middle Man是一对可逆的过程，代码总是在变化的，之前的修改可能在之后变得并不适用，不用说对不起，继续把这个问题修补好就行了。</li>
-</ul>
-<h5 id="做法-5"><a href="#做法-5" class="headerlink" title="做法"></a>做法</h5><ul>
-<li>和Hide Delegate过程刚好相反</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">//before</div><div class="line">class Person...	</div><div class="line">	Department _department;</div><div class="line"></div><div class="line">	public void setDepartment(Department arg) &#123;</div><div class="line">		_department = arg;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	public Person getManager() &#123;</div><div class="line">		return _department.getManager();</div><div class="line">	&#125;</div><div class="line"></div><div class="line">//after</div><div class="line">class Person...	</div><div class="line">	Department _department;</div><div class="line">	</div><div class="line">	public Department getDepartment() &#123;</div><div class="line">		return _department;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	public void setDepartment(Department arg) &#123;</div><div class="line">		_department = arg;</div><div class="line">	&#125;</div></pre></td></tr></table></figure>
-<h4 id="Introduce-Foreign-Method-引用外加函数"><a href="#Introduce-Foreign-Method-引用外加函数" class="headerlink" title="Introduce Foreign Method(引用外加函数)"></a>Introduce Foreign Method(引用外加函数)</h4><p>你需要为提供服务的类增加一个函数，但是你无法修改这个类</p>
-<h5 id="动机-6"><a href="#动机-6" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>需要为不能修改源代码的类增加函数</li>
-<li>如果这个函数只使用一次，可能没有必要，如果需要多次使用，则应该这么做。</li>
-</ul>
-<h5 id="做法-6"><a href="#做法-6" class="headerlink" title="做法"></a>做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">//before</div><div class="line">Date newStart = new Date (previousEnd.getYear(),previousEnd.getMonth(),previousEnd.getDay() + 1);</div><div class="line"></div><div class="line">//after</div><div class="line">Date newStart = nextDay(previousEnd);</div><div class="line"></div><div class="line">private static Date nextDay(Date arg)&#123;</div><div class="line">	return new Date(previousEnd.getYear(),previousEnd.getMonth(),previousEnd.getDay() + 1);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h4 id="Introduce-Local-Extension-引入本地扩展"><a href="#Introduce-Local-Extension-引入本地扩展" class="headerlink" title="Introduce Local Extension(引入本地扩展)"></a>Introduce Local Extension(引入本地扩展)</h4><p>你需要为服务类提供一些额外函数，但是你无法修改这个类。</p>
-<h5 id="动机-7"><a href="#动机-7" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>如果需要加多个函数，则应该对这些函数做一个封装，而不是散落在各处</li>
-<li>子类是更好的扩展方式</li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1833,7 +1782,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">63</span>
+              <span class="site-state-item-count">64</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
