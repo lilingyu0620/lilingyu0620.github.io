@@ -1,0 +1,616 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="从宏观上看，计算机系统整体上都是一种分层的架构设计，从网络的五层协议到分布式系统；从操作系统到应用软件。架构设计要解决的核心问题就是如何分层，层与层之间以及同层之前如何去交互的问题。在我们着手去做分层架构和通信设计之前，我们可能还需要一些设计理论和原则的支撑，历史一次次证明，如果只是全凭实践经验，我们是无法成功设计出一款好的产品的。（比如飞机的发明，飞行器古代就已经出现，但是现代意义上的飞机直到空">
+<meta property="og:type" content="article">
+<meta property="og:title" content="架构设计的一些思考">
+<meta property="og:url" content="http://yoursite.com/2020/07/04/架构设计的一些思考/index.html">
+<meta property="og:site_name" content="lly&#39;s Blog">
+<meta property="og:description" content="从宏观上看，计算机系统整体上都是一种分层的架构设计，从网络的五层协议到分布式系统；从操作系统到应用软件。架构设计要解决的核心问题就是如何分层，层与层之间以及同层之前如何去交互的问题。在我们着手去做分层架构和通信设计之前，我们可能还需要一些设计理论和原则的支撑，历史一次次证明，如果只是全凭实践经验，我们是无法成功设计出一款好的产品的。（比如飞机的发明，飞行器古代就已经出现，但是现代意义上的飞机直到空">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/架构设计的一些思考/factory.png">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/架构设计的一些思考/activity.png">
+<meta property="og:updated_time" content="2020-07-05T12:46:31.635Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="架构设计的一些思考">
+<meta name="twitter:description" content="从宏观上看，计算机系统整体上都是一种分层的架构设计，从网络的五层协议到分布式系统；从操作系统到应用软件。架构设计要解决的核心问题就是如何分层，层与层之间以及同层之前如何去交互的问题。在我们着手去做分层架构和通信设计之前，我们可能还需要一些设计理论和原则的支撑，历史一次次证明，如果只是全凭实践经验，我们是无法成功设计出一款好的产品的。（比如飞机的发明，飞行器古代就已经出现，但是现代意义上的飞机直到空">
+<meta name="twitter:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/架构设计的一些思考/factory.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/07/04/架构设计的一些思考/"/>
+
+  <title> 架构设计的一些思考 | lly's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">lly's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">用心记录点滴</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                架构设计的一些思考
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2020-07-04T17:21:34+08:00" content="2020-07-04">
+              2020-07-04
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2020/07/04/架构设计的一些思考/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2020/07/04/架构设计的一些思考/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>从宏观上看，计算机系统整体上都是一种分层的架构设计，从网络的五层协议到分布式系统；从操作系统到应用软件。架构设计要解决的核心问题就是如何分层，层与层之间以及同层之前如何去交互的问题。在我们着手去做分层架构和通信设计之前，我们可能还需要一些设计理论和原则的支撑，历史一次次证明，如果只是全凭实践经验，我们是无法成功设计出一款好的产品的。（比如飞机的发明，飞行器古代就已经出现，但是现代意义上的飞机直到空气动力学理论出现后才由莱特兄弟设计制造出来，这样的例子在科技史上还有很多）这里我总结了三个部分：模块设计原则，设计模式的应用和重构原则。</p>
+<h3 id="模块设计原则"><a href="#模块设计原则" class="headerlink" title="模块设计原则"></a>模块设计原则</h3><h4 id="单一职能原则SRP"><a href="#单一职能原则SRP" class="headerlink" title="单一职能原则SRP"></a>单一职能原则SRP</h4><p>单一职能原则强调一个模块或者一个类只应该有一种行为，也只能对一种行为负责，比如负责UI展示的类，就不要在内部去处理业务逻辑，负责业务逻辑的类，则内部必要去修改UI布局等。这个原则在MVVM的模式中被广泛采用。</p>
+<h4 id="开闭原则OCP"><a href="#开闭原则OCP" class="headerlink" title="开闭原则OCP"></a>开闭原则OCP</h4><p>开闭原则指类或者模块应该易于扩展，而难以修改。要遵守该原则，我们在设计模块时就要尽量设计“害羞”的代码，隐藏自己的大部分行为，只将必要的接口暴露给外部，并且尽量只暴露只读的接口，不要暴露能够修改内部属性的接口，这是难以修改部分，那易于扩展部分，我们应该预留适当的钩子接口，该钩子可以扩展类的行为，将该行为的实现交于外部去处理。</p>
+<h4 id="里斯替换原则LSP"><a href="#里斯替换原则LSP" class="headerlink" title="里斯替换原则LSP"></a>里斯替换原则LSP</h4><p>里斯替换也是描述的接口扩展问题，但是和开闭描述的场景又不太一样，里斯替换更像工厂，一个接口的具体行为不依赖该类，而依赖其扩展类，该接口的行为可以很容易被其扩展类替换。</p>
+<h4 id="接口隔离原则ISP"><a href="#接口隔离原则ISP" class="headerlink" title="接口隔离原则ISP"></a>接口隔离原则ISP</h4><p>接口隔离很重要，但是经常被忽视，只有正在懂的人才会在模块封装的过程中采用这个原则，大部分人则无视该原则的好处，只是为了代码写起来更方便。我们是封装系统库和三方库时，往往会使用该原则去对系统方法做一层隔离，但是大部分也仅仅只是做到了这一层，选择忽略更上层的情况。其实对更上层的业务实体来说，每一个实体都应该再加一层的隔离，这样做的利大于弊，模块的职能划分的越清晰，维护和扩展的成本就会越低。</p>
+<h4 id="依赖反转原则DIP"><a href="#依赖反转原则DIP" class="headerlink" title="依赖反转原则DIP"></a>依赖反转原则DIP</h4><p>该原则主要解决模块间比较常见的相互依赖的问题，相互依赖的坏处这里不再多描述，依赖反转将双向或者多向的依赖关系梳理为单向的依赖关系，依赖反转的工具常常使用抽象接口去实现。</p>
+<h4 id="组件聚合原则"><a href="#组件聚合原则" class="headerlink" title="组件聚合原则"></a>组件聚合原则</h4><p>组件聚合原则主要介绍在做组件封装时类的归属问题，哪些类应该放入一个组件，哪些又不应该放入一个组件内，该原则主要包括以下三部分：</p>
+<ul>
+<li><p>复用/发布等同原则 </p>
+<p>  该原则指组件中的类和模块应该是可以共同发布，也能被其他组件共同复用的，即该组件中的类应该具有紧密的关系和共同的主题，而不是毫不相干的内容。</p>
+</li>
+<li><p>共同闭包原则</p>
+<p>  一个组件中的各类应该是会因为同一个行为而被一起修改的，如果有一些独善其身的类，那说明该类可能并不适合该组件，应该将其剥离该组件。</p>
+</li>
+<li><p>共同复用原则</p>
+<p>  一个组件中的类应该是可以被外部共同复用的，而不应该存在只需要复用一部分的情况，一个组件应该是不可再拆分的。</p>
+</li>
+</ul>
+<h4 id="组件解耦原则"><a href="#组件解耦原则" class="headerlink" title="组件解耦原则"></a>组件解耦原则</h4><p>该原则主要介绍组件内部或者组件之间的关系。</p>
+<ul>
+<li>无依赖环原则，这个上面已经介绍过（DIP）.</li>
+<li><p>稳定依赖原则：</p>
+<p>  这里先介绍什么是<strong>模块的稳定性</strong>，一个模块被其他模块依赖称为<em>入口依赖</em>,该模块依赖其他模块称为<em>出口依赖</em>，入口依赖越多，该模块就越稳定。</p>
+<p>  组件之间的依赖关系应该是从不稳定指向稳定方向的。这里已一个分层组件举例的话，越上层的组件，应该是越不稳定，因为它依赖了太多其他组件，越底层的组件，应该越稳定，因为它几乎只被其他组件依赖，分层组件的依赖关系应该是自顶向下的单向依赖。</p>
+</li>
+<li><p>稳定抽象原则：</p>
+<p>  抽象这个概念应该都知道，这里已接口举例，一个接口就是一个抽象方法。稳定抽象原则是指一个组件的稳定性应该和它的抽象性保持一致。</p>
+<p>  这里又要解释一下<strong>抽象性的概念</strong>，组件中的抽象类和抽象方法 / 组件中的实现类和实现方法 = 组件的抽象性。其实很好理解，抽象类和抽象方法越多，表示该组件越抽象。</p>
+<p>  既然稳定性和抽象性要保持一致，还是按上面的分层组件举例，就可以解释为：越是上层的组件应该越具体，越是底层的组件应该越抽象。    </p>
+</li>
+</ul>
+<h3 id="设计模式的应用"><a href="#设计模式的应用" class="headerlink" title="设计模式的应用"></a>设计模式的应用</h3><p>设计模式在代码中角色很奇妙，有的人可能根据自身经验采用了许多设计模式而不自知，其实设计模式本身也是从实践和经验中总结出来的一套代码设计的真理，了解并应用这些设计模式，在模块和架构设计过程中是必不可少的。</p>
+<h4 id="创建型"><a href="#创建型" class="headerlink" title="创建型"></a>创建型</h4><p>创建型设计模式这里重点介绍抽象工厂和工厂模式，工厂模式比较单一，一次只能生产一种对象，抽象工厂在工厂的基础上做了扩展，可同时生产多个对象。</p>
+<p>考虑下面这种情况：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/架构设计的一些思考/factory.png" alt=""></p>
+<p>这个活动目前有5种类型，我们在展示UI时可以选择创建5种cell去分别适配，如果以后还有类型的扩展再新建cell,但是这种方案会造成子类爆炸，也贡献了大量的重复代码，更好的方案是新建一个类型的抽象工厂，抽象工厂提供变化的UI元素的生成接口（设计模式的核心就是对变化的概念进行抽象），具体生成逻辑放到工厂实体类进行。这样就只需要一个cell和一个抽象工厂实体即可完全展示，后续扩展也更方便。整体类结构大概长这样：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/架构设计的一些思考/activity.png" alt=""></p>
+<p>其他的创建型设计模式比如原型描述的是对象的复用（clone），单例则是对象的共享，生成器一般用在比较复杂的对象创建上，比如这个对象由很多子对象组成，如一个订单等。</p>
+<h4 id="结构型"><a href="#结构型" class="headerlink" title="结构型"></a>结构型</h4><p>适配器模式主要描述如何对类和对象的行为进行扩展，方式主要是依赖和继承。iOS中还可以通过协议和消息转发扩展类。</p>
+<p>桥接有点像抽象工厂，基类只提供行为接口，具体的行为逻辑放到实体类进行。这种设计方便了对行为进行替换和扩展。</p>
+<p>组合是同一个类型的集合，方便统一处理一些行为，iOS中的subviews集合就是一个典型的组合模式的应用。</p>
+<p>装饰其实也是在给类添加属性或者方法，iOS中的分类就是装饰模式的应用。</p>
+<p>外观是将一系列相关联的方法进行封装，然后提供一个统一的入口。编译器的封装采用了外观模式,将整个编译链进行封装，隐藏内部过程，只提供一个统一的api供外部调用.</p>
+<p>享元模式有点类似上面的原型，只是享元复用的对象可能颗粒度更细，而且只是内部数据，内部数据是不变的，外部数据是可变的。</p>
+<p>代理模式比较好理解，类的某个行为自己不去实现，而是交给另一个代理类去实现，代理模式可以用来解耦模块间的相互依赖。</p>
+<h4 id="行为型"><a href="#行为型" class="headerlink" title="行为型"></a>行为型</h4><h3 id="重构原则"><a href="#重构原则" class="headerlink" title="重构原则"></a>重构原则</h3><h4 id="类的重构"><a href="#类的重构" class="headerlink" title="类的重构"></a>类的重构</h4><h4 id="函数的重构"><a href="#函数的重构" class="headerlink" title="函数的重构"></a>函数的重构</h4>
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/06/30/《软技能-代码之外的生存指南-职业篇》读书笔记/" rel="next" title="《软技能-代码之外的生存指南-职业篇》读书笔记">
+                <i class="fa fa-chevron-left"></i> 《软技能-代码之外的生存指南-职业篇》读书笔记
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2060/11/27/记录自己写的线上bug/" rel="prev" title="记录自己写的线上bug">
+                记录自己写的线上bug <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2020/07/04/架构设计的一些思考/"
+           data-title="架构设计的一些思考" data-url="http://yoursite.com/2020/07/04/架构设计的一些思考/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/head.png"
+               alt="lly" />
+          <p class="site-author-name" itemprop="name">lly</p>
+          <p class="site-description motion-element" itemprop="description">耿直的一Boy</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">67</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#模块设计原则"><span class="nav-number">1.</span> <span class="nav-text">模块设计原则</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#单一职能原则SRP"><span class="nav-number">1.1.</span> <span class="nav-text">单一职能原则SRP</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#开闭原则OCP"><span class="nav-number">1.2.</span> <span class="nav-text">开闭原则OCP</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#里斯替换原则LSP"><span class="nav-number">1.3.</span> <span class="nav-text">里斯替换原则LSP</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#接口隔离原则ISP"><span class="nav-number">1.4.</span> <span class="nav-text">接口隔离原则ISP</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#依赖反转原则DIP"><span class="nav-number">1.5.</span> <span class="nav-text">依赖反转原则DIP</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#组件聚合原则"><span class="nav-number">1.6.</span> <span class="nav-text">组件聚合原则</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#组件解耦原则"><span class="nav-number">1.7.</span> <span class="nav-text">组件解耦原则</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#设计模式的应用"><span class="nav-number">2.</span> <span class="nav-text">设计模式的应用</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#创建型"><span class="nav-number">2.1.</span> <span class="nav-text">创建型</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#结构型"><span class="nav-number">2.2.</span> <span class="nav-text">结构型</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#行为型"><span class="nav-number">2.3.</span> <span class="nav-text">行为型</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#重构原则"><span class="nav-number">3.</span> <span class="nav-text">重构原则</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#类的重构"><span class="nav-number">3.1.</span> <span class="nav-text">类的重构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#函数的重构"><span class="nav-number">3.2.</span> <span class="nav-text">函数的重构</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lly</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"llyblog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
