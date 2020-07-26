@@ -229,131 +229,6 @@
             
               
                 
-                <a class="post-title-link" href="/2060/11/27/记录自己写的线上bug/" itemprop="url">
-                  记录自己写的线上bug
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2060-11-27T16:17:25+08:00" content="2060-11-27">
-              2060-11-27
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2060/11/27/记录自己写的线上bug/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2060/11/27/记录自己写的线上bug/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="给NSDictionary设置nil值导致线上崩溃"><a href="#给NSDictionary设置nil值导致线上崩溃" class="headerlink" title="给NSDictionary设置nil值导致线上崩溃"></a>给NSDictionary设置nil值导致线上崩溃</h3><h4 id="崩溃描述"><a href="#崩溃描述" class="headerlink" title="崩溃描述"></a>崩溃描述</h4><p>这个问题是昨天新版本上线后firebase开始报的，当时正在扫线上的崩溃问题（因为老板注意到我们的崩溃率比其他产品线高很多），所以在崩溃刚出现时就发现了。崩溃原因并不复杂，以下是出现崩溃的代码片段：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">- (void)p_recordMetrics:(NSURLSessionTaskMetrics *)metrics&#123;</div><div class="line">    </div><div class="line">    if (metrics.transactionMetrics &gt; 0) &#123;</div><div class="line">        </div><div class="line">        NSMutableDictionary * track = [NSMutableDictionary dictionary];</div><div class="line">    </div><div class="line">        NSURLSessionTaskTransactionMetrics *tm = metrics.transactionMetrics.lastObject;</div><div class="line">        [track setObject:@(metrics.taskInterval.duration * 1000) forKey:@&quot;duration&quot;];</div><div class="line">        [track setObject:tm.request.URL.absoluteString forKey:@&quot;uri&quot;];</div><div class="line"></div><div class="line">        NSTimeInterval domain = [tm.domainLookupEndDate timeIntervalSinceDate:tm.domainLookupStartDate] * 1000;</div><div class="line">        NSTimeInterval connect = [tm.connectEndDate timeIntervalSinceDate:tm.connectStartDate] * 1000;</div><div class="line">        NSTimeInterval tls = [tm.secureConnectionEndDate timeIntervalSinceDate:tm.secureConnectionStartDate] * 1000;</div><div class="line">        NSTimeInterval request = [tm.requestEndDate timeIntervalSinceDate:tm.requestStartDate] * 1000;</div><div class="line">        NSTimeInterval response = [tm.responseEndDate timeIntervalSinceDate:tm.responseStartDate] * 1000;</div><div class="line">        </div><div class="line">        NSString *str = [NSString stringWithFormat:@&quot;dns:%f,connect:%f,tls:%f,request:%f,response:%f&quot;,domain,connect,tls,request,response];</div><div class="line">        [track setObject:str forKey:@&quot;metrics&quot;];</div><div class="line">        </div><div class="line">        [[FMBMonitor shareManager] trackData:track type:FMBMonitorTrackerTypeAPISample];</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>崩溃发生在给track设置uri的时候，在iOS13上，这个tm.request.URL.absoluteString字段有可能为nil，其他版本下暂时未发现崩溃。</p>
-<h4 id="造成的影响"><a href="#造成的影响" class="headerlink" title="造成的影响"></a>造成的影响</h4><p>线上的崩溃数增加了一倍，又提高了整体崩溃率。。。</p>
-<h4 id="解决过程"><a href="#解决过程" class="headerlink" title="解决过程"></a>解决过程</h4><p>发现问题后，马上对代码进行了修改，增加了非空的判断，本来准备跟下个版本一起发，后来发现崩溃数增长有点快，受影响用户会比较多，所以临时发了个bugfix版本。</p>
-<h4 id="槽点"><a href="#槽点" class="headerlink" title="槽点"></a>槽点</h4><p>万万想不到啊，这个字段居然可能为空，那这个tm的意义何在，就算我拿到下面的耗时数据了也没有任何用啊。</p>
-<p>而且只在13上出现这个问题，果然是bugOS啊。。。</p>
-<h4 id="经验教训"><a href="#经验教训" class="headerlink" title="经验教训"></a>经验教训</h4><p>以后再给字典赋值时，只要不是基本数据类型，一律进行为空判断，管你是从哪里搞的数据，这个社会除了自己，谁也靠不住啊。</p>
-<h3 id="使用高版本的api导致线上崩溃"><a href="#使用高版本的api导致线上崩溃" class="headerlink" title="使用高版本的api导致线上崩溃"></a>使用高版本的api导致线上崩溃</h3><h4 id="崩溃描述-1"><a href="#崩溃描述-1" class="headerlink" title="崩溃描述"></a>崩溃描述</h4><p>这个崩溃是之前做开屏广告时写的一个崩溃，当时是重构之前的代码，在新增计时器时为了图方便，用了个iOS10以后的api,当时开发环境都是10以上的设备，所以没有发现问题。</p>
-<h4 id="造成的影响-1"><a href="#造成的影响-1" class="headerlink" title="造成的影响"></a>造成的影响</h4><p>每天新增几千个崩溃。。。</p>
-<h4 id="解决过程-1"><a href="#解决过程-1" class="headerlink" title="解决过程"></a>解决过程</h4><p>发版后第二天才发现问题，然后马上替换了api，发了bugfix版本。</p>
-<h4 id="槽点-1"><a href="#槽点-1" class="headerlink" title="槽点"></a>槽点</h4><p>这个完全是自己的锅。</p>
-<h4 id="经验教训-1"><a href="#经验教训-1" class="headerlink" title="经验教训"></a>经验教训</h4><p>以后在使用系统api，特别是一个api簇的时候，一定要注意api版本兼容性。</p>
-<h3 id="代码重构导致api参数丢失的bug"><a href="#代码重构导致api参数丢失的bug" class="headerlink" title="代码重构导致api参数丢失的bug"></a>代码重构导致api参数丢失的bug</h3><h4 id="bug描述"><a href="#bug描述" class="headerlink" title="bug描述"></a>bug描述</h4><p>在做用户间送礼功能时，对之前的送礼模块进行了一些重构，将一些重复的代码块进行了封装，提炼出了一些公用的函数，在函数提炼过程中，将之前上下文使用到的数据以参数的形式做了传递，其中有一个函数在传参过程中出现了错误，传了初始数据，导致将处理后的数据丢失了。</p>
-<h4 id="造成的影响-2"><a href="#造成的影响-2" class="headerlink" title="造成的影响"></a>造成的影响</h4><p>由于将收礼人的id丢失了，服务器无法统计当前直播间的收礼情况，导致运营的活动无法正常进行，只能临时换活动方案。</p>
-<h4 id="解决过程-2"><a href="#解决过程-2" class="headerlink" title="解决过程"></a>解决过程</h4><p>这个问题很快就定位到并解决了，刚好跟最新的一个版本发布。</p>
-<h4 id="槽点-2"><a href="#槽点-2" class="headerlink" title="槽点"></a>槽点</h4><p>这已经不是第一次在重构过程中出现线上bug了，如何保证重构代码的正确性我可能需要做一些总结了。<br>快速的业务迭代和对代码质量的严格要求之间确实存在一个博弈和取舍的问题。当然这也和目前项目人手不足有关系，希望新同学的加入能使现状有所缓解，这样我也有更多的时间和精力去做那些一直想做也是真正对项目有帮助的事情。</p>
-<h4 id="经验教训-2"><a href="#经验教训-2" class="headerlink" title="经验教训"></a>经验教训</h4><ul>
-<li><p>对重构后的代码块一定要进行覆盖测试</p>
-</li>
-<li><p>在代码重构过程，特别是函数提炼过程中，一定要注意被提炼的这些代码块在之前的上下文中所使用到的数据，保证传参的正确性</p>
-</li>
-<li><p>代码重构过程，切记不能偷懒，还是得按重构的标准步骤来，慢工出细活不是没有道理</p>
-</li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
                 <a class="post-title-link" href="/2020/07/04/架构设计的一些思考/" itemprop="url">
                   架构设计的一些思考
                 </a>
@@ -1670,6 +1545,169 @@
 <li>如果你没有使用受委托类的所有接口，那就不需要修改，如果需要使用所有的接口，请使用继承代替委托。</li>
 </ul>
 
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2019/11/19/《重构-改善既有代码的设计》系列读书笔记（六、简化函数调用）/" itemprop="url">
+                  《重构-改善既有代码的设计》系列读书笔记（六、简化函数调用）
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-11-19T16:41:12+08:00" content="2019-11-19">
+              2019-11-19
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2019/11/19/《重构-改善既有代码的设计》系列读书笔记（六、简化函数调用）/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2019/11/19/《重构-改善既有代码的设计》系列读书笔记（六、简化函数调用）/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="简化函数调用"><a href="#简化函数调用" class="headerlink" title="简化函数调用"></a>简化函数调用</h3><h4 id="Rename-Method-函数改名"><a href="#Rename-Method-函数改名" class="headerlink" title="Rename Method (函数改名)"></a>Rename Method (函数改名)</h4><h5 id="动机"><a href="#动机" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>函数名称应该准确表达它的用途，在给函数命名时，首先考虑给这个函数写上一句怎样的注释，然后根据这句注释来命名。</li>
+<li>警惕以“将就用”的动机起名。</li>
+</ul>
+<h4 id="Add-Paramenter-添加参数"><a href="#Add-Paramenter-添加参数" class="headerlink" title="Add Paramenter(添加参数)"></a>Add Paramenter(添加参数)</h4><p>某个函数需要从调用端得到更多信息。</p>
+<h5 id="动机-1"><a href="#动机-1" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>只有在其他方式不能提供更多的信息时，才可以采用这种重构方式，添加参数意味着增加接口复杂度。</li>
+</ul>
+<h4 id="Remove-Paramenter-移除参数"><a href="#Remove-Paramenter-移除参数" class="headerlink" title="Remove Paramenter(移除参数)"></a>Remove Paramenter(移除参数)</h4><p>函数本身不再需要某个参数</p>
+<h5 id="动机-2"><a href="#动机-2" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>移除参数和添加参数同样重要</li>
+<li>多态函数需要谨慎</li>
+</ul>
+<h4 id="Seperate-Query-from-Modifier-将查询函数和修改函数分离"><a href="#Seperate-Query-from-Modifier-将查询函数和修改函数分离" class="headerlink" title="Seperate Query from Modifier(将查询函数和修改函数分离)"></a>Seperate Query from Modifier(将查询函数和修改函数分离)</h4><p>某个函数既返回对象状态值，又修改对象状态值</p>
+<h5 id="动机-3"><a href="#动机-3" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>任何有返回值的函数，都不应该有看得到的副作用。</li>
+<li>函数的单一职能原则。</li>
+</ul>
+<h4 id="Parameterize-Method-令函数携带参数"><a href="#Parameterize-Method-令函数携带参数" class="headerlink" title="Parameterize Method (令函数携带参数)"></a>Parameterize Method (令函数携带参数)</h4><p>若干函数做了类似的工作，但在函数本体中却包含了不同的值。</p>
+<h5 id="动机-4"><a href="#动机-4" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>将多个类似的函数合并，通过参数控制具体执行逻辑，可以简化问题，消除重复。</li>
+</ul>
+<h4 id="Replace-Paramenter-with-Explicit-Methods-以明确函数取代参数"><a href="#Replace-Paramenter-with-Explicit-Methods-以明确函数取代参数" class="headerlink" title="Replace Paramenter with Explicit Methods(以明确函数取代参数)"></a>Replace Paramenter with Explicit Methods(以明确函数取代参数)</h4><p>你有一个函数，其中完全取决于参数值而采取不同行动</p>
+<h5 id="动机-5"><a href="#动机-5" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>函数单一职能原则</li>
+<li>参数决定函数行为时，参数的合法判断可能并未在文档中提出，导致理解和调用困难</li>
+</ul>
+<h5 id="做法"><a href="#做法" class="headerlink" title="做法"></a>做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div></pre></td><td class="code"><pre><div class="line">// before</div><div class="line">static final int ENGINEER = 0;</div><div class="line">static final int SALESMAN = 1;</div><div class="line">static final int MANAGER = 2;</div><div class="line"></div><div class="line">static Employee create(int type) &#123;</div><div class="line">	switch (type) &#123;</div><div class="line">		case ENGINEER:</div><div class="line">			return new Engineer();</div><div class="line">		case SALESMAN:</div><div class="line">			return new Salesman();</div><div class="line">		case MANAGER:</div><div class="line">			return new Manager();</div><div class="line">		default:</div><div class="line">			...</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">Employee kent = Employee.create(ENGINEER);</div><div class="line"></div><div class="line">//after</div><div class="line">static Employee createEngineer() &#123;</div><div class="line">	return new Engineer();</div><div class="line">&#125;</div><div class="line">static Employee createSalesman() &#123;</div><div class="line">	return new Salesman();</div><div class="line">&#125;</div><div class="line">static Employee createManager() &#123;</div><div class="line">	return new Manager();</div><div class="line">&#125;</div><div class="line"></div><div class="line">Employee kent = Employee.createEngineer();</div></pre></td></tr></table></figure>
+<h4 id="Preserve-Whole-Object-保持对象完整"><a href="#Preserve-Whole-Object-保持对象完整" class="headerlink" title="Preserve Whole Object(保持对象完整)"></a>Preserve Whole Object(保持对象完整)</h4><p>你从某个对象中取出若干值，将它们作为某一次函数调用时的参数。</p>
+<h5 id="动机-6"><a href="#动机-6" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>以对象作为参数可能会让函数参数列更稳固，并能提高代码的可读性。</li>
+<li>如果以对象作为参数对类的依赖关系影响较大，则不应该采取这种方式。</li>
+<li>是否使用只取决于依赖关系是否复杂，而不应该依赖所需的参数的数量。</li>
+</ul>
+<h4 id="Replace-Parameter-with-Methods-以函数取代参数"><a href="#Replace-Parameter-with-Methods-以函数取代参数" class="headerlink" title="Replace Parameter with Methods(以函数取代参数)"></a>Replace Parameter with Methods(以函数取代参数)</h4><p>参数的实参来自于一个函数</p>
+<h5 id="动机-7"><a href="#动机-7" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>如果函数能够通过其他方式拿到参数值，那么它就不应该再通过参数传递的方式取值。</li>
+<li>多此一举，增加一个参数反而增加了代码的复杂性。</li>
+<li>less is more。</li>
+</ul>
+<h5 id="做法-1"><a href="#做法-1" class="headerlink" title="做法"></a>做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line">public double getPrice() &#123;</div><div class="line">	int basePrice = _quantity * _itemPrice;</div><div class="line">	int discountLevel;</div><div class="line">	if (_quantity &gt; 100) discountLevel = 2;</div><div class="line">	else discountLevel = 1;</div><div class="line">	double finalPrice = discountedPrice(basePrice,discountLevel);</div><div class="line">	return finalPrice;</div><div class="line">&#125;</div><div class="line"></div><div class="line">private double discountedPrice(int basePrice,int discountLevel) &#123;</div><div class="line">	if (discountLevel == 2) return basePrice * 0.1;</div><div class="line">	else return basePrice * 0.05;</div><div class="line">&#125;</div><div class="line"></div><div class="line">// after</div><div class="line"></div><div class="line">private double getDiscountLevel() &#123;</div><div class="line">	if (_quantity &gt; 100) return 2;</div><div class="line">	else return 1;</div><div class="line">&#125;</div><div class="line"></div><div class="line">private double getBasePrice() &#123;</div><div class="line">	return _quantity * _itemPrice;</div><div class="line">&#125;</div><div class="line"></div><div class="line">public double getPrice() &#123;</div><div class="line">	if (getDiscountLevel() == 2) return getBasePrice() * 0.1;</div><div class="line">	else return getBasePrice() * 0.05;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="Introduce-Parameter-Object-引入参数对象"><a href="#Introduce-Parameter-Object-引入参数对象" class="headerlink" title="Introduce Parameter Object(引入参数对象)"></a>Introduce Parameter Object(引入参数对象)</h4><p>某些参数总是很自然的同时出现</p>
+<h5 id="动机-8"><a href="#动机-8" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>同时出现的一组参数往往形成“数据泥团”</li>
+<li>对象的引入可以减少重复的代码</li>
+</ul>
+<h4 id="Remove-Setting-Method-移除设值函数"><a href="#Remove-Setting-Method-移除设值函数" class="headerlink" title="Remove Setting Method 移除设值函数"></a>Remove Setting Method 移除设值函数</h4><p>类中的某个字段应该在对象创建时被设值，然后就不再改变</p>
+<h5 id="动机-9"><a href="#动机-9" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>如果你为某个字段提供了设值函数，就暗示这个字段可以被改变。</li>
+<li>如果你保留了间接访问变量的方法，就可能经常有程序员盲目的使用他们。</li>
+</ul>
+<h4 id="Hide-Method-隐藏函数"><a href="#Hide-Method-隐藏函数" class="headerlink" title="Hide Method(隐藏函数)"></a>Hide Method(隐藏函数)</h4><p>有一个函数，从来没有被其他任何类用到。</p>
+<h5 id="动机-10"><a href="#动机-10" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>重构往往促使你修改函数的可见度，根据实际情况提高或者降低函数可见度。</li>
+</ul>
+<h4 id="Replace-Constructor-with-Factory-Method-以工厂函数取代构造函数"><a href="#Replace-Constructor-with-Factory-Method-以工厂函数取代构造函数" class="headerlink" title="Replace Constructor with Factory Method(以工厂函数取代构造函数)"></a>Replace Constructor with Factory Method(以工厂函数取代构造函数)</h4><p>你希望在创建对象时不仅仅是做简单的建构动作</p>
+<h5 id="动机-11"><a href="#动机-11" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>较典型的应用场景是在派生类的过程中以工厂函数取代类型码</li>
+</ul>
+<h5 id="做法-2"><a href="#做法-2" class="headerlink" title="做法"></a>做法</h5><ul>
+<li>工厂一：所有类型公用同一个方法，根据类型创建不同实例。</li>
+<li>工厂二：为每一个子类型创建属于自己的工厂方法，只返回自身实例。</li>
+</ul>
+<h4 id="Encapsulate-Downcast-封装向下转型"><a href="#Encapsulate-Downcast-封装向下转型" class="headerlink" title="Encapsulate Downcast(封装向下转型)"></a>Encapsulate Downcast(封装向下转型)</h4><h4 id="Replace-Error-Code-with-Exception-以异常取代错误码"><a href="#Replace-Error-Code-with-Exception-以异常取代错误码" class="headerlink" title="Replace Error Code with Exception(以异常取代错误码)"></a>Replace Error Code with Exception(以异常取代错误码)</h4><h4 id="Replace-Exception-with-Test-以测试取代异常"><a href="#Replace-Exception-with-Test-以测试取代异常" class="headerlink" title="Replace Exception with Test(以测试取代异常)"></a>Replace Exception with Test(以测试取代异常)</h4>
           
         
       

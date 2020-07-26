@@ -229,135 +229,6 @@
             
               
                 
-                <a class="post-title-link" href="/2017/02/08/UML类图中类的关系/" itemprop="url">
-                  UML类图中类的关系
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-02-08T16:22:32+08:00" content="2017-02-08">
-              2017-02-08
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2017/02/08/UML类图中类的关系/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/08/UML类图中类的关系/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="一、关联关系"><a href="#一、关联关系" class="headerlink" title="一、关联关系"></a>一、关联关系</h2><p>关联(Association)关系是类与类之间最常用的一种关系，它是一种结构化关系，用于表示一类对象与另一类对象之间有联系，如汽车和轮胎、师傅和徒弟、班级和学生等等。在UML类图中，用实线连接有关联关系的对象所对应的类，在使用Java、C#和C++等编程语言实现关联关系时，通常将一个类的对象作为另一个类的成员变量。在使用类图表示关联关系时可以在关联线上标注角色名，一般使用一个表示两者之间关系的动词或者名词表示角色名（有时该名词为实例对象名），关系的两端代表两种不同的角色，因此在一个关联关系中可以包含两个角色名，角色名不是必须的，可以根据需要增加，其目的是使类之间的关系更加明确。</p>
-<h3 id="1-双向关联"><a href="#1-双向关联" class="headerlink" title="1.双向关联"></a>1.双向关联</h3><p>默认情况下，关联是双向的。例如：顾客(Customer)购买商品(Product)并拥有商品，反之，卖出的商品总有某个顾客与之相关联。因此，Customer类和Product类之间具有双向关联关系 如下图: </p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/%E5%8F%8C%E5%90%91%E5%85%B3%E8%81%94.jpg" alt=""></p>
-<h3 id="2-单向关联"><a href="#2-单向关联" class="headerlink" title="2.单向关联"></a>2.单向关联</h3><p>类的关联关系也可以是单向的，单向关联用带箭头的实线表示。例如：顾客(Customer)拥有地址(Address)，则Customer类与Address类具有单向关联关系 如下图:</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/%E5%8D%95%E5%90%91%E5%85%B3%E8%81%94.jpg" alt=""></p>
-<h3 id="3-自关联"><a href="#3-自关联" class="headerlink" title="3.自关联"></a>3.自关联</h3><p>在系统中可能会存在一些类的属性对象类型为该类本身，这种特殊的关联关系称为自关联。例如：一个节点类(Node)的成员又是节点Node类型的对象<br>如下图：</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/%E8%87%AA%E5%85%B3%E8%81%94.jpg" alt=""></p>
-<h3 id="4-多重性关联"><a href="#4-多重性关联" class="headerlink" title="4.多重性关联"></a>4.多重性关联</h3><p>多重性关联关系又称为重数性(Multiplicity)关联关系，表示两个关联对象在数量上的对应关系。在UML中，对象之间的多重性可以直接在关联直线上用一个数字或一个数字范围表示。</p>
-<p>对象之间可以存在多种多重性关联关系，常见的多重性表示方式如下所示：</p>
-<p>表示方式<br>多重性说明</p>
-<p>1..1<br>表示另一个类的一个对象只与该类的一个对象有关系</p>
-<p>0..*<br>表示另一个类的一个对象与该类的零个或多个对象有关系</p>
-<p>1..*<br>表示另一个类的一个对象与该类的一个或多个对象有关系</p>
-<p>0..1<br>表示另一个类的一个对象没有或只与该类的一个对象有关系</p>
-<p>m..n<br>表示另一个类的一个对象与该类最少m，最多n个对象有关系 (m≤n)</p>
-<p>如下图</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/%E5%A4%9A%E9%87%8D%E6%80%A7%E5%85%B3%E8%81%94.jpg" alt=""></p>
-<h3 id="5-聚合关系"><a href="#5-聚合关系" class="headerlink" title="5.聚合关系"></a>5.聚合关系</h3><p>聚合(Aggregation)关系表示整体与部分的关系。在聚合关系中，成员对象是整体对象的一部分，但是成员对象可以脱离整体对象独立存在。在UML中，聚合关系用带空心菱形的直线表示。例如：汽车发动机(Engine)是汽车(Car)的组成部分，但是汽车发动机可以独立存在，因此，汽车和发动机是聚合关系</p>
-<p>如下图</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/%E8%81%9A%E5%90%88%E5%85%B3%E7%B3%BB.jpg" alt=""></p>
-<h3 id="6-组合关系"><a href="#6-组合关系" class="headerlink" title="6.组合关系"></a>6.组合关系</h3><p>组合(Composition)关系也表示类之间整体和部分的关系，但是在组合关系中整体对象可以控制成员对象的生命周期，一旦整体对象不存在，成员对象也将不存在，成员对象与整体对象之间具有同生共死的关系。在UML中，组合关系用带实心菱形的直线表示。例如：人的头(Head)与嘴巴(Mouth)，嘴巴是头的组成部分之一，而且如果头没了，嘴巴也就没了，因此头和嘴巴是组合关系</p>
-<p>如下图</p>
-<p><img src="http://ofy1hyquv.bkt.clouddn.com/%E7%BB%84%E5%90%88%E5%85%B3%E7%B3%BB.jpg" alt=""></p>
-<h2 id="二、依赖关系"><a href="#二、依赖关系" class="headerlink" title="二、依赖关系"></a>二、依赖关系</h2><p>依赖(Dependency)关系是一种使用关系，特定事物的改变有可能会影响到使用该事物的其他事物，在需要表示一个事物使用另一个事物时使用依赖关系。大多数情况下，依赖关系体现在某个类的方法使用另一个类的对象作为参数。在UML中，依赖关系用带箭头的虚线表示，由依赖的一方指向被依赖的一方。例如：驾驶员开车，在Driver类的drive()方法中将Car类型的对象car作为一个参数传递，以便在drive()方法中能够调用car的move()方法，且驾驶员的drive()方法依赖车的move()方法，因此类Driver依赖类Car</p>
-<p>如下图<br><img src="http://ofy1hyquv.bkt.clouddn.com/%E4%BE%9D%E8%B5%96%E5%85%B3%E7%B3%BB.jpg" alt=""></p>
-<h2 id="三、泛化关系"><a href="#三、泛化关系" class="headerlink" title="三、泛化关系"></a>三、泛化关系</h2><p>泛化(Generalization)关系也就是继承关系，用于描述父类与子类之间的关系，父类又称作基类或超类，子类又称作派生类。在UML中，泛化关系用带空心三角形的直线来表示。在代码实现时，我们使用面向对象的继承机制来实现泛化关系，如在Java语言中使用extends关键字、在C++/C#中使用冒号“：”来实现。例如：Student类和Teacher类都是Person类的子类，Student类和Teacher类继承了Person类的属性和方法，Person类的属性包含姓名(name)和年龄(age)，每一个Student和Teacher也都具有这两个属性，另外Student类增加了属性学号(studentNo)，Teacher类增加了属性教师编号(teacherNo)，Person类的方法包括行走move()和说话say()，Student类和Teacher类继承了这两个方法，而且Student类还新增方法study()，Teacher类还新增方法teach()</p>
-<p>如下图<br><img src="http://ofy1hyquv.bkt.clouddn.com/%E6%B3%9B%E5%8C%96%E5%85%B3%E7%B3%BB.jpg" alt=""></p>
-<h2 id="四、接口与实现关系"><a href="#四、接口与实现关系" class="headerlink" title="四、接口与实现关系"></a>四、接口与实现关系</h2><p>接口之间也可以有与类之间关系类似的继承关系和依赖关系，但是接口和类之间还存在一种实现(Realization)关系，在这种关系中，类实现了接口，类中的操作实现了接口中所声明的操作。在UML中，类与接口之间的实现关系用带空心三角形的虚线来表示。例如：定义了一个交通工具接口Vehicle，包含一个抽象操作move()，在类Ship和类Car中都实现了该move()操作，不过具体的实现细节将会不一样</p>
-<p>如下图<br><img src="http://ofy1hyquv.bkt.clouddn.com/%E6%8E%A5%E5%8F%A3%E4%B8%8E%E5%AE%9E%E7%8E%B0%E5%85%B3%E7%B3%BB.jpg" alt=""></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
                 <a class="post-title-link" href="/2016/12/08/iOS并发编程指南/" itemprop="url">
                   iOS并发编程指南
                 </a>
@@ -1101,6 +972,131 @@
 <p>  2.配置SSH-Key的一般步骤很简单，网上有很多教程，随手搬<a href="http://blog.csdn.net/hustpzb/article/details/8230454/" target="_blank" rel="noopener">这篇</a>过来,这是配置一个账号的，如果你同时拥有多个账号（比如公司一个账号，自己还有一个账号），可以参考<a href="http://www.jianshu.com/p/f7f4142a1556" target="_blank" rel="noopener">这一篇文章</a>。</p>
 <p>  3.使用过程中可能对markdown语法不太熟悉的小伙伴，可以看看<a href="http://www.jianshu.com/p/1e402922ee32/" target="_blank" rel="noopener">这一篇文章</a>.</p>
 <p>  以上是我在搭建自己的个人博客时遇到的问题，做一下记录，方便后来者。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2015/11/27/记录自己写的线上bug/" itemprop="url">
+                  记录自己写的线上bug
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-11-27T16:17:25+08:00" content="2015-11-27">
+              2015-11-27
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/11/27/记录自己写的线上bug/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/11/27/记录自己写的线上bug/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="给NSDictionary设置nil值导致线上崩溃"><a href="#给NSDictionary设置nil值导致线上崩溃" class="headerlink" title="给NSDictionary设置nil值导致线上崩溃"></a>给NSDictionary设置nil值导致线上崩溃</h3><h4 id="崩溃描述"><a href="#崩溃描述" class="headerlink" title="崩溃描述"></a>崩溃描述</h4><p>这个问题是昨天新版本上线后firebase开始报的，当时正在扫线上的崩溃问题（因为老板注意到我们的崩溃率比其他产品线高很多），所以在崩溃刚出现时就发现了。崩溃原因并不复杂，以下是出现崩溃的代码片段：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">- (void)p_recordMetrics:(NSURLSessionTaskMetrics *)metrics&#123;</div><div class="line">    </div><div class="line">    if (metrics.transactionMetrics &gt; 0) &#123;</div><div class="line">        </div><div class="line">        NSMutableDictionary * track = [NSMutableDictionary dictionary];</div><div class="line">    </div><div class="line">        NSURLSessionTaskTransactionMetrics *tm = metrics.transactionMetrics.lastObject;</div><div class="line">        [track setObject:@(metrics.taskInterval.duration * 1000) forKey:@&quot;duration&quot;];</div><div class="line">        [track setObject:tm.request.URL.absoluteString forKey:@&quot;uri&quot;];</div><div class="line"></div><div class="line">        NSTimeInterval domain = [tm.domainLookupEndDate timeIntervalSinceDate:tm.domainLookupStartDate] * 1000;</div><div class="line">        NSTimeInterval connect = [tm.connectEndDate timeIntervalSinceDate:tm.connectStartDate] * 1000;</div><div class="line">        NSTimeInterval tls = [tm.secureConnectionEndDate timeIntervalSinceDate:tm.secureConnectionStartDate] * 1000;</div><div class="line">        NSTimeInterval request = [tm.requestEndDate timeIntervalSinceDate:tm.requestStartDate] * 1000;</div><div class="line">        NSTimeInterval response = [tm.responseEndDate timeIntervalSinceDate:tm.responseStartDate] * 1000;</div><div class="line">        </div><div class="line">        NSString *str = [NSString stringWithFormat:@&quot;dns:%f,connect:%f,tls:%f,request:%f,response:%f&quot;,domain,connect,tls,request,response];</div><div class="line">        [track setObject:str forKey:@&quot;metrics&quot;];</div><div class="line">        </div><div class="line">        [[FMBMonitor shareManager] trackData:track type:FMBMonitorTrackerTypeAPISample];</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>崩溃发生在给track设置uri的时候，在iOS13上，这个tm.request.URL.absoluteString字段有可能为nil，其他版本下暂时未发现崩溃。</p>
+<h4 id="造成的影响"><a href="#造成的影响" class="headerlink" title="造成的影响"></a>造成的影响</h4><p>线上的崩溃数增加了一倍，又提高了整体崩溃率。。。</p>
+<h4 id="解决过程"><a href="#解决过程" class="headerlink" title="解决过程"></a>解决过程</h4><p>发现问题后，马上对代码进行了修改，增加了非空的判断，本来准备跟下个版本一起发，后来发现崩溃数增长有点快，受影响用户会比较多，所以临时发了个bugfix版本。</p>
+<h4 id="槽点"><a href="#槽点" class="headerlink" title="槽点"></a>槽点</h4><p>万万想不到啊，这个字段居然可能为空，那这个tm的意义何在，就算我拿到下面的耗时数据了也没有任何用啊。</p>
+<p>而且只在13上出现这个问题，果然是bugOS啊。。。</p>
+<h4 id="经验教训"><a href="#经验教训" class="headerlink" title="经验教训"></a>经验教训</h4><p>以后再给字典赋值时，只要不是基本数据类型，一律进行为空判断，管你是从哪里搞的数据，这个社会除了自己，谁也靠不住啊。</p>
+<h3 id="使用高版本的api导致线上崩溃"><a href="#使用高版本的api导致线上崩溃" class="headerlink" title="使用高版本的api导致线上崩溃"></a>使用高版本的api导致线上崩溃</h3><h4 id="崩溃描述-1"><a href="#崩溃描述-1" class="headerlink" title="崩溃描述"></a>崩溃描述</h4><p>这个崩溃是之前做开屏广告时写的一个崩溃，当时是重构之前的代码，在新增计时器时为了图方便，用了个iOS10以后的api,当时开发环境都是10以上的设备，所以没有发现问题。</p>
+<h4 id="造成的影响-1"><a href="#造成的影响-1" class="headerlink" title="造成的影响"></a>造成的影响</h4><p>每天新增几千个崩溃。。。</p>
+<h4 id="解决过程-1"><a href="#解决过程-1" class="headerlink" title="解决过程"></a>解决过程</h4><p>发版后第二天才发现问题，然后马上替换了api，发了bugfix版本。</p>
+<h4 id="槽点-1"><a href="#槽点-1" class="headerlink" title="槽点"></a>槽点</h4><p>这个完全是自己的锅。</p>
+<h4 id="经验教训-1"><a href="#经验教训-1" class="headerlink" title="经验教训"></a>经验教训</h4><p>以后在使用系统api，特别是一个api簇的时候，一定要注意api版本兼容性。</p>
+<h3 id="代码重构导致api参数丢失的bug"><a href="#代码重构导致api参数丢失的bug" class="headerlink" title="代码重构导致api参数丢失的bug"></a>代码重构导致api参数丢失的bug</h3><h4 id="bug描述"><a href="#bug描述" class="headerlink" title="bug描述"></a>bug描述</h4><p>在做用户间送礼功能时，对之前的送礼模块进行了一些重构，将一些重复的代码块进行了封装，提炼出了一些公用的函数，在函数提炼过程中，将之前上下文使用到的数据以参数的形式做了传递，其中有一个函数在传参过程中出现了错误，传了初始数据，导致将处理后的数据丢失了。</p>
+<h4 id="造成的影响-2"><a href="#造成的影响-2" class="headerlink" title="造成的影响"></a>造成的影响</h4><p>由于将收礼人的id丢失了，服务器无法统计当前直播间的收礼情况，导致运营的活动无法正常进行，只能临时换活动方案。</p>
+<h4 id="解决过程-2"><a href="#解决过程-2" class="headerlink" title="解决过程"></a>解决过程</h4><p>这个问题很快就定位到并解决了，刚好跟最新的一个版本发布。</p>
+<h4 id="槽点-2"><a href="#槽点-2" class="headerlink" title="槽点"></a>槽点</h4><p>这已经不是第一次在重构过程中出现线上bug了，如何保证重构代码的正确性我可能需要做一些总结了。<br>快速的业务迭代和对代码质量的严格要求之间确实存在一个博弈和取舍的问题。当然这也和目前项目人手不足有关系，希望新同学的加入能使现状有所缓解，这样我也有更多的时间和精力去做那些一直想做也是真正对项目有帮助的事情。</p>
+<h4 id="经验教训-2"><a href="#经验教训-2" class="headerlink" title="经验教训"></a>经验教训</h4><ul>
+<li><p>对重构后的代码块一定要进行覆盖测试</p>
+</li>
+<li><p>在代码重构过程，特别是函数提炼过程中，一定要注意被提炼的这些代码块在之前的上下文中所使用到的数据，保证传参的正确性</p>
+</li>
+<li><p>代码重构过程，切记不能偷懒，还是得按重构的标准步骤来，慢工出细活不是没有道理</p>
+</li>
+</ul>
 
           
         
