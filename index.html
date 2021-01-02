@@ -229,6 +229,144 @@
             
               
                 
+                <a class="post-title-link" href="/2021/01/02/借助lldb探究OC类结构的底层实现/" itemprop="url">
+                  借助lldb探究OC类结构的底层实现
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2021-01-02T21:12:55+08:00" content="2021-01-02">
+              2021-01-02
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2021/01/02/借助lldb探究OC类结构的底层实现/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/01/02/借助lldb探究OC类结构的底层实现/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h4 id="类结构源码"><a href="#类结构源码" class="headerlink" title="类结构源码"></a>类结构源码</h4><p>我们先来看一下runtime中类的结构定义：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">struct objc_object &#123;</div><div class="line">private:</div><div class="line">    isa_t isa;</div><div class="line">//下面的函数部分去掉 因为不影响类结构</div><div class="line">//...</div><div class="line">&#125;</div><div class="line"></div><div class="line">struct objc_class : objc_object &#123;</div><div class="line">    // Class ISA; // 8字节</div><div class="line">    Class superclass; // 8字节</div><div class="line">    cache_t cache;    // 16字节         // formerly cache pointer and vtable</div><div class="line">    class_data_bits_t bits; //这里存的就是类的主要结构    // class_rw_t * plus custom rr/alloc flags</div><div class="line">    </div><div class="line">    // 具体结构体数据</div><div class="line">    class_rw_t *data() const &#123;</div><div class="line">        return bits.data();</div><div class="line">    &#125;</div><div class="line">    void setData(class_rw_t *newData) &#123;</div><div class="line">        bits.setData(newData);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    //下面的函数部分去掉 因为不影响类结构</div><div class="line">	//...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>从上面的结构体定义可以看出，每一个类的第一个属性都会是一个isa指针，然后是super和cache,之后的bits里面就是类的结构，我们需要使用llbd命令Debug bits内部的内存分配情况，在开始探究之前，我们可以先熟悉下bits中包含的主要数据结构，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div></pre></td><td class="code"><pre><div class="line">struct class_rw_t &#123;</div><div class="line">   </div><div class="line">   	 // 去掉了一些不关心的函数 只留下比较关心的下面这几个数据</div><div class="line">    </div><div class="line">    // 只读部分</div><div class="line">    const class_ro_t *ro() const &#123;</div><div class="line">        auto v = get_ro_or_rwe();</div><div class="line">        if (slowpath(v.is&lt;class_rw_ext_t *&gt;())) &#123;</div><div class="line">            return v.get&lt;class_rw_ext_t *&gt;()-&gt;ro;</div><div class="line">        &#125;</div><div class="line">        return v.get&lt;const class_ro_t *&gt;();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    void set_ro(const class_ro_t *ro) &#123;</div><div class="line">        auto v = get_ro_or_rwe();</div><div class="line">        if (v.is&lt;class_rw_ext_t *&gt;()) &#123;</div><div class="line">            v.get&lt;class_rw_ext_t *&gt;()-&gt;ro = ro;</div><div class="line">        &#125; else &#123;</div><div class="line">            set_ro_or_rwe(ro);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    </div><div class="line">    const method_array_t methods() const &#123;</div><div class="line">        auto v = get_ro_or_rwe();</div><div class="line">        if (v.is&lt;class_rw_ext_t *&gt;()) &#123;</div><div class="line">            return v.get&lt;class_rw_ext_t *&gt;()-&gt;methods;</div><div class="line">        &#125; else &#123;</div><div class="line">            return method_array_t&#123;v.get&lt;const class_ro_t *&gt;()-&gt;baseMethods()&#125;;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    const property_array_t properties() const &#123;</div><div class="line">        auto v = get_ro_or_rwe();</div><div class="line">        if (v.is&lt;class_rw_ext_t *&gt;()) &#123;</div><div class="line">            return v.get&lt;class_rw_ext_t *&gt;()-&gt;properties;</div><div class="line">        &#125; else &#123;</div><div class="line">            return property_array_t&#123;v.get&lt;const class_ro_t *&gt;()-&gt;baseProperties&#125;;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    const protocol_array_t protocols() const &#123;</div><div class="line">        auto v = get_ro_or_rwe();</div><div class="line">        if (v.is&lt;class_rw_ext_t *&gt;()) &#123;</div><div class="line">            return v.get&lt;class_rw_ext_t *&gt;()-&gt;protocols;</div><div class="line">        &#125; else &#123;</div><div class="line">            return protocol_array_t&#123;v.get&lt;const class_ro_t *&gt;()-&gt;baseProtocols&#125;;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>可以看到，我们熟悉的函数列表，属性列表和协议列表都在其中，下面我们就通过内存堆栈的Debug来证明下上面的类结构。</p>
+<h4 id="知识储备"><a href="#知识储备" class="headerlink" title="知识储备"></a>知识储备</h4><p>在开始探索前，我们先来看一下这张图：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/ISA/isa流程图.png" alt=""></p>
+<p>这里有一个知识点我们需要了解，一个类（不考虑继承）在内存中会存在3种与它有关联的对象，分别是实例对象，类对象和元类对象，这3种对象通过isa指针进行关联，实例对象可能存在多个，类对象和元类对象是唯一的。其中类对象存储实例方法和属性，元类对象存储类方法。</p>
+<h4 id="开始探究"><a href="#开始探究" class="headerlink" title="开始探究"></a>开始探究</h4><p>我们先来自定义一个简单的类，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">@interface LLYModel : NSObject</div><div class="line"></div><div class="line">@property (nonatomic, strong) NSString *name;</div><div class="line"></div><div class="line">- (void)sayHey;</div><div class="line"></div><div class="line">+ (void)sayBey;</div><div class="line"></div><div class="line">@end</div><div class="line"></div><div class="line"></div><div class="line">@implementation LLYModel &#123;</div><div class="line">    int _age;</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (void)sayHey&#123;&#125;</div><div class="line"></div><div class="line">+ (void)sayBey&#123;&#125;</div><div class="line"></div><div class="line">@end</div><div class="line"></div><div class="line">int main(int argc, const char * argv[]) &#123;</div><div class="line">    @autoreleasepool &#123;</div><div class="line">        // insert code here...</div><div class="line">        LLYModel *objc2 = [LLYModel alloc];</div><div class="line">        objc2.name      = @&quot;lly&quot;;</div><div class="line">        NSLog(@&quot;Hello, World!  %@&quot;,objc2.name);</div><div class="line">    &#125;</div><div class="line">    return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h5 id="实例对象"><a href="#实例对象" class="headerlink" title="实例对象"></a>实例对象</h5><p>在主函数中我们简单创建一个上面的model实例，然后就可以断点调试了,首先我们查看实例对象的内存地址：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">(lldb) x/4gx objc2</div><div class="line">0x1006a8a20: 0x001d8001000083ed 0x0000000000000000</div><div class="line">0x1006a8a30: 0x0000000100004018 0x0000000000000000</div></pre></td></tr></table></figure>
+<p>根据对源码的分析，我们知道bits数据存储在首地址偏移32个字节的地方，so我们这样访问bits的地址</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">(lldb) p (class_data_bits_t *)0x1006a8a40</div><div class="line">(class_data_bits_t *) $94 = 0x00000001006a8a40</div></pre></td></tr></table></figure>
+<p>拿到bits的地址后，然后访问改结构体的data方法拿到class_rw_t数据</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">(lldb) p $94-&gt;data()</div><div class="line">(class_rw_t *) $97 = 0x00007fff97ca45c0</div><div class="line">(lldb) p *$97</div><div class="line">(class_rw_t) $98 = &#123;</div><div class="line">  flags = 2546615872</div><div class="line">  witness = 32767</div><div class="line">  ro_or_rw_ext = &#123;</div><div class="line">    std::__1::atomic&lt;unsigned long&gt; = &#123;</div><div class="line">      Value = 140735591042296</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">  firstSubclass = 0x0000000100346430</div><div class="line">  nextSiblingClass = 0x0000800000000000</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>然后我们就可以访问该结构内部的相关方法获取数据了，比如方法列表</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">(lldb) p $98.methods()</div><div class="line">(const method_array_t) $99 = &#123;</div><div class="line">  list_array_tt&lt;method_t, method_list_t&gt; = &#123;</div><div class="line">     = &#123;</div><div class="line">      list = 0x0000000102004ee0</div><div class="line">      arrayAndFlag = 4328541920</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line">(lldb) p $99.list</div><div class="line">(method_list_t *const) $100 = 0x0000000102004ee0</div><div class="line">(lldb) p *$100</div><div class="line">(method_list_t) $101 = &#123;</div><div class="line">  entsize_list_tt&lt;method_t, method_list_t, 3&gt; = &#123;</div><div class="line">    entsizeAndFlags = 2148007936</div><div class="line">    count = 0</div><div class="line">    first = &#123;</div><div class="line">      name = &quot;\x10&quot;</div><div class="line">      types = 0x00007fff97ca45c0 &quot;@Fʗ</div><div class="line">      imp = 0x00007fff8ee94d20 ((void *)0x00007fff8ee959a0: __NSStackBlock)</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>通过查看内存情况，发现方法列表内部的count为0，说明方法并未存放在实例对象中。</p>
+<p>然后看看属性列表</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">(lldb) p $98.properties()</div><div class="line">(const property_array_t) $102 = &#123;</div><div class="line">  list_array_tt&lt;property_t, property_list_t&gt; = &#123;</div><div class="line">     = &#123;</div><div class="line">      list = 0x0000001000000000</div><div class="line">      arrayAndFlag = 68719476736</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line">(lldb) p $102.list</div><div class="line">(property_list_t *const) $103 = 0x0000001000000000</div><div class="line">(lldb) p *$103</div><div class="line">error: Couldn&apos;t apply expression side effects : Couldn&apos;t dematerialize a result variable: couldn&apos;t read its memory</div></pre></td></tr></table></figure>
+<p>属性列表访问失败，说明也是没有数据的。</p>
+<h5 id="类对象"><a href="#类对象" class="headerlink" title="类对象"></a>类对象</h5><p>然后我们再来看看类对象中的内存情况，这里我们先拿到类对象的首地址：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">(lldb) x/4gx LLYModel.class</div><div class="line">0x1000083e8: 0x00000001000083c0 0x000000010034c140</div><div class="line">0x1000083f8: 0x00000001006ace60 0x0004802400000007</div></pre></td></tr></table></figure>
+<p>上面也提到过，类对象是唯一的，所以可以这样访问，其他步骤都差不多就不在重复粘贴，这里只放最后的结果</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line">(method_list_t) $117 = &#123;</div><div class="line">  entsize_list_tt&lt;method_t, method_list_t, 3&gt; = &#123;</div><div class="line">    entsizeAndFlags = 26</div><div class="line">    count = 4</div><div class="line">    first = &#123;</div><div class="line">      name = &quot;sayHey&quot;</div><div class="line">      types = 0x0000000100003f9a &quot;v16@0:8&quot;</div><div class="line">      imp = 0x0000000100003da0 (KCObjc`-[LLYModel sayHey])</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line">(lldb) p $117.get(0)</div><div class="line">(method_t) $118 = &#123;</div><div class="line">  name = &quot;sayHey&quot;</div><div class="line">  types = 0x0000000100003f9a &quot;v16@0:8&quot;</div><div class="line">  imp = 0x0000000100003da0 (KCObjc`-[LLYModel sayHey])</div><div class="line">&#125;</div><div class="line">(lldb) p $117.get(1)</div><div class="line">(method_t) $119 = &#123;</div><div class="line">  name = &quot;.cxx_destruct&quot;</div><div class="line">  types = 0x0000000100003f9a &quot;v16@0:8&quot;</div><div class="line">  imp = 0x0000000100003e00 (KCObjc`-[LLYModel .cxx_destruct])</div><div class="line">&#125;</div><div class="line">(lldb) p $117.get(2)</div><div class="line">(method_t) $120 = &#123;</div><div class="line">  name = &quot;name&quot;</div><div class="line">  types = 0x0000000100003f87 &quot;@16@0:8&quot;</div><div class="line">  imp = 0x0000000100003db0 (KCObjc`-[LLYModel name])</div><div class="line">&#125;</div><div class="line">(lldb) p $117.get(3)</div><div class="line">(method_t) $121 = &#123;</div><div class="line">  name = &quot;setName:&quot;</div><div class="line">  types = 0x0000000100003f8f &quot;v24@0:8@16&quot;</div><div class="line">  imp = 0x0000000100003dd0 (KCObjc`-[LLYModel setName:])</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>除了我们定义的实例方法外，还看到了属性的get和set方法，还有一个编译器默认添加的析构方法。接着是属性列表</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">(property_list_t) $124 = &#123;</div><div class="line">  entsize_list_tt&lt;property_t, property_list_t, 0&gt; = &#123;</div><div class="line">    entsizeAndFlags = 16</div><div class="line">    count = 1</div><div class="line">    first = (name = &quot;name&quot;, attributes = &quot;T@\&quot;NSString\&quot;,&amp;,N,V_name&quot;)</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>只有一个我们定义的name属性。</p>
+<h5 id="元类对象"><a href="#元类对象" class="headerlink" title="元类对象"></a>元类对象</h5><p>最后我们来看看元类的内存分配情况，首先我们拿到元类的首地址:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">(lldb) x/4gx objc_getMetaClass(object_getClassName(objc2))</div><div class="line">0x1000083c0: 0x000000010034c0f0 0x000000010034c0f0</div><div class="line">0x1000083d0: 0x000000010200d880 0x0004e03500000007</div></pre></td></tr></table></figure>
+<p>方法列表：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">(method_list_t) $135 = &#123;</div><div class="line">  entsize_list_tt&lt;method_t, method_list_t, 3&gt; = &#123;</div><div class="line">    entsizeAndFlags = 26</div><div class="line">    count = 1</div><div class="line">    first = &#123;</div><div class="line">      name = &quot;sayBey&quot;</div><div class="line">      types = 0x0000000100003f9a &quot;v16@0:8&quot;</div><div class="line">      imp = 0x0000000100003d90 (KCObjc`+[LLYModel sayBey])</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>元类中存放了我们上面定义的一个类方法</p>
+<p>属性列表：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">(lldb) p $132.properties()</div><div class="line">(const property_array_t) $136 = &#123;</div><div class="line">  list_array_tt&lt;property_t, property_list_t&gt; = &#123;</div><div class="line">     = &#123;</div><div class="line">      list = 0x0000000000000000</div><div class="line">      arrayAndFlag = 0</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line">(lldb) p $136.list</div><div class="line">(property_list_t *const) $137 = 0x0000000000000000</div><div class="line">(lldb) p *$137</div><div class="line">error: Couldn&apos;t apply expression side effects : Couldn&apos;t dematerialize a result variable: couldn&apos;t read its memory</div></pre></td></tr></table></figure>
+<p>元类中没有存放属性。</p>
+<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>通过以上的探索过程，证明了我们之前的结论<strong>其中类对象存储实例方法和属性，元类对象存储类方法。</strong>，通过源码+lldb相结合的方式，可以更好的证明我们已知的一些结论。也给我们探索更广阔的空间提供了可能。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2021/01/01/从【class-getInstanceSize方法】探究iOS的内存分配策略/" itemprop="url">
                   从【class_getInstanceSize方法】探究iOS的内存分配策略
                 </a>
@@ -1542,159 +1680,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2019/11/20/《重构-改善既有代码的设计》系列读书笔记（七、处理概括关系（继承关系））/" itemprop="url">
-                  《重构-改善既有代码的设计》系列读书笔记（七、处理概括关系（继承关系））
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2019-11-20T11:38:51+08:00" content="2019-11-20">
-              2019-11-20
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2019/11/20/《重构-改善既有代码的设计》系列读书笔记（七、处理概括关系（继承关系））/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2019/11/20/《重构-改善既有代码的设计》系列读书笔记（七、处理概括关系（继承关系））/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="处理概括关系（继承关系）"><a href="#处理概括关系（继承关系）" class="headerlink" title="处理概括关系（继承关系）"></a>处理概括关系（继承关系）</h3><h4 id="Pull-Up-Field-字段上移"><a href="#Pull-Up-Field-字段上移" class="headerlink" title="Pull Up Field(字段上移)"></a>Pull Up Field(字段上移)</h4><p>两个子类拥有相同的字段</p>
-<h5 id="动机"><a href="#动机" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>本重构从两方面减少重复，首先去除了重复的数据声明，其次去除了重复的行为。</li>
-</ul>
-<h4 id="Pull-Up-Method-函数上移"><a href="#Pull-Up-Method-函数上移" class="headerlink" title="Pull Up Method (函数上移)"></a>Pull Up Method (函数上移)</h4><p>有些函数，在各个子类中产生完全相同的结果</p>
-<h5 id="动机-1"><a href="#动机-1" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>如果系统中出现重复，意味着以后你修改一处代码时需要同时修改另一个。</li>
-<li>子类函数覆盖了超类的函数，确做的相同的工作。</li>
-</ul>
-<h4 id="Pull-Up-Constructor-Body-构造函数本体上移"><a href="#Pull-Up-Constructor-Body-构造函数本体上移" class="headerlink" title="Pull Up Constructor Body(构造函数本体上移)"></a>Pull Up Constructor Body(构造函数本体上移)</h4><p>你在各个子类中拥有一些构造函数，他们的本体几乎完全一致</p>
-<h5 id="动机-2"><a href="#动机-2" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>构造函数不能继承，所以如果有相同的构造逻辑，需要将具体逻辑上移到父类的构造函数中。</li>
-</ul>
-<h5 id="做法"><a href="#做法" class="headerlink" title="做法"></a>做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">// before </div><div class="line">class Employee...</div><div class="line">	protected String _name;</div><div class="line">	protected String _id;</div><div class="line">	</div><div class="line">class Manager extends Employee...</div><div class="line">	public Manager(String name,String id,int grade) &#123;</div><div class="line">		_name = name;</div><div class="line">		_id = id;</div><div class="line">		_grade = grade;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	private int _grade;</div><div class="line">	</div><div class="line">//after</div><div class="line">class Employee...</div><div class="line">	public Employee(String name,String id) &#123;</div><div class="line">		_name = name;</div><div class="line">		_id = id;</div><div class="line">	&#125;</div><div class="line">	protected String _name;</div><div class="line">	protected String _id;</div><div class="line">	</div><div class="line">class Manager extends Employee...</div><div class="line">	public Manager(String name,String id,int grade) &#123;</div><div class="line">		super (name,id);</div><div class="line">		_grade = grade;</div><div class="line">	&#125;</div><div class="line">	private int _grade;</div></pre></td></tr></table></figure>
-<h4 id="Pull-Down-Method-函数下移"><a href="#Pull-Down-Method-函数下移" class="headerlink" title="Pull Down Method(函数下移)"></a>Pull Down Method(函数下移)</h4><p>超类中某个函数只与部分子类有关</p>
-<h5 id="动机-3"><a href="#动机-3" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>使用完提炼子类后，你可能会需要用到这个手段。</li>
-</ul>
-<h4 id="Pull-Down-Field-字段下移"><a href="#Pull-Down-Field-字段下移" class="headerlink" title="Pull Down Field(字段下移)"></a>Pull Down Field(字段下移)</h4><p>超类中的某个字段只被部分子类用到</p>
-<h5 id="动机-4"><a href="#动机-4" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>同上面的函数下移</li>
-</ul>
-<h4 id="Extract-Subclass-提炼子类"><a href="#Extract-Subclass-提炼子类" class="headerlink" title="Extract Subclass (提炼子类)"></a>Extract Subclass (提炼子类)</h4><p>类中的某些特性只被某些实例用到（这个有点勉强吧，不可能每个实例都会用到所有特性，当然，将关联性比较强的特性组成一个新的类是可以的）</p>
-<h4 id="Extract-Superclass-提炼超类"><a href="#Extract-Superclass-提炼超类" class="headerlink" title="Extract Superclass (提炼超类)"></a>Extract Superclass (提炼超类)</h4><p>两个类有相似特性</p>
-<h5 id="动机-5"><a href="#动机-5" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>重复代码的危害。</li>
-</ul>
-<h4 id="Extract-Interface-提炼接口"><a href="#Extract-Interface-提炼接口" class="headerlink" title="Extract Interface (提炼接口)"></a>Extract Interface (提炼接口)</h4><p>若干客户使用类接口中的同一个子集，或者有部分接口相同。</p>
-<h5 id="动机-6"><a href="#动机-6" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>分离出公用的接口可以使系统的用法更清晰，同时也更容易看清楚系统的责任划分。</li>
-<li>接口或者多继承可以实现这种模块分离需求。</li>
-</ul>
-<h4 id="Collapse-Hierarchy-折叠集成关系"><a href="#Collapse-Hierarchy-折叠集成关系" class="headerlink" title="Collapse Hierarchy(折叠集成关系)"></a>Collapse Hierarchy(折叠集成关系)</h4><p>超类和子类之间无太大区别</p>
-<h5 id="动机-7"><a href="#动机-7" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>消除无谓的集成关系，简化代码结构。</li>
-</ul>
-<h4 id="Form-Template-Method（塑造模板函数）"><a href="#Form-Template-Method（塑造模板函数）" class="headerlink" title="Form Template Method（塑造模板函数）"></a>Form Template Method（塑造模板函数）</h4><p>你有一些子类，其中相应的某些函数以相同顺序执行类似的操作，但各个操作的细节上有所不同</p>
-<h5 id="动机-8"><a href="#动机-8" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>将执行操作的顺序移至超类，并借多态保证各操作仍得以保持差异性，这样的函数称为模板函数。</li>
-</ul>
-<h5 id="做法-1"><a href="#做法-1" class="headerlink" title="做法"></a>做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">// before</div><div class="line">class Customer...</div><div class="line"></div><div class="line">public String statement() &#123;</div><div class="line">	String result = textHeaderString();</div><div class="line">	while(...)&#123;</div><div class="line">		result += textEachRentalString();</div><div class="line">	&#125; </div><div class="line">	result += textFooterString();</div><div class="line">	return result;</div><div class="line">&#125;</div><div class="line"></div><div class="line">public String htmlStatement() &#123;</div><div class="line">	String result = htmlHeaderString();</div><div class="line">	while(...)&#123;</div><div class="line">		result += htmlEachRentalString();</div><div class="line">	&#125; </div><div class="line">	result += htmlFooterString();</div><div class="line">	return result;</div><div class="line">&#125;</div><div class="line"></div><div class="line">// step 1</div><div class="line"></div><div class="line">class Statement &#123;&#125;</div><div class="line">class TextStatement extends Statement &#123;&#125;</div><div class="line">class HtmlStatement extends Statement &#123;&#125;</div><div class="line"></div><div class="line">class Customer...</div><div class="line">public String statement() &#123;</div><div class="line">	return new TextStatement().value(this);</div><div class="line">&#125;</div><div class="line">public String htmlStatsment() &#123;</div><div class="line">	return new HtmlStatement().value(this);</div><div class="line">&#125;</div><div class="line"></div><div class="line">class TextStatement &#123;</div><div class="line">	public String value(Customer aCustomer) &#123;</div><div class="line">		String result = headerString(aCustomer);</div><div class="line">		while(...)&#123;</div><div class="line">			result += eachRentalString();</div><div class="line">		&#125; </div><div class="line">		result += footerString(aCustomer);</div><div class="line">		return result;</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">class HtmlStatement &#123;</div><div class="line">	public String value(Customer aCustomer) &#123;</div><div class="line">		String result = headerString(aCustomer);</div><div class="line">		while(...)&#123;</div><div class="line">			result += eachRentalString();</div><div class="line">		&#125; </div><div class="line">		result += footerString(aCustomer);</div><div class="line">		return result;</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">// step 2</div><div class="line"></div><div class="line">class Statement &#123;</div><div class="line">	public String value(Customer aCustomer) &#123;</div><div class="line">		String result = headerString(aCustomer);</div><div class="line">		while(...)&#123;</div><div class="line">			result += eachRentalString();</div><div class="line">		&#125; </div><div class="line">		result += footerString(aCustomer);</div><div class="line">		return result;</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">abstract String headerString(Customer aCustomer)</div><div class="line">abstract String eachRentalString()</div><div class="line">abstract String footerString(Customer aCustomer)</div></pre></td></tr></table></figure>
-<h4 id="Replace-Inheritance-with-Delegation-以委托取代继承"><a href="#Replace-Inheritance-with-Delegation-以委托取代继承" class="headerlink" title="Replace Inheritance with Delegation(以委托取代继承)"></a>Replace Inheritance with Delegation(以委托取代继承)</h4><p>某个子类只使用超类接口中的一部分，或是根本不需要继承而来的数据。</p>
-<h5 id="动机-9"><a href="#动机-9" class="headerlink" title="动机"></a>动机</h5><ul>
-<li><p>当你从超类中继承了一堆并不需要的东西时，传达出的信息与你的意图南辕北辙，这是一种混淆，你应该将它去除。</p>
-</li>
-<li><p>所用委托取代继承时，你可以有目的的选择需要的接口。 </p>
-</li>
-</ul>
-<h4 id="Replace-Delegation-with-Inheritance-以继承取代委托"><a href="#Replace-Delegation-with-Inheritance-以继承取代委托" class="headerlink" title="Replace Delegation with Inheritance(以继承取代委托)"></a>Replace Delegation with Inheritance(以继承取代委托)</h4><p>你的两个子类之间使用委托关系，并且经常是全托。。。</p>
-<h5 id="动机-10"><a href="#动机-10" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>委托需要编写大量的委托代码，如果是全托，会增加大量的代码量。</li>
-<li>如果你没有使用受委托类的所有接口，那就不需要修改，如果需要使用所有的接口，请使用继承代替委托。</li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1740,7 +1725,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">68</span>
+              <span class="site-state-item-count">69</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
