@@ -1,0 +1,581 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="As we know, OC上层的方法调用的底层逻辑都是通过objc_msgSend来实现的，那么如何验证呢？我们通过clang反编译看看就知道了： 上层的OC调用： 1234567891011121314int main(int argc, const char * argv[]) &amp;#123;    @autoreleasepool &amp;#123;        // insert code h">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OC方法调用快查找流程底层逻辑探究">
+<meta property="og:url" content="http://yoursite.com/2021/01/03/OC方法调用快查找流程底层逻辑探究/index.html">
+<meta property="og:site_name" content="lly&#39;s Blog">
+<meta property="og:description" content="As we know, OC上层的方法调用的底层逻辑都是通过objc_msgSend来实现的，那么如何验证呢？我们通过clang反编译看看就知道了： 上层的OC调用： 1234567891011121314int main(int argc, const char * argv[]) &amp;#123;    @autoreleasepool &amp;#123;        // insert code h">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2021-01-03T12:26:48.199Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="OC方法调用快查找流程底层逻辑探究">
+<meta name="twitter:description" content="As we know, OC上层的方法调用的底层逻辑都是通过objc_msgSend来实现的，那么如何验证呢？我们通过clang反编译看看就知道了： 上层的OC调用： 1234567891011121314int main(int argc, const char * argv[]) &amp;#123;    @autoreleasepool &amp;#123;        // insert code h">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2021/01/03/OC方法调用快查找流程底层逻辑探究/"/>
+
+  <title> OC方法调用快查找流程底层逻辑探究 | lly's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">lly's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">用心记录点滴</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                OC方法调用快查找流程底层逻辑探究
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2021-01-03T20:23:45+08:00" content="2021-01-03">
+              2021-01-03
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2021/01/03/OC方法调用快查找流程底层逻辑探究/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/01/03/OC方法调用快查找流程底层逻辑探究/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>As we know, OC上层的方法调用的底层逻辑都是通过<em>objc_msgSend</em>来实现的，那么如何验证呢？我们通过clang反编译看看就知道了：</p>
+<p>上层的OC调用：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">int main(int argc, const char * argv[]) &#123;</div><div class="line">    @autoreleasepool &#123;</div><div class="line">        // insert code here...</div><div class="line">        </div><div class="line">        LLYModel *model = [LLYModel alloc];</div><div class="line">        </div><div class="line">        [model func0];</div><div class="line">        </div><div class="line">        [model func1];</div><div class="line">        </div><div class="line">        NSLog(@&quot;Hello, World!&quot;);</div><div class="line">    &#125;</div><div class="line">    return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>使用clang命令：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">clang -rewrite-objc main.m -o main.cpp</div></pre></td></tr></table></figure>
+<p>反编译之后的底层实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">int main(int argc, const char * argv[]) &#123;</div><div class="line">    /* @autoreleasepool */ &#123; __AtAutoreleasePool __autoreleasepool; </div><div class="line"></div><div class="line"></div><div class="line">        LLYModel *model = ((LLYModel *(*)(id, SEL))(void *)objc_msgSend)((id)objc_getClass(&quot;LLYModel&quot;), sel_registerName(&quot;alloc&quot;));</div><div class="line"></div><div class="line">        ((void (*)(id, SEL))(void *)objc_msgSend)((id)model, sel_registerName(&quot;func0&quot;));</div><div class="line"></div><div class="line">        ((void (*)(id, SEL))(void *)objc_msgSend)((id)model, sel_registerName(&quot;func1&quot;));</div><div class="line"></div><div class="line">        NSLog((NSString *)&amp;__NSConstantStringImpl__var_folders_71_gd0d02_n7td1h8k9l7bx0jqh0000gp_T_main_f2985d_mi_0);</div><div class="line">    &#125;</div><div class="line">    return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>可以看到，所有的方法调用全都被编译器转换为了<em>objc_msgSend</em>方法的调用，我们很自然的去runtime源码中找该函数的实现逻辑，结果在<em>.mm</em>文件中没有发现，以为线索就要断了的时候，在<em>objc-msg-arm64.s</em>文件内看到了下面几行代码:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">ENTRY _objc_msgSend</div><div class="line">UNWIND _objc_msgSend, NoFrame</div><div class="line"></div><div class="line">cmp	p0, #0	 //p0寄存器保存的应该是objc_msgSend()的第一个参数receive // nil check and tagged pointer check </div><div class="line"></div><div class="line">// taggedpointer判断</div><div class="line">#if SUPPORT_TAGGED_POINTERS</div><div class="line">b.le	LNilOrTagged		//  (MSB tagged pointer looks negative)</div><div class="line">#else</div><div class="line">b.eq	LReturnZero</div><div class="line">#endif</div><div class="line"></div><div class="line">// 拿到receive的isa指针</div><div class="line">ldr	p13, [x0]		// p13 = isa</div><div class="line"></div><div class="line">// 拿到类对象</div><div class="line">GetClassFromIsa_p16 p13		// p16 = class</div><div class="line">LGetIsaDone:</div><div class="line"></div><div class="line">// calls imp or objc_msgSend_uncached</div><div class="line">CacheLookup NORMAL, _objc_msgSend</div></pre></td></tr></table></figure>
+<p>这里应该就是<em>objc_msgSend</em>的入口了，原来是使用汇编代码来实现的，只能硬着头皮看下去了。</p>
+<p>上面的逻辑最终调用了<em>CacheLookup</em>这个函数，我们全局搜一下，找到了该函数的实现部分：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div></pre></td><td class="code"><pre><div class="line">.macro CacheLookup</div><div class="line"></div><div class="line">LLookupStart$1:</div><div class="line"></div><div class="line">	// p1 = SEL, p16 = isa</div><div class="line">	// #define CACHE            (2 * __SIZEOF_POINTER__)</div><div class="line">	// 从isa指针首地址偏移16个字节，这一步操作是拿到类的cache数据，原理参考类结构的定义。</div><div class="line">	ldr	p11, [x16, #CACHE]				// p11 = mask|buckets</div><div class="line"></div><div class="line">#if CACHE_MASK_STORAGE == CACHE_MASK_STORAGE_HIGH_16</div><div class="line">	// 参考cache_t中的结构 这一步是拿到缓存的buckts数组</div><div class="line">	and	p10, p11, #0x0000ffffffffffff	// p10 = buckets</div><div class="line">	// 计算_cmd(也就是sel)的索引</div><div class="line">	and	p12, p1, p11, LSR #48		// x12 = _cmd &amp; mask</div><div class="line">#elif CACHE_MASK_STORAGE == CACHE_MASK_STORAGE_LOW_4</div><div class="line">	and	p10, p11, #~0xf			// p10 = buckets</div><div class="line">	and	p11, p11, #0xf			// p11 = maskShift</div><div class="line">	mov	p12, #0xffff</div><div class="line">	lsr	p11, p12, p11				// p11 = mask = 0xffff &gt;&gt; p11</div><div class="line">	and	p12, p1, p11				// x12 = _cmd &amp; mask</div><div class="line">#else</div><div class="line">#error Unsupported cache mask storage for ARM64.</div><div class="line">#endif</div><div class="line">	// #define PTRSHIFT 3  // 1&lt;&lt;PTRSHIFT == PTRSIZE</div><div class="line">	// 根据上面的索引值获取具体的bucket数据 每一个bucket是16个字节 所以这一要向左平移4位</div><div class="line">	add	p12, p10, p12, LSL #(1+PTRSHIFT)</div><div class="line">		             // p12 = buckets + ((_cmd &amp; mask) &lt;&lt; (1+PTRSHIFT))</div><div class="line"></div><div class="line">	// 拿到sel和imp元组</div><div class="line">	ldp	p17, p9, [x12]		// &#123;imp, sel&#125; = *bucket</div><div class="line">	</div><div class="line">	// 下面就是一个条件判断和分支语句了</div><div class="line">	</div><div class="line">	// 找到的sel不是当前执行的方法</div><div class="line">1:	cmp	p9, p1			// if (bucket-&gt;sel != _cmd)</div><div class="line">	// goto 2</div><div class="line">	b.ne	2f			//     scan more</div><div class="line">	// 否则直接命中</div><div class="line">	CacheHit $0			// call or return imp</div><div class="line">	</div><div class="line">	// 未命中逻辑</div><div class="line">2:	// not hit: p12 = not-hit bucket</div><div class="line">	// 空判断</div><div class="line">	CheckMiss $0			// miss if bucket-&gt;sel == 0</div><div class="line">	// 当前是否已经寻址到buckets的第一个元素</div><div class="line">	cmp	p12, p10		// wrap if bucket == buckets</div><div class="line">	// 是的话 goto 3</div><div class="line">	b.eq	3f</div><div class="line">	// 不是的话 向前移位继续查找</div><div class="line">	ldp	p17, p9, [x12, #-BUCKET_SIZE]!	// &#123;imp, sel&#125; = *--bucket</div><div class="line">	// 这是一个循环查找的过程</div><div class="line">	b	1b			// loop</div><div class="line"></div><div class="line">3:	// wrap: p12 = first bucket, w11 = mask</div><div class="line">#if CACHE_MASK_STORAGE == CACHE_MASK_STORAGE_HIGH_16</div><div class="line">	// 已经寻址到buckets的第一个元素，直接干到最后一个元素，再重新开始向前查找。</div><div class="line">	add	p12, p12, p11, LSR #(48 - (1+PTRSHIFT))</div><div class="line">					// p12 = buckets + (mask &lt;&lt; 1+PTRSHIFT)</div><div class="line">#elif CACHE_MASK_STORAGE == CACHE_MASK_STORAGE_LOW_4</div><div class="line">	add	p12, p12, p11, LSL #(1+PTRSHIFT)</div><div class="line">					// p12 = buckets + (mask &lt;&lt; 1+PTRSHIFT)</div><div class="line">#else</div><div class="line">#error Unsupported cache mask storage for ARM64.</div><div class="line">#endif</div><div class="line"></div><div class="line">	// Clone scanning loop to miss instead of hang when cache is corrupt.</div><div class="line">	// The slow path may detect any corruption and halt later.</div><div class="line"></div><div class="line">	// 这里的逻辑和上面类似</div><div class="line">	ldp	p17, p9, [x12]		// &#123;imp, sel&#125; = *bucket</div><div class="line">1:	cmp	p9, p1			// if (bucket-&gt;sel != _cmd)</div><div class="line">	b.ne	2f			//     scan more</div><div class="line">	CacheHit $0			// call or return imp</div><div class="line">	</div><div class="line">2:	// not hit: p12 = not-hit bucket</div><div class="line">	CheckMiss $0			// miss if bucket-&gt;sel == 0</div><div class="line">	cmp	p12, p10		// wrap if bucket == buckets</div><div class="line">	b.eq	3f</div><div class="line">	ldp	p17, p9, [x12, #-BUCKET_SIZE]!	// &#123;imp, sel&#125; = *--bucket</div><div class="line">	b	1b			// loop</div><div class="line"></div><div class="line">LLookupEnd$1:</div><div class="line">LLookupRecover$1:</div><div class="line">3:	// double wrap</div><div class="line">	JumpMiss $0</div><div class="line"></div><div class="line">.endmacro</div><div class="line"></div><div class="line">``` </div><div class="line"></div><div class="line">通过以上汇编代码分析，可以发现方法缓存的查找是一个从后往前遍历buckets的过程，如果当前遍历到第一个元素，会回到队尾继续遍历，知道找到我们需要的元素，或者找到一个空数据，会退出循环，然后我们看看缓存命中和未命中分别做了啥：</div><div class="line"></div><div class="line">##### 缓存命中</div></pre></td></tr></table></figure>
+<p>.macro CacheHit<br>.if $0 == NORMAL<br>    TailCallCachedImp x17, x12, x1, x16    // authenticate and call imp<br>.elseif $0 == GETIMP<br>    mov    p0, p17<br>    cbz    p0, 9f            // don’t ptrauth a nil imp<br>    AuthAndResignAsIMP x0, x12, x1, x16    // authenticate imp and re-sign as IMP<br>9:    ret                // return IMP<br>.elseif $0 == LOOKUP<br>    // No nil check for ptrauth: the caller would crash anyway when they<br>    // jump to a nil IMP. We don’t care if that jump also fails ptrauth.<br>    AuthAndResignAsIMP x17, x12, x1, x16    // authenticate imp and re-sign as IMP<br>    ret                // return imp via x17<br>.else<br>.abort oops<br>.endif<br>.endmacro<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">##### 缓存未命中</div></pre></td></tr></table></figure></p>
+<p>.macro CheckMiss<br>    // miss if bucket-&gt;sel == 0<br>.if $0 == GETIMP<br>    cbz    p9, LGetImpMiss<br>.elseif $0 == NORMAL<br>    cbz    p9, <strong>objc_msgSend_uncached<br>.elseif $0 == LOOKUP<br>    cbz    p9, </strong>objc_msgLookup_uncached<br>.else<br>.abort oops<br>.endif<br>.endmacro</p>
+<p>```</p>
+<p>都只是根据类型不同调用了对应的方法，这里已经不再是快查询的逻辑，我们暂时不看。</p>
+<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>这里先点个题，所谓的快查找就是对cache的查找，与之对应的慢查找就是对method_list的查找了，method_list的查找可能涉及到不同文件的遍历过程，所以会比cache慢很多。通过查看汇编实现，我的主要感受就是对类结构的熟悉是非常重要的，因为所有的查找逻辑都是基于类的结构来的。我们在实际编码过程中，也应该做到庖丁解牛，而不是盲人摸象。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/01/03/OC方法缓存策略底层探究/" rel="next" title="OC方法缓存策略底层探究">
+                <i class="fa fa-chevron-left"></i> OC方法缓存策略底层探究
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2021/01/03/OC方法调用快查找流程底层逻辑探究/"
+           data-title="OC方法调用快查找流程底层逻辑探究" data-url="http://yoursite.com/2021/01/03/OC方法调用快查找流程底层逻辑探究/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/head.png"
+               alt="lly" />
+          <p class="site-author-name" itemprop="name">lly</p>
+          <p class="site-description motion-element" itemprop="description">耿直的一Boy</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">72</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#小结"><span class="nav-number">1.</span> <span class="nav-text">小结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lly</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"llyblog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

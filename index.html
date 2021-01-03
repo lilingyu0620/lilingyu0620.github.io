@@ -229,6 +229,123 @@
             
               
                 
+                <a class="post-title-link" href="/2021/01/03/OC方法调用快查找流程底层逻辑探究/" itemprop="url">
+                  OC方法调用快查找流程底层逻辑探究
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2021-01-03T20:23:45+08:00" content="2021-01-03">
+              2021-01-03
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2021/01/03/OC方法调用快查找流程底层逻辑探究/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/01/03/OC方法调用快查找流程底层逻辑探究/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>As we know, OC上层的方法调用的底层逻辑都是通过<em>objc_msgSend</em>来实现的，那么如何验证呢？我们通过clang反编译看看就知道了：</p>
+<p>上层的OC调用：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">int main(int argc, const char * argv[]) &#123;</div><div class="line">    @autoreleasepool &#123;</div><div class="line">        // insert code here...</div><div class="line">        </div><div class="line">        LLYModel *model = [LLYModel alloc];</div><div class="line">        </div><div class="line">        [model func0];</div><div class="line">        </div><div class="line">        [model func1];</div><div class="line">        </div><div class="line">        NSLog(@&quot;Hello, World!&quot;);</div><div class="line">    &#125;</div><div class="line">    return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>使用clang命令：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">clang -rewrite-objc main.m -o main.cpp</div></pre></td></tr></table></figure>
+<p>反编译之后的底层实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">int main(int argc, const char * argv[]) &#123;</div><div class="line">    /* @autoreleasepool */ &#123; __AtAutoreleasePool __autoreleasepool; </div><div class="line"></div><div class="line"></div><div class="line">        LLYModel *model = ((LLYModel *(*)(id, SEL))(void *)objc_msgSend)((id)objc_getClass(&quot;LLYModel&quot;), sel_registerName(&quot;alloc&quot;));</div><div class="line"></div><div class="line">        ((void (*)(id, SEL))(void *)objc_msgSend)((id)model, sel_registerName(&quot;func0&quot;));</div><div class="line"></div><div class="line">        ((void (*)(id, SEL))(void *)objc_msgSend)((id)model, sel_registerName(&quot;func1&quot;));</div><div class="line"></div><div class="line">        NSLog((NSString *)&amp;__NSConstantStringImpl__var_folders_71_gd0d02_n7td1h8k9l7bx0jqh0000gp_T_main_f2985d_mi_0);</div><div class="line">    &#125;</div><div class="line">    return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>可以看到，所有的方法调用全都被编译器转换为了<em>objc_msgSend</em>方法的调用，我们很自然的去runtime源码中找该函数的实现逻辑，结果在<em>.mm</em>文件中没有发现，以为线索就要断了的时候，在<em>objc-msg-arm64.s</em>文件内看到了下面几行代码:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">ENTRY _objc_msgSend</div><div class="line">UNWIND _objc_msgSend, NoFrame</div><div class="line"></div><div class="line">cmp	p0, #0	 //p0寄存器保存的应该是objc_msgSend()的第一个参数receive // nil check and tagged pointer check </div><div class="line"></div><div class="line">// taggedpointer判断</div><div class="line">#if SUPPORT_TAGGED_POINTERS</div><div class="line">b.le	LNilOrTagged		//  (MSB tagged pointer looks negative)</div><div class="line">#else</div><div class="line">b.eq	LReturnZero</div><div class="line">#endif</div><div class="line"></div><div class="line">// 拿到receive的isa指针</div><div class="line">ldr	p13, [x0]		// p13 = isa</div><div class="line"></div><div class="line">// 拿到类对象</div><div class="line">GetClassFromIsa_p16 p13		// p16 = class</div><div class="line">LGetIsaDone:</div><div class="line"></div><div class="line">// calls imp or objc_msgSend_uncached</div><div class="line">CacheLookup NORMAL, _objc_msgSend</div></pre></td></tr></table></figure>
+<p>这里应该就是<em>objc_msgSend</em>的入口了，原来是使用汇编代码来实现的，只能硬着头皮看下去了。</p>
+<p>上面的逻辑最终调用了<em>CacheLookup</em>这个函数，我们全局搜一下，找到了该函数的实现部分：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div></pre></td><td class="code"><pre><div class="line">.macro CacheLookup</div><div class="line"></div><div class="line">LLookupStart$1:</div><div class="line"></div><div class="line">	// p1 = SEL, p16 = isa</div><div class="line">	// #define CACHE            (2 * __SIZEOF_POINTER__)</div><div class="line">	// 从isa指针首地址偏移16个字节，这一步操作是拿到类的cache数据，原理参考类结构的定义。</div><div class="line">	ldr	p11, [x16, #CACHE]				// p11 = mask|buckets</div><div class="line"></div><div class="line">#if CACHE_MASK_STORAGE == CACHE_MASK_STORAGE_HIGH_16</div><div class="line">	// 参考cache_t中的结构 这一步是拿到缓存的buckts数组</div><div class="line">	and	p10, p11, #0x0000ffffffffffff	// p10 = buckets</div><div class="line">	// 计算_cmd(也就是sel)的索引</div><div class="line">	and	p12, p1, p11, LSR #48		// x12 = _cmd &amp; mask</div><div class="line">#elif CACHE_MASK_STORAGE == CACHE_MASK_STORAGE_LOW_4</div><div class="line">	and	p10, p11, #~0xf			// p10 = buckets</div><div class="line">	and	p11, p11, #0xf			// p11 = maskShift</div><div class="line">	mov	p12, #0xffff</div><div class="line">	lsr	p11, p12, p11				// p11 = mask = 0xffff &gt;&gt; p11</div><div class="line">	and	p12, p1, p11				// x12 = _cmd &amp; mask</div><div class="line">#else</div><div class="line">#error Unsupported cache mask storage for ARM64.</div><div class="line">#endif</div><div class="line">	// #define PTRSHIFT 3  // 1&lt;&lt;PTRSHIFT == PTRSIZE</div><div class="line">	// 根据上面的索引值获取具体的bucket数据 每一个bucket是16个字节 所以这一要向左平移4位</div><div class="line">	add	p12, p10, p12, LSL #(1+PTRSHIFT)</div><div class="line">		             // p12 = buckets + ((_cmd &amp; mask) &lt;&lt; (1+PTRSHIFT))</div><div class="line"></div><div class="line">	// 拿到sel和imp元组</div><div class="line">	ldp	p17, p9, [x12]		// &#123;imp, sel&#125; = *bucket</div><div class="line">	</div><div class="line">	// 下面就是一个条件判断和分支语句了</div><div class="line">	</div><div class="line">	// 找到的sel不是当前执行的方法</div><div class="line">1:	cmp	p9, p1			// if (bucket-&gt;sel != _cmd)</div><div class="line">	// goto 2</div><div class="line">	b.ne	2f			//     scan more</div><div class="line">	// 否则直接命中</div><div class="line">	CacheHit $0			// call or return imp</div><div class="line">	</div><div class="line">	// 未命中逻辑</div><div class="line">2:	// not hit: p12 = not-hit bucket</div><div class="line">	// 空判断</div><div class="line">	CheckMiss $0			// miss if bucket-&gt;sel == 0</div><div class="line">	// 当前是否已经寻址到buckets的第一个元素</div><div class="line">	cmp	p12, p10		// wrap if bucket == buckets</div><div class="line">	// 是的话 goto 3</div><div class="line">	b.eq	3f</div><div class="line">	// 不是的话 向前移位继续查找</div><div class="line">	ldp	p17, p9, [x12, #-BUCKET_SIZE]!	// &#123;imp, sel&#125; = *--bucket</div><div class="line">	// 这是一个循环查找的过程</div><div class="line">	b	1b			// loop</div><div class="line"></div><div class="line">3:	// wrap: p12 = first bucket, w11 = mask</div><div class="line">#if CACHE_MASK_STORAGE == CACHE_MASK_STORAGE_HIGH_16</div><div class="line">	// 已经寻址到buckets的第一个元素，直接干到最后一个元素，再重新开始向前查找。</div><div class="line">	add	p12, p12, p11, LSR #(48 - (1+PTRSHIFT))</div><div class="line">					// p12 = buckets + (mask &lt;&lt; 1+PTRSHIFT)</div><div class="line">#elif CACHE_MASK_STORAGE == CACHE_MASK_STORAGE_LOW_4</div><div class="line">	add	p12, p12, p11, LSL #(1+PTRSHIFT)</div><div class="line">					// p12 = buckets + (mask &lt;&lt; 1+PTRSHIFT)</div><div class="line">#else</div><div class="line">#error Unsupported cache mask storage for ARM64.</div><div class="line">#endif</div><div class="line"></div><div class="line">	// Clone scanning loop to miss instead of hang when cache is corrupt.</div><div class="line">	// The slow path may detect any corruption and halt later.</div><div class="line"></div><div class="line">	// 这里的逻辑和上面类似</div><div class="line">	ldp	p17, p9, [x12]		// &#123;imp, sel&#125; = *bucket</div><div class="line">1:	cmp	p9, p1			// if (bucket-&gt;sel != _cmd)</div><div class="line">	b.ne	2f			//     scan more</div><div class="line">	CacheHit $0			// call or return imp</div><div class="line">	</div><div class="line">2:	// not hit: p12 = not-hit bucket</div><div class="line">	CheckMiss $0			// miss if bucket-&gt;sel == 0</div><div class="line">	cmp	p12, p10		// wrap if bucket == buckets</div><div class="line">	b.eq	3f</div><div class="line">	ldp	p17, p9, [x12, #-BUCKET_SIZE]!	// &#123;imp, sel&#125; = *--bucket</div><div class="line">	b	1b			// loop</div><div class="line"></div><div class="line">LLookupEnd$1:</div><div class="line">LLookupRecover$1:</div><div class="line">3:	// double wrap</div><div class="line">	JumpMiss $0</div><div class="line"></div><div class="line">.endmacro</div><div class="line"></div><div class="line">``` </div><div class="line"></div><div class="line">通过以上汇编代码分析，可以发现方法缓存的查找是一个从后往前遍历buckets的过程，如果当前遍历到第一个元素，会回到队尾继续遍历，知道找到我们需要的元素，或者找到一个空数据，会退出循环，然后我们看看缓存命中和未命中分别做了啥：</div><div class="line"></div><div class="line">##### 缓存命中</div></pre></td></tr></table></figure>
+<p>.macro CacheHit<br>.if $0 == NORMAL<br>    TailCallCachedImp x17, x12, x1, x16    // authenticate and call imp<br>.elseif $0 == GETIMP<br>    mov    p0, p17<br>    cbz    p0, 9f            // don’t ptrauth a nil imp<br>    AuthAndResignAsIMP x0, x12, x1, x16    // authenticate imp and re-sign as IMP<br>9:    ret                // return IMP<br>.elseif $0 == LOOKUP<br>    // No nil check for ptrauth: the caller would crash anyway when they<br>    // jump to a nil IMP. We don’t care if that jump also fails ptrauth.<br>    AuthAndResignAsIMP x17, x12, x1, x16    // authenticate imp and re-sign as IMP<br>    ret                // return imp via x17<br>.else<br>.abort oops<br>.endif<br>.endmacro<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">##### 缓存未命中</div></pre></td></tr></table></figure></p>
+<p>.macro CheckMiss<br>    // miss if bucket-&gt;sel == 0<br>.if $0 == GETIMP<br>    cbz    p9, LGetImpMiss<br>.elseif $0 == NORMAL<br>    cbz    p9, <strong>objc_msgSend_uncached<br>.elseif $0 == LOOKUP<br>    cbz    p9, </strong>objc_msgLookup_uncached<br>.else<br>.abort oops<br>.endif<br>.endmacro</p>
+<p>```</p>
+<p>都只是根据类型不同调用了对应的方法，这里已经不再是快查询的逻辑，我们暂时不看。</p>
+<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>这里先点个题，所谓的快查找就是对cache的查找，与之对应的慢查找就是对method_list的查找了，method_list的查找可能涉及到不同文件的遍历过程，所以会比cache慢很多。通过查看汇编实现，我的主要感受就是对类结构的熟悉是非常重要的，因为所有的查找逻辑都是基于类的结构来的。我们在实际编码过程中，也应该做到庖丁解牛，而不是盲人摸象。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2021/01/03/OC方法缓存策略底层探究/" itemprop="url">
                   OC方法缓存策略底层探究
                 </a>
@@ -1407,117 +1524,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2020/01/04/iOS基于GPUImage带Alpha的mp4播放方案/" itemprop="url">
-                  iOS基于GPUImage带Alpha的mp4播放方案
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2020-01-04T16:26:00+08:00" content="2020-01-04">
-              2020-01-04
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2020/01/04/iOS基于GPUImage带Alpha的mp4播放方案/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2020/01/04/iOS基于GPUImage带Alpha的mp4播放方案/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>mp4本身并不带透明通道，使用普通的视频播放器（比如AVPlayerLayer）只能播放一个不透明的视频，如果我们需要播放带透明度的视频（比如直播中的大礼物动画），就需要自己去写一个视频播放器。</p>
-<h4 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h4><p>基于OPENGLES的渲染流程，我们拿到视频每一帧的数据，即每个像素的RGB值，然后再拿到该像素点对应的Alpha值，组成一个新的RGBA，通过shader渲染成新的视频。这里的关键点在怎么将每个像素的Alpha值传给shader,这里采用的方式是在导出视频的时候导出两个视频，一个正常导出，另一个只导出透明度，同时为了避免取值的时候不同步，再将这两个视频合成为一个视频。最后播放的视频可能长下面这样：</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/GPUImage播放透明视频/9muuy-6x9z7.gif" alt=""></p>
-<h4 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h4><p>GPUImage提供了很多的Filter，但是都不太满足这里的需求，所有需要自定义一个Filter,核心代码如下：</p>
-<h5 id="shader"><a href="#shader" class="headerlink" title="shader"></a>shader</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">NSString *const kGPUImageVideoAlphaShaderString = SHADER_STRING</div><div class="line">(</div><div class="line"> </div><div class="line"> varying highp vec2 textureCoordinate;//这个对应下面的ST坐标,即右边视频的坐标</div><div class="line"> uniform sampler2D inputImageTexture;//这个是完整视频的纹理</div><div class="line"> </div><div class="line"> const lowp vec2 leftW = vec2(-0.5,0.0);</div><div class="line"> </div><div class="line"> void main()</div><div class="line"> &#123;</div><div class="line">     //从右边的视频中拿RGB值，从左边的视频中拿Alpha值，然后返回一个新的RGBA.</div><div class="line">     lowp vec4 rightTextureColor = texture2D(inputImageTexture, textureCoordinate);</div><div class="line">     lowp vec2 leftTextureCoordinate = leftW + textureCoordinate;</div><div class="line">     lowp vec4 leftTextureColor = texture2D(inputImageTexture, leftTextureCoordinate);</div><div class="line">     gl_FragColor = vec4(rightTextureColor.rgb,leftTextureColor.r);</div><div class="line"> &#125;</div><div class="line"> );</div></pre></td></tr></table></figure>
-<h5 id="opengl相关设置"><a href="#opengl相关设置" class="headerlink" title="opengl相关设置"></a>opengl相关设置</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line">- (void)renderToTextureWithVertices:(const GLfloat *)vertices textureCoordinates:(const GLfloat *)textureCoordinates;</div><div class="line">&#123;</div><div class="line">    </div><div class="line">    static const GLfloat posVertices[] = &#123;</div><div class="line">        // x , y</div><div class="line">        -1, 1,</div><div class="line">        1, 1,</div><div class="line">        -1, -1,</div><div class="line">        1, -1,</div><div class="line">    &#125;;</div><div class="line">    static const GLfloat textVertices[] = &#123;</div><div class="line">        // s , t</div><div class="line">        0.5, 1.0,</div><div class="line">        1.0, 1.0,</div><div class="line">        0.5, 0.0,</div><div class="line">        1.0, 0.0</div><div class="line">    &#125;;</div><div class="line"></div><div class="line">    // 向缓冲区对象写入刚定义的顶点数据</div><div class="line">    glEnable(GL_BLEND);</div><div class="line">    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);</div><div class="line">//    glBlendFunc(GL_ONE, GL_ZERO);</div><div class="line">    </div><div class="line">    [super renderToTextureWithVertices:posVertices textureCoordinates:textVertices];</div><div class="line">    </div><div class="line">    glDisable(GL_BLEND);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>ST坐标这里，我们只取右边的部分进行展示，然后就是需要设置GL_BLEND和glBlendFunc的透明度混合模式，这里的模式有很多种，每个模式的具体含义参考<a href="https://www.cnblogs.com/ylwn817/archive/2012/09/07/2675285.html" target="_blank" rel="noopener">这篇文章</a></p>
-<h4 id="播放"><a href="#播放" class="headerlink" title="播放"></a>播放</h4><p>播放的代码比较简单，可以参考下面的demo,最后的播放效果大概是这样：</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/GPUImage播放透明视频/pvert-k93lw.gif" alt=""></p>
-<p><a href="https://github.com/lilingyu0620/LLYGPUImageDemo" target="_blank" rel="noopener">demo</a></p>
-<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>这个方案需要对opengl和shader有一些了解，比如顶点坐标系和纹理坐标系之间如何映射，shader中如何获取每个像素点的RGB值，包括向量的偏移计算，shader的变量类型如何声明等等。。。使用视频播放大礼物比直接用序列帧播放在性能和内存占用上都有明显的优势，应该算一种不错的优化方案了。之前我在iOS性能优化中提起过，做性能优化需要程序员本身有一定的技术积累，所以，程序员学习的脚步不能停止，不知道哪天你现在学的东西就会体现出它的价值。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1563,7 +1569,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">71</span>
+              <span class="site-state-item-count">72</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
