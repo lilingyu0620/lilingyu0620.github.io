@@ -1,0 +1,593 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="源码结构分析我们先来看一下OC类的最新结构定义： 1234567891011121314struct objc_class : objc_object &amp;#123;    // Class ISA;    Class superclass;    cache_t cache;             // formerly cache pointer and vtable    class_dat">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OC方法缓存策略底层探究">
+<meta property="og:url" content="http://yoursite.com/2021/01/03/OC方法缓存策略底层探究/index.html">
+<meta property="og:site_name" content="lly&#39;s Blog">
+<meta property="og:description" content="源码结构分析我们先来看一下OC类的最新结构定义： 1234567891011121314struct objc_class : objc_object &amp;#123;    // Class ISA;    Class superclass;    cache_t cache;             // formerly cache pointer and vtable    class_dat">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2021-01-03T08:55:29.571Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="OC方法缓存策略底层探究">
+<meta name="twitter:description" content="源码结构分析我们先来看一下OC类的最新结构定义： 1234567891011121314struct objc_class : objc_object &amp;#123;    // Class ISA;    Class superclass;    cache_t cache;             // formerly cache pointer and vtable    class_dat">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2021/01/03/OC方法缓存策略底层探究/"/>
+
+  <title> OC方法缓存策略底层探究 | lly's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">lly's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">用心记录点滴</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                OC方法缓存策略底层探究
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2021-01-03T16:51:09+08:00" content="2021-01-03">
+              2021-01-03
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2021/01/03/OC方法缓存策略底层探究/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/01/03/OC方法缓存策略底层探究/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="源码结构分析"><a href="#源码结构分析" class="headerlink" title="源码结构分析"></a>源码结构分析</h4><p>我们先来看一下OC类的最新结构定义：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">struct objc_class : objc_object &#123;</div><div class="line">    // Class ISA;</div><div class="line">    Class superclass;</div><div class="line">    cache_t cache;             // formerly cache pointer and vtable</div><div class="line">    class_data_bits_t bits;    // class_rw_t * plus custom rr/alloc flags</div><div class="line">    // 函数部分...</div><div class="line">&#125;</div><div class="line"></div><div class="line">struct objc_object &#123;</div><div class="line">private:</div><div class="line">    isa_t isa;</div><div class="line">public:</div><div class="line">    // 函数部分...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>之前的文章中我们分析了bits这个属性，里面存放的就是类的子结构，比如方法，属性，协议等。今天我们再来探究下上面的cache内部的结构和底层原理。</p>
+<h4 id="实操"><a href="#实操" class="headerlink" title="实操"></a>实操</h4><p>相信大家对cache都不会陌生，即OC中的方法缓存，在objc_msgSend的流程中，最先查找的就是这个列表，那OC是如何维护这个列表的呢，内部的存储结构又是如何？今天我们就来一探究竟。</p>
+<p>之前我们使用lldb调试了bits内部的存储结构，但是这个方式比较繁琐，今天我们换一种简单点的方式来Debug，我们首先镜像一个objc_class结构体，然后对镜像的结构体进行分析。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div></pre></td><td class="code"><pre><div class="line">struct lly_bucket_t &#123;</div><div class="line">    SEL _sel;</div><div class="line">    IMP _imp;</div><div class="line">&#125;;</div><div class="line">struct lly_cache_t &#123;</div><div class="line">    struct lly_bucket_t * _buckets;</div><div class="line">    uint32_t _mask;</div><div class="line">    uint16_t _flags;</div><div class="line">    uint16_t _occupied;</div><div class="line">&#125;;</div><div class="line">struct lly_class_data_bits_t &#123;</div><div class="line">    Class objc_class;</div><div class="line">    // Values are the FAST_ flags above.</div><div class="line">    uintptr_t bits;</div><div class="line">&#125;;</div><div class="line">struct lly_objc_class &#123;</div><div class="line">    Class ISA;</div><div class="line">    Class superclass;</div><div class="line">    struct lly_cache_t cache;</div><div class="line">    struct lly_class_data_bits_t bits;</div><div class="line">&#125;;</div><div class="line"></div><div class="line">void printCache(Class model) &#123;</div><div class="line">    </div><div class="line">    struct lly_objc_class * llyClass = (__bridge struct lly_objc_class *)(model);</div><div class="line">    struct lly_cache_t cache = llyClass-&gt;cache;</div><div class="line">    NSLog(@&quot;_occupied = %d,_mask = %d&quot;,cache._occupied,cache._mask);</div><div class="line">    for (uint32_t i = 0; i &lt; cache._mask; i++) &#123;</div><div class="line">        struct lly_bucket_t bucket = cache._buckets[i];</div><div class="line">        NSLog(@&quot;method : sel = %@, imp = %p&quot;,NSStringFromSelector(bucket._sel),bucket._imp);</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">&#125;</div><div class="line"></div><div class="line">int main(int argc, const char * argv[]) &#123;</div><div class="line">    @autoreleasepool &#123;</div><div class="line">	    // insert code here...</div><div class="line">	    LLYModel *objc2 = [LLYModel alloc];</div><div class="line">	    Class llyClass = [LLYModel class];</div><div class="line">	    printCache(llyClass);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>首先我们不调用任何实例方法，查看打印结果</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">2021-01-03 15:59:51.995108+0800 LLYObjc[1738:6603344] _occupied = 0,_mask = 0</div></pre></td></tr></table></figure>
+<p>可以看到，初始状态都是0，里面的for也没有进 说明当前缓存列表为空。</p>
+<p>然后我们分次调用方法并打印：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">int main(int argc, const char * argv[]) &#123;</div><div class="line">    @autoreleasepool &#123;</div><div class="line">        // insert code here...</div><div class="line">        LLYModel *objc2 = [LLYModel alloc];</div><div class="line">        Class llyClass = [LLYModel class];</div><div class="line">        printCache(llyClass);</div><div class="line">        </div><div class="line">        [objc2 fun0];</div><div class="line">        [objc2 fun1];</div><div class="line">        </div><div class="line">        printCache(llyClass);</div><div class="line">                </div><div class="line">        [objc2 fun2];</div><div class="line">        [objc2 fun3];</div><div class="line">        </div><div class="line">        printCache(llyClass);</div><div class="line">    &#125;</div><div class="line">    return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>查看打印结果如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">2021-01-03 16:05:09.335088+0800 LLYModel[1804:6607181] _occupied = 0,_mask = 0</div><div class="line">2021-01-03 16:05:09.335668+0800 LLYModel[1804:6607181] ---------------------------------------------------------------------------</div><div class="line">2021-01-03 16:05:09.335785+0800 LLYModel[1804:6607181] -[LLYModel fun0]</div><div class="line">2021-01-03 16:05:09.335875+0800 LLYModel[1804:6607181] -[LLYModel fun1]</div><div class="line">2021-01-03 16:05:09.335959+0800 LLYModel[1804:6607181] _occupied = 2,_mask = 3</div><div class="line">2021-01-03 16:05:09.336174+0800 LLYModel[1804:6607181] method : sel = fun1, imp = 0xbf90</div><div class="line">2021-01-03 16:05:09.336245+0800 LLYModel[1804:6607181] method : sel = (null), imp = 0x0</div><div class="line">2021-01-03 16:05:09.336344+0800 LLYModel[1804:6607181] method : sel = fun0, imp = 0xbfc0</div><div class="line">2021-01-03 16:05:09.336397+0800 LLYModel[1804:6607181] ---------------------------------------------------------------------------</div><div class="line">2021-01-03 16:05:09.336447+0800 LLYModel[1804:6607181] -[LLYModel fun2]</div><div class="line">2021-01-03 16:05:09.336497+0800 LLYModel[1804:6607181] -[LLYModel fun3]</div><div class="line">2021-01-03 16:05:09.336542+0800 LLYModel[1804:6607181] _occupied = 2,_mask = 7</div><div class="line">2021-01-03 16:05:09.336618+0800 LLYModel[1804:6607181] method : sel = (null), imp = 0x0</div><div class="line">2021-01-03 16:05:09.336737+0800 LLYModel[1804:6607181] method : sel = fun3, imp = 0xbf30</div><div class="line">2021-01-03 16:05:09.336818+0800 LLYModel[1804:6607181] method : sel = (null), imp = 0x0</div><div class="line">2021-01-03 16:05:09.344380+0800 LLYModel[1804:6607181] method : sel = (null), imp = 0x0</div><div class="line">2021-01-03 16:05:09.344554+0800 LLYModel[1804:6607181] method : sel = fun2, imp = 0xbf60</div><div class="line">2021-01-03 16:05:09.344657+0800 LLYModel[1804:6607181] method : sel = (null), imp = 0x0</div><div class="line">2021-01-03 16:05:09.344746+0800 LLYModel[1804:6607181] method : sel = (null), imp = 0x0</div><div class="line">2021-01-03 16:05:09.344833+0800 LLYModel[1804:6607181] ---------------------------------------------------------------------------</div></pre></td></tr></table></figure>
+<p>分析打印结果，我们存在几个疑惑的地方：</p>
+<ul>
+<li>_occupied 和 _mask 分别是什么，为什么调用方法会改变它们的值？</li>
+<li>方法的调用顺序和缓存列表的顺序为什么不一致？</li>
+<li>当我们调用后面的方法后，前面缓存的方法为什么会丢失？</li>
+</ul>
+<p>带着上面的问题，我们去源码中看看能不能找到满意的答案。</p>
+<h4 id="源码逻辑分析"><a href="#源码逻辑分析" class="headerlink" title="源码逻辑分析"></a>源码逻辑分析</h4><p>通过对<em>occupied</em>关键字的搜索，我们最终定位到下面这个函数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div></pre></td><td class="code"><pre><div class="line">ALWAYS_INLINE</div><div class="line">void cache_t::insert(Class cls, SEL sel, IMP imp, id receiver)</div><div class="line">&#123;	 </div><div class="line">	// 去掉我们不关系的旁枝末节</div><div class="line"></div><div class="line">    // Use the cache as-is if it is less than 3/4 full</div><div class="line">    // 每次新插入缓存时occupied + 1，这里我们大概就能猜到它的含义了，就是保存当前已缓存方法的数量。</div><div class="line">    mask_t newOccupied = occupied() + 1;</div><div class="line">    unsigned oldCapacity = capacity(), capacity = oldCapacity;</div><div class="line">    </div><div class="line">    // 如果当前缓存列表为空 去创建一个</div><div class="line">    if (slowpath(isConstantEmptyCache())) &#123;</div><div class="line">        // Cache is read-only. Replace it.</div><div class="line">        // INIT_CACHE_SIZE_LOG2 = 2,</div><div class="line">    	 // INIT_CACHE_SIZE      = (1 &lt;&lt; INIT_CACHE_SIZE_LOG2),</div><div class="line">    	 // 看这里，初始的缓存列表的容量是 1 &lt;&lt; 2 = 4。</div><div class="line">        if (!capacity) capacity = INIT_CACHE_SIZE;</div><div class="line">        reallocate(oldCapacity, capacity, /* freeOld */false);</div><div class="line">    &#125;</div><div class="line">    else if (fastpath(newOccupied + CACHE_END_MARKER &lt;= capacity / 4 * 3)) &#123;</div><div class="line">        // Cache is less than 3/4 full. Use it as-is.</div><div class="line">        // (当前缓存列表用到的容量 + 1 ) &lt;= 总容量的四分之三时 说明还够用 啥也不用干</div><div class="line">    &#125;</div><div class="line">    else &#123;</div><div class="line">    	 // 要扩容了，新的容量大小为当前容量的2倍哦 当然有最大值的限制哈。 </div><div class="line">    	 // 具体扩容逻辑下看面的扩容函数注释</div><div class="line">        capacity = capacity ? capacity * 2 : INIT_CACHE_SIZE;</div><div class="line">        if (capacity &gt; MAX_CACHE_SIZE) &#123;</div><div class="line">            capacity = MAX_CACHE_SIZE;</div><div class="line">        &#125;</div><div class="line">        reallocate(oldCapacity, capacity, true);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    bucket_t *b = buckets();</div><div class="line">    // _mask = 当前容量 - 1</div><div class="line">    mask_t m = capacity - 1;</div><div class="line">    // 缓存的索引通过这个hash计算 </div><div class="line">    mask_t begin = cache_hash(sel, m);</div><div class="line">    mask_t i = begin;</div><div class="line"></div><div class="line">    // Scan for the first unused slot and insert there.</div><div class="line">    // There is guaranteed to be an empty slot because the</div><div class="line">    // minimum size is 4 and we resized at 3/4 full.</div><div class="line">    do &#123;</div><div class="line">    	 // 如果当前索引没有数据，直接插入</div><div class="line">        if (fastpath(b[i].sel() == 0)) &#123;</div><div class="line">        	  // _occupied++;</div><div class="line">            incrementOccupied();</div><div class="line">            b[i].set&lt;Atomic, Encoded&gt;(sel, imp, cls);</div><div class="line">            return;</div><div class="line">        &#125;</div><div class="line">        // 如果当前索引内存的就是传入的方法，直接返回</div><div class="line">        if (b[i].sel() == sel) &#123;</div><div class="line">            // The entry was added to the cache by some other thread</div><div class="line">            // before we grabbed the cacheUpdateLock.</div><div class="line">            return;</div><div class="line">        &#125;</div><div class="line">        // 否则就是寻找下一个索引</div><div class="line">    &#125; while (fastpath((i = cache_next(i, m)) != begin));</div><div class="line"></div><div class="line">    cache_t::bad_cache(receiver, (SEL)sel, cls);</div><div class="line">&#125;</div><div class="line"></div><div class="line">/// 初始化和扩容都走这个函数</div><div class="line">ALWAYS_INLINE</div><div class="line">void cache_t::reallocate(mask_t oldCapacity, mask_t newCapacity, bool freeOld)</div><div class="line">&#123;</div><div class="line">    bucket_t *oldBuckets = buckets();</div><div class="line">    // 分配内存</div><div class="line">    bucket_t *newBuckets = allocateBuckets(newCapacity);</div><div class="line"></div><div class="line">    // Cache&apos;s old contents are not propagated. </div><div class="line">    // This is thought to save cache memory at the cost of extra cache fills.</div><div class="line">    // fixme re-measure this</div><div class="line"></div><div class="line">    ASSERT(newCapacity &gt; 0);</div><div class="line">    ASSERT((uintptr_t)(mask_t)(newCapacity-1) == newCapacity-1);</div><div class="line">	</div><div class="line">	// 存储新创建缓存列表 _occupied置0</div><div class="line">    setBucketsAndMask(newBuckets, newCapacity - 1);</div><div class="line">    </div><div class="line">    // 要扩容了 free调旧值</div><div class="line">    if (freeOld) &#123;</div><div class="line">        cache_collect_free(oldBuckets, oldCapacity);</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">// 当前索引 </div><div class="line">static inline mask_t cache_hash(SEL sel, mask_t mask) </div><div class="line">&#123;</div><div class="line">    return (mask_t)(uintptr_t)sel &amp; mask;</div><div class="line">&#125;</div><div class="line"></div><div class="line">// 下一个索引</div><div class="line">static inline mask_t cache_next(mask_t i, mask_t mask) &#123;</div><div class="line">    return (i+1) &amp; mask;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这又是一个内联函数，意味这你在调用堆栈里面是看不到的。但是我们通过源码还是可以Debug进来的。<br>通过以上源码的分析过程，应该能够回答我们上面的疑问了。</p>
+<ul>
+<li>_occupied表示当前已缓存的的方法数，_mask标识当前缓存列表最大数-1，有新的方法调用_occupied就会更新，缓存列表扩容时_mask会更新。</li>
+<li>存储到缓存列表中的方法并不一定是连续的，和具体的hash算法有关。</li>
+<li>当缓存列表扩容后，之前缓存过的方法都会被清除，所以会丢失。</li>
+</ul>
+<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>当前的探索因为工程比较小，可能还不能看出方法cache的好处，在实际的工程中，方法的调用是大量且频繁的，这时就能体现出方法缓存的实际意义。之前的学习中对方法缓存丢失的逻辑不太了解，经过这次的探索，对整个方法缓存的策略有了更深刻的理解。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/01/03/OC方法isKindOfClass趣探/" rel="next" title="OC方法isKindOfClass趣探">
+                <i class="fa fa-chevron-left"></i> OC方法isKindOfClass趣探
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2021/01/03/OC方法缓存策略底层探究/"
+           data-title="OC方法缓存策略底层探究" data-url="http://yoursite.com/2021/01/03/OC方法缓存策略底层探究/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/head.png"
+               alt="lly" />
+          <p class="site-author-name" itemprop="name">lly</p>
+          <p class="site-description motion-element" itemprop="description">耿直的一Boy</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">71</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#源码结构分析"><span class="nav-number">1.</span> <span class="nav-text">源码结构分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#实操"><span class="nav-number">2.</span> <span class="nav-text">实操</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#源码逻辑分析"><span class="nav-number">3.</span> <span class="nav-text">源码逻辑分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#小结"><span class="nav-number">4.</span> <span class="nav-text">小结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lly</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"llyblog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
