@@ -229,6 +229,106 @@
             
               
                 
+                <a class="post-title-link" href="/2019/05/29/操作系统原理-线程/" itemprop="url">
+                  操作系统原理--线程
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-05-29T10:56:14+08:00" content="2019-05-29">
+              2019-05-29
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2019/05/29/操作系统原理-线程/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2019/05/29/操作系统原理-线程/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="线程的概念"><a href="#线程的概念" class="headerlink" title="线程的概念"></a>线程的概念</h3><h3 id="线程与进程的关系"><a href="#线程与进程的关系" class="headerlink" title="线程与进程的关系"></a>线程与进程的关系</h3><h3 id="线程的结构"><a href="#线程的结构" class="headerlink" title="线程的结构"></a>线程的结构</h3><h3 id="线程的调度"><a href="#线程的调度" class="headerlink" title="线程的调度"></a>线程的调度</h3><h3 id="线程的同步"><a href="#线程的同步" class="headerlink" title="线程的同步"></a>线程的同步</h3>
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2019/05/29/操作系统原理-进程/" itemprop="url">
                   操作系统原理--进程
                 </a>
@@ -2210,129 +2310,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/07/04/FDFullscreenPopGesture全屏返回实现原理解析/" itemprop="url">
-                  FDFullscreenPopGesture实现原理解析
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-07-04T14:47:58+08:00" content="2018-07-04">
-              2018-07-04
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2018/07/04/FDFullscreenPopGesture全屏返回实现原理解析/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/07/04/FDFullscreenPopGesture全屏返回实现原理解析/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>最近在项目中处理了一个UIScrollView右滑返回上级页的问题，刚好项目中也使用了<a href="https://github.com/forkingdog/FDFullscreenPopGesture" target="_blank" rel="noopener">FDFullscreenPopGesture</a>这个全屏返回的库，于是来分析它的实现吧。</p>
-<p>这个库是sunngxx之前在百度的时候弄的，已经好久没有更新了，不过目前还能用，star也已经有5k多了，而且sunngxx这种runtime小王子，写的这个库几乎所有函数都是runtime实现，还是很有学习的价值的。</p>
-<p>FDFullscreenPopGesture是以一个分类文件的形式提供给使用者，在内部重写了<strong>+(void)load;</strong>方法，只要把代码集成到项目中就可以使用全屏返回了。</p>
-<p>先来看一下头文件中的内容，首先是UINavigationController的分类</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">@interface UINavigationController (FDFullscreenPopGesture)</div><div class="line"></div><div class="line">/// The gesture recognizer that actually handles interactive pop.</div><div class="line">@property (nonatomic, strong, readonly) UIPanGestureRecognizer *fd_fullscreenPopGestureRecognizer;</div><div class="line"></div><div class="line">/// A view controller is able to control navigation bar&apos;s appearance by itself,</div><div class="line">/// rather than a global way, checking &quot;fd_prefersNavigationBarHidden&quot; property.</div><div class="line">/// Default to YES, disable it if you don&apos;t want so.</div><div class="line">@property (nonatomic, assign) BOOL fd_viewControllerBasedNavigationBarAppearanceEnabled;</div><div class="line"></div><div class="line">@end</div></pre></td></tr></table></figure>
-<p>第一个属性是当前实际相应右滑的手势对象，这个对象替换了系统的手势对象，具体咋替换的后面在说。</p>
-<p>第二个属性设置是否使用fd的方法去控制导航栏的显示隐藏。</p>
-<p>然后我们看一下UIViewController的分类:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">/// Allows any view controller to disable interactive pop gesture, which might</div><div class="line">/// be necessary when the view controller itself handles pan gesture in some</div><div class="line">/// cases.</div><div class="line">@interface UIViewController (FDFullscreenPopGesture)</div><div class="line"></div><div class="line">/// Whether the interactive pop gesture is disabled when contained in a navigation</div><div class="line">/// stack.</div><div class="line">@property (nonatomic, assign) BOOL fd_interactivePopDisabled;</div><div class="line"></div><div class="line">/// Indicate this view controller prefers its navigation bar hidden or not,</div><div class="line">/// checked when view controller based navigation bar&apos;s appearance is enabled.</div><div class="line">/// Default to NO, bars are more likely to show.</div><div class="line">@property (nonatomic, assign) BOOL fd_prefersNavigationBarHidden;</div><div class="line"></div><div class="line">/// Max allowed initial distance to left edge when you begin the interactive pop</div><div class="line">/// gesture. 0 by default, which means it will ignore this limit.</div><div class="line">@property (nonatomic, assign) CGFloat fd_interactivePopMaxAllowedInitialDistanceToLeftEdge;</div><div class="line"></div><div class="line">@end</div></pre></td></tr></table></figure>
-<ul>
-<li>fd_interactivePopDisabled:当前页面是否支持右滑返回</li>
-<li>fd_prefersNavigationBarHidden:控制当前页面导航栏的显示隐藏</li>
-<li>fd_interactivePopMaxAllowedInitialDistanceToLeftEdge:右滑返回触发的位置，这里是距离左边距的距离。</li>
-</ul>
-<h3 id="全屏返回"><a href="#全屏返回" class="headerlink" title="全屏返回"></a>全屏返回</h3><p>我们先来看一下全屏返回的实现。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div></pre></td><td class="code"><pre><div class="line">@interface _FDFullscreenPopGestureRecognizerDelegate : NSObject &lt;UIGestureRecognizerDelegate&gt;</div><div class="line"></div><div class="line">@property (nonatomic, weak) UINavigationController *navigationController;</div><div class="line"></div><div class="line">@end</div><div class="line"></div><div class="line">@implementation _FDFullscreenPopGestureRecognizerDelegate</div><div class="line"></div><div class="line">//判断是否处理返回手势</div><div class="line">- (BOOL)gestureRecognizerShouldBegin:(UIPanGestureRecognizer *)gestureRecognizer</div><div class="line">&#123;</div><div class="line">    // Ignore when no view controller is pushed into the navigation stack.</div><div class="line">    if (self.navigationController.viewControllers.count &lt;= 1) &#123;</div><div class="line">        return NO;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    // Ignore when the active view controller doesn&apos;t allow interactive pop.</div><div class="line">    UIViewController *topViewController = self.navigationController.viewControllers.lastObject;</div><div class="line">    if (topViewController.fd_interactivePopDisabled) &#123;</div><div class="line">        return NO;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    // Ignore when the beginning location is beyond max allowed initial distance to left edge.</div><div class="line">    CGPoint beginningLocation = [gestureRecognizer locationInView:gestureRecognizer.view];</div><div class="line">    CGFloat maxAllowedInitialDistance = topViewController.fd_interactivePopMaxAllowedInitialDistanceToLeftEdge;</div><div class="line">    if (maxAllowedInitialDistance &gt; 0 &amp;&amp; beginningLocation.x &gt; maxAllowedInitialDistance) &#123;</div><div class="line">        return NO;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // Ignore pan gesture when the navigation controller is currently in transition.</div><div class="line">    if ([[self.navigationController valueForKey:@&quot;_isTransitioning&quot;] boolValue]) &#123;</div><div class="line">        return NO;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    // Prevent calling the handler when the gesture begins in an opposite direction.</div><div class="line">    CGPoint translation = [gestureRecognizer translationInView:gestureRecognizer.view];</div><div class="line">    BOOL isLeftToRight = [UIApplication sharedApplication].userInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionLeftToRight;</div><div class="line">    CGFloat multiplier = isLeftToRight ? 1 : - 1;</div><div class="line">    if ((translation.x * multiplier) &lt;= 0) &#123;</div><div class="line">        return NO;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    return YES;</div><div class="line">&#125;</div><div class="line"></div><div class="line">//初始化返回手势</div><div class="line">- (UIPanGestureRecognizer *)fd_fullscreenPopGestureRecognizer</div><div class="line">&#123;</div><div class="line">    UIPanGestureRecognizer *panGestureRecognizer = objc_getAssociatedObject(self, _cmd);</div><div class="line"></div><div class="line">    if (!panGestureRecognizer) &#123;</div><div class="line">        panGestureRecognizer = [[UIPanGestureRecognizer alloc] init];</div><div class="line">        panGestureRecognizer.maximumNumberOfTouches = 1;</div><div class="line">        </div><div class="line">        objc_setAssociatedObject(self, _cmd, panGestureRecognizer, OBJC_ASSOCIATION_RETAIN_NONATOMIC);</div><div class="line">    &#125;</div><div class="line">    return panGestureRecognizer;</div><div class="line">&#125;</div><div class="line"></div><div class="line">//初始化返回手势的代理</div><div class="line">- (_FDFullscreenPopGestureRecognizerDelegate *)fd_popGestureRecognizerDelegate</div><div class="line">&#123;</div><div class="line">    _FDFullscreenPopGestureRecognizerDelegate *delegate = objc_getAssociatedObject(self, _cmd);</div><div class="line"></div><div class="line">    if (!delegate) &#123;</div><div class="line">        delegate = [[_FDFullscreenPopGestureRecognizerDelegate alloc] init];</div><div class="line">        delegate.navigationController = self;</div><div class="line">        </div><div class="line">        objc_setAssociatedObject(self, _cmd, delegate, OBJC_ASSOCIATION_RETAIN_NONATOMIC);</div><div class="line">    &#125;</div><div class="line">    return delegate;</div><div class="line">&#125;</div><div class="line"></div><div class="line">//hook系统的pushViewController方法，每个vc在被push后都会调用fd的fd_pushViewController方法</div><div class="line">+ (void)load</div><div class="line">&#123;</div><div class="line">    // Inject &quot;-pushViewController:animated:&quot;</div><div class="line">    static dispatch_once_t onceToken;</div><div class="line">    dispatch_once(&amp;onceToken, ^&#123;</div><div class="line">        Class class = [self class];</div><div class="line">        </div><div class="line">        SEL originalSelector = @selector(pushViewController:animated:);</div><div class="line">        SEL swizzledSelector = @selector(fd_pushViewController:animated:);</div><div class="line">        </div><div class="line">        Method originalMethod = class_getInstanceMethod(class, originalSelector);</div><div class="line">        Method swizzledMethod = class_getInstanceMethod(class, swizzledSelector);</div><div class="line">        </div><div class="line">        BOOL success = class_addMethod(class, originalSelector, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod));</div><div class="line">        if (success) &#123;</div><div class="line">            class_replaceMethod(class, swizzledSelector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod));</div><div class="line">        &#125; else &#123;</div><div class="line">            method_exchangeImplementations(originalMethod, swizzledMethod);</div><div class="line">        &#125;</div><div class="line">    &#125;);</div><div class="line">&#125;</div><div class="line"></div><div class="line">//重要代码部分，这里替换系统右滑手势为fd自己的对象，并给对象设置fd自定义的delegate</div><div class="line">- (void)fd_pushViewController:(UIViewController *)viewController animated:(BOOL)animated</div><div class="line">&#123;</div><div class="line">    if (![self.interactivePopGestureRecognizer.view.gestureRecognizers containsObject:self.fd_fullscreenPopGestureRecognizer]) &#123;</div><div class="line">        </div><div class="line">        // Add our own gesture recognizer to where the onboard screen edge pan gesture recognizer is attached to.</div><div class="line">        [self.interactivePopGestureRecognizer.view addGestureRecognizer:self.fd_fullscreenPopGestureRecognizer];</div><div class="line"></div><div class="line">        // Forward the gesture events to the private handler of the onboard gesture recognizer.</div><div class="line">        NSArray *internalTargets = [self.interactivePopGestureRecognizer valueForKey:@&quot;targets&quot;];</div><div class="line">        id internalTarget = [internalTargets.firstObject valueForKey:@&quot;target&quot;];</div><div class="line">        SEL internalAction = NSSelectorFromString(@&quot;handleNavigationTransition:&quot;);</div><div class="line">        self.fd_fullscreenPopGestureRecognizer.delegate = self.fd_popGestureRecognizerDelegate;</div><div class="line">        [self.fd_fullscreenPopGestureRecognizer addTarget:internalTarget action:internalAction];</div><div class="line"></div><div class="line">        // Disable the onboard gesture recognizer.</div><div class="line">        self.interactivePopGestureRecognizer.enabled = NO;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    // Handle perferred navigation bar appearance.</div><div class="line">    [self fd_setupViewControllerBasedNavigationBarAppearanceIfNeeded:viewController];</div><div class="line">    </div><div class="line">    // Forward to primary implementation.</div><div class="line">    if (![self.viewControllers containsObject:viewController]) &#123;</div><div class="line">        [self fd_pushViewController:viewController animated:animated];</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">@end</div></pre></td></tr></table></figure>
-<p>上面的代码展示了fd是怎么一步步的替换了系统的右滑手势的，其他部分比较好理解，这里我们来重点看一下替换代理的部分，如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">if (![self.interactivePopGestureRecognizer.view.gestureRecognizers containsObject:self.fd_fullscreenPopGestureRecognizer]) &#123;</div><div class="line">    </div><div class="line">    // Add our own gesture recognizer to where the onboard screen edge pan gesture recognizer is attached to.</div><div class="line">    [self.interactivePopGestureRecognizer.view addGestureRecognizer:self.fd_fullscreenPopGestureRecognizer];</div><div class="line"></div><div class="line">    // Forward the gesture events to the private handler of the onboard gesture recognizer.</div><div class="line">    NSArray *internalTargets = [self.interactivePopGestureRecognizer valueForKey:@&quot;targets&quot;];</div><div class="line">    id internalTarget = [internalTargets.firstObject valueForKey:@&quot;target&quot;];</div><div class="line">    SEL internalAction = NSSelectorFromString(@&quot;handleNavigationTransition:&quot;);</div><div class="line">    self.fd_fullscreenPopGestureRecognizer.delegate = self.fd_popGestureRecognizerDelegate;</div><div class="line">    [self.fd_fullscreenPopGestureRecognizer addTarget:internalTarget action:internalAction];</div><div class="line"></div><div class="line">    // Disable the onboard gesture recognizer.</div><div class="line">    self.interactivePopGestureRecognizer.enabled = NO;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>这里，先判断当前view的手势列表中是否包含我们自定义的右滑手势，如果不包含，先将自定义手势add到手势列表中，然后重点来了，获取interactivePopGestureRecognizer这个系统右滑返回手势的所有target,然后取出该手势的第一响应者，然后生成系统返回手势处理函数（handleNavigationTransition）的SEL结构体，然后设置自定义手势的代理，最后将系统的target和SEL添加给自定义的手势对象，并将系统的返回手势关闭。这样，fd就可以通过自定义的代理控制右滑返回了。</p>
-<h3 id="隐藏导航栏"><a href="#隐藏导航栏" class="headerlink" title="隐藏导航栏"></a>隐藏导航栏</h3><p>看完了右滑返回，再看一下fd是如何隐藏系统导航栏的。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">+ (void)load</div><div class="line">&#123;</div><div class="line">    static dispatch_once_t onceToken;</div><div class="line">    dispatch_once(&amp;onceToken, ^&#123;</div><div class="line">        Class class = [self class];</div><div class="line">        </div><div class="line">        SEL originalSelector = @selector(viewWillAppear:);</div><div class="line">        SEL swizzledSelector = @selector(fd_viewWillAppear:);</div><div class="line">        </div><div class="line">        Method originalMethod = class_getInstanceMethod(class, originalSelector);</div><div class="line">        Method swizzledMethod = class_getInstanceMethod(class, swizzledSelector);</div><div class="line">        </div><div class="line">        BOOL success = class_addMethod(class, originalSelector, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod));</div><div class="line">        if (success) &#123;</div><div class="line">            class_replaceMethod(class, swizzledSelector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod));</div><div class="line">        &#125; else &#123;</div><div class="line">            method_exchangeImplementations(originalMethod, swizzledMethod);</div><div class="line">        &#125;</div><div class="line">    &#125;);</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (void)fd_viewWillAppear:(BOOL)animated</div><div class="line">&#123;</div><div class="line">    // Forward to primary implementation.</div><div class="line">    [self fd_viewWillAppear:animated];</div><div class="line">    </div><div class="line">    if (self.fd_willAppearInjectBlock) &#123;</div><div class="line">        self.fd_willAppearInjectBlock(self, animated);</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (_FDViewControllerWillAppearInjectBlock)fd_willAppearInjectBlock</div><div class="line">&#123;</div><div class="line">    return objc_getAssociatedObject(self, _cmd);</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (void)setFd_willAppearInjectBlock:(_FDViewControllerWillAppearInjectBlock)block</div><div class="line">&#123;</div><div class="line">    objc_setAssociatedObject(self, @selector(fd_willAppearInjectBlock), block, OBJC_ASSOCIATION_COPY_NONATOMIC);</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (void)fd_setupViewControllerBasedNavigationBarAppearanceIfNeeded:(UIViewController *)appearingViewController</div><div class="line">&#123;</div><div class="line">    if (!self.fd_viewControllerBasedNavigationBarAppearanceEnabled) &#123;</div><div class="line">        return;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    __weak typeof(self) weakSelf = self;</div><div class="line">    _FDViewControllerWillAppearInjectBlock block = ^(UIViewController *viewController, BOOL animated) &#123;</div><div class="line">        __strong typeof(weakSelf) strongSelf = weakSelf;</div><div class="line">        if (strongSelf) &#123;</div><div class="line">            [strongSelf setNavigationBarHidden:viewController.fd_prefersNavigationBarHidden animated:animated];</div><div class="line">        &#125;</div><div class="line">    &#125;;</div><div class="line">    </div><div class="line">    // Setup will appear inject block to appearing view controller.</div><div class="line">    // Setup disappearing view controller as well, because not every view controller is added into</div><div class="line">    // stack by pushing, maybe by &quot;-setViewControllers:&quot;.</div><div class="line">    appearingViewController.fd_willAppearInjectBlock = block;</div><div class="line">    UIViewController *disappearingViewController = self.viewControllers.lastObject;</div><div class="line">    if (disappearingViewController &amp;&amp; !disappearingViewController.fd_willAppearInjectBlock) &#123;</div><div class="line">        disappearingViewController.fd_willAppearInjectBlock = block;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>隐藏这个就比较简单了，也是在fd_pushViewController里面处理的，具体说一下，这里先生成一个用来隐藏导航栏的block，使用的方法还是系统的setNavigationBarHidden：animation 方式。然后将这个block赋值给self.fd_willAppearInjectBlock，然后再每次fd_viewWillAppear时，会调用一下这个block。</p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>可以看到，代码大量的使用runtime来编写，学习一遍下来对应runtime相关的内容会有更深刻的认识。然后就是fd替换系统方法的这种骚操作，如果有类似的需求的话也是可以参考的。这个库代码也不太多，内容也比较好理解，个人觉得有学习的价值。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2378,7 +2355,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">69</span>
+              <span class="site-state-item-count">70</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

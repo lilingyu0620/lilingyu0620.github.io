@@ -229,6 +229,149 @@
             
               
                 
+                <a class="post-title-link" href="/2021/01/03/OC方法isKindOfClass趣探/" itemprop="url">
+                  OC方法isKindOfClass趣探
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2021-01-03T11:44:27+08:00" content="2021-01-03">
+              2021-01-03
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2021/01/03/OC方法isKindOfClass趣探/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/01/03/OC方法isKindOfClass趣探/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h4 id="起"><a href="#起" class="headerlink" title="起"></a>起</h4><p>我们先来看一下下面的一个面试题：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">BOOL re1 = [(id)[NSObject class] isKindOfClass:[NSObject class]];       //</div><div class="line">BOOL re2 = [(id)[NSObject class] isMemberOfClass:[NSObject class]];     //</div><div class="line">BOOL re3 = [(id)[LLYModel class] isKindOfClass:[LLYModel class]];       //</div><div class="line">BOOL re4 = [(id)[LLYModel class] isMemberOfClass:[LLYModel class]];     //</div><div class="line">NSLog(@&quot; re1 :%hhd\n re2 :%hhd\n re3 :%hhd\n re4 :%hhd\n&quot;,re1,re2,re3,re4);</div><div class="line"></div><div class="line">BOOL re5 = [(id)[NSObject alloc] isKindOfClass:[NSObject class]];       //</div><div class="line">BOOL re6 = [(id)[NSObject alloc] isMemberOfClass:[NSObject class]];     //</div><div class="line">BOOL re7 = [(id)[LLYModel alloc] isKindOfClass:[LLYModel class]];       //</div><div class="line">BOOL re8 = [(id)[LLYModel alloc] isMemberOfClass:[LLYModel class]];     //</div><div class="line">NSLog(@&quot; re5 :%hhd\n re6 :%hhd\n re7 :%hhd\n re8 :%hhd\n&quot;,re5,re6,re7,re8);</div></pre></td></tr></table></figure>
+<p>请问输出分别是多少呢？大家可以自己试一试，答案分别是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">re1 :1</div><div class="line">re2 :0</div><div class="line">re3 :0</div><div class="line">re4 :0</div><div class="line"></div><div class="line">re5 :1</div><div class="line">re6 :1</div><div class="line">re7 :1</div><div class="line">re8 :1</div></pre></td></tr></table></figure>
+<h4 id="承"><a href="#承" class="headerlink" title="承"></a>承</h4><p>我们直接看源码进行分析：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">//直接判断当前类的元类是否和后面的类相等。</div><div class="line">+ (BOOL)isMemberOfClass:(Class)cls &#123;</div><div class="line">    return self-&gt;ISA() == cls;</div><div class="line">&#125;</div><div class="line"></div><div class="line">//直接判断是不是同一个类对象</div><div class="line">- (BOOL)isMemberOfClass:(Class)cls &#123;</div><div class="line">    return [self class] == cls;</div><div class="line">&#125;</div><div class="line"></div><div class="line">//使用当前类对象的元类的继承链和后面的类对象进行比较，只要后面的类对象在当前元类的继承链中，既判断相等。</div><div class="line">+ (BOOL)isKindOfClass:(Class)cls &#123;</div><div class="line">    for (Class tcls = self-&gt;ISA(); tcls; tcls = tcls-&gt;superclass) &#123;</div><div class="line">        if (tcls == cls) return YES;</div><div class="line">    &#125;</div><div class="line">    return NO;</div><div class="line">&#125;</div><div class="line"></div><div class="line">//使用当前实例的类对象的继承链和后面的类对象进行比较，只要后面的类在当前类的继承链中，既判断是相等。</div><div class="line">- (BOOL)isKindOfClass:(Class)cls &#123;</div><div class="line">    for (Class tcls = [self class]; tcls; tcls = tcls-&gt;superclass) &#123;</div><div class="line">        if (tcls == cls) return YES;</div><div class="line">    &#125;</div><div class="line">    return NO;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>总结一下上面的判断逻辑大概是这样：</p>
+<p>isKindOfClass会使用继承链比较，实例方法使用类对象的继承链，类方法使用元类对象的继承链。<br>isMemberOfClass直接比较，实例方法使用类对象，类方法使用元类对象。</p>
+<p>看到这里，不得不再次祭出下面这张图了：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/ISA/isa流程图.png" alt=""></p>
+<p>我们来瞧瞧元类对象的继承链，根元类的superclass指针指向的是根类，这也就是</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">BOOL re1 = [(id)[NSObject class] isKindOfClass:[NSObject class]];       //</div></pre></td></tr></table></figure>
+<p>这里为什么返回1的原因。</p>
+<h4 id="转"><a href="#转" class="headerlink" title="转"></a>转</h4><p>有了以上结论，我们再来Debug一下runtime的代码，看一下这几个函数内部的运行逻辑是否和我们上面的结论一致。</p>
+<h5 id="isMemberOfClass-lldb分析"><a href="#isMemberOfClass-lldb分析" class="headerlink" title="isMemberOfClass lldb分析"></a>isMemberOfClass lldb分析</h5><p>先来看看类方法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">BOOL re2 = [(id)[NSObject class] isMemberOfClass:[NSObject class]];     //</div><div class="line"></div><div class="line">(lldb) x/4gx self //类对象</div><div class="line">0x10034c140: 0x000000010034c0f0 0x0000000000000000</div><div class="line">0x10034c150: 0x0000000100888a40 0x0001801000000003</div><div class="line">(lldb) x/4gx cls  //类对象</div><div class="line">0x10034c140: 0x000000010034c0f0 0x0000000000000000</div><div class="line">0x10034c150: 0x0000000100888a40 0x0001801000000003</div><div class="line">(lldb) x/4gx 0x000000010034c0f0（ISA） //元类对象也是根源类</div><div class="line">0x10034c0f0: 0x000000010034c0f0 0x000000010034c140</div><div class="line">0x10034c100: 0x0000000100739650 0x0004e03100000007</div></pre></td></tr></table></figure>
+<p>这里就很清晰，类对象只有一个，因为他们的首地址和内部变量都相同 ,根元类对象也只有一个，但是和类对象首地址不同，ISA指针相同，这又证明了上图的内容，即根源类的ISA指向自己。根元类和类对象不相等，返回0。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">BOOL re4 = [(id)[LLYModel class] isMemberOfClass:[LLYModel class]];     //</div><div class="line"></div><div class="line">(lldb) x/4gx self //类对象</div><div class="line">0x100008408: 0x00000001000083e0 0x000000010034c140</div><div class="line">0x100008418: 0x0000000100346430 0x0000802400000000</div><div class="line">(lldb) x/4gx cls  //类对象</div><div class="line">0x100008408: 0x00000001000083e0 0x000000010034c140</div><div class="line">0x100008418: 0x0000000100346430 0x0000802400000000</div><div class="line">(lldb) x/4gx 0x00000001000083e0 //元类对象</div><div class="line">0x1000083e0: 0x000000010034c0f0 0x000000010034c0f0</div><div class="line">0x1000083f0: 0x00000001007396d0 0x0002e03500000003</div><div class="line">(lldb) x/4gx 0x000000010034c0f0 //根源类对象</div><div class="line">0x10034c0f0: 0x000000010034c0f0 0x000000010034c140</div><div class="line">0x10034c100: 0x0000000100739650 0x0004e03100000007</div><div class="line">(lldb)</div></pre></td></tr></table></figure>
+<p>因为是自定义的类，所以会有一个元类对象，元类对象isa指向上面的根元类，元类和类对象不相等，返回0，没有问题。</p>
+<p>然后我们来看看实例方法，<strong>实例对象的内存分析和类对象有一点区别，请注意！！！</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">BOOL re6 = [(id)[NSObject alloc] isMemberOfClass:[NSObject class]];     //</div><div class="line"></div><div class="line">(lldb) x/4gx self //实例对象</div><div class="line">0x100629c30: 0x001d80010034c141 0x0000000000000000</div><div class="line">0x100629c40: 0x00007fff7ba35c58 0x00000000e642baab</div><div class="line">(lldb) x/4gx cls  //类对象</div><div class="line">0x10034c140: 0x000000010034c0f0 0x0000000000000000</div><div class="line">0x10034c150: 0x0000000100629c80 0x0001801000000007</div><div class="line">(lldb) p/x 0x001d80010034c141 &amp; 0x00007ffffffffff8ULL //这里是重要，实例对象的isa指针是nonpointer_isa 如果想要拿到类对象信息，需要带个面具。！！！</div><div class="line">(unsigned long long) $40 = 0x000000010034c140</div><div class="line">(lldb) x/4gx 0x000000010034c140 //类对象</div><div class="line">0x10034c140: 0x000000010034c0f0 0x0000000000000000</div><div class="line">0x10034c150: 0x0000000100629c80 0x0001801000000007</div></pre></td></tr></table></figure>
+<p>在分析前，我们先回到源码部分</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">- (BOOL)isMemberOfClass:(Class)cls &#123;</div><div class="line">    return [self class] == cls;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">[self class]</div></pre></td></tr></table></figure>
+<p>怎么理解呢？</p>
+<p>实际上分两种情况：</p>
+<ul>
+<li>当self是实例对象时，class是实例方法，返回isa指针，也就是类对象</li>
+<li>当self是类或者元类对象时，class是类方法，返回自己。</li>
+</ul>
+<p>所以上面我需要拿到self的isa指向的内存，但是self的isa不能直接打印内存，因为nonpointer_isa对isa进行了优化，存储很多其他的信息，我们需要先使用面具过滤掉其他不需要的信息，才能拿到isa中存储的类对象地址。从lldb打印情况可以看到，self实例对象的isa指向的就是类对象，所以这里返回1.</p>
+<p>re8的分析过程和re6相似，就不再重复劳动了。</p>
+<h5 id="特殊的isKindOfClass"><a href="#特殊的isKindOfClass" class="headerlink" title="特殊的isKindOfClass"></a>特殊的isKindOfClass</h5><p>为什么要加上【特殊】这个前缀呢，原因很简单，isKindOfClass里面的断点根本没有进去，可见runtime内部对这个方法的调用可能走的就不是我们上面的实现，这种情况我们之前在alloc的分析过程中也遇到过，所以不要慌。经过在源码中一番搜索，我们最终找到下面这个函数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">// Calls [obj isKindOfClass]</div><div class="line">BOOL</div><div class="line">objc_opt_isKindOfClass(id obj, Class otherClass)</div><div class="line">&#123;</div><div class="line">#if __OBJC2__</div><div class="line">    if (slowpath(!obj)) return NO;</div><div class="line">    Class cls = obj-&gt;getIsa();</div><div class="line">    if (fastpath(!cls-&gt;hasCustomCore())) &#123;</div><div class="line">        for (Class tcls = cls; tcls; tcls = tcls-&gt;superclass) &#123;</div><div class="line">            if (tcls == otherClass) return YES;</div><div class="line">        &#125;</div><div class="line">        return NO;</div><div class="line">    &#125;</div><div class="line">#endif</div><div class="line">    return ((BOOL(*)(id, SEL, Class))objc_msgSend)(obj, @selector(isKindOfClass:), otherClass);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>内部的判断逻辑和我们上面看到的源码一样，所有我们可以在这个函数中进行debug了，不过这个debug过程已经不是重点了，重点是为什么会走到这个函数里面，上面的函数又是什么时候调用，因为有了之前的经验，我们直接去llvm中看能否寻找的一些答案。</p>
+<p>果不其然，我们在llvm的源码中发现了这个：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">// This is the table of ObjC &quot;accelerated dispatch&quot; functions.  They are a set</div><div class="line">// of objc methods that are &quot;seldom overridden&quot; and so the compiler replaces the</div><div class="line">// objc_msgSend with a call to one of the dispatch functions.  That will check</div><div class="line">// whether the method has been overridden, and directly call the Foundation </div><div class="line">// implementation if not.  </div><div class="line">// This table is supposed to be complete.  If ones get added in the future, we</div><div class="line">// will have to add them to the table.</div><div class="line">const char *AppleObjCTrampolineHandler::g_opt_dispatch_names[] = &#123;</div><div class="line">    &quot;objc_alloc&quot;,</div><div class="line">    &quot;objc_autorelease&quot;,</div><div class="line">    &quot;objc_release&quot;,</div><div class="line">    &quot;objc_retain&quot;,</div><div class="line">    &quot;objc_alloc_init&quot;,</div><div class="line">    &quot;objc_allocWithZone&quot;,</div><div class="line">    &quot;objc_opt_class&quot;,</div><div class="line">    &quot;objc_opt_isKindOfClass&quot;,</div><div class="line">    &quot;objc_opt_new&quot;,</div><div class="line">    &quot;objc_opt_respondsToSelector&quot;,</div><div class="line">    &quot;objc_opt_self&quot;,</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>在注释中，我们发现了【加速派发】，【不常重写】等字样，这里我们大胆猜测就是llvm在底层为了优化方法的调用速度，对下面列表中的方法做了优化，会优先进到这些优化方法中去，如果我们重写isKindOfClass等方法，可能才会进入之前我们看到的函数中去。</p>
+<p>ok 来尝试一下我们的猜测，很简单，我们只需要重写一下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">+ (BOOL)isKindOfClass:(Class)aClass &#123;</div><div class="line">    return [super isKindOfClass:aClass];</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (BOOL)isKindOfClass:(Class)aClass &#123;</div><div class="line">    return [super isKindOfClass:aClass];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>果然，在我们重写之后，之前的断点就生效了，完美！！！</p>
+<h4 id="合"><a href="#合" class="headerlink" title="合"></a>合</h4><p>源码的探索过程还是比较有趣的，不过如果你找不到正确的方法的话，可能跟到一个方法后就很难再深入进入，导致直接放弃，打击学习的积极性，所以还是要多看多学，不断积累才行啊。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2021/01/02/借助lldb探究OC类结构的底层实现/" itemprop="url">
                   借助lldb探究OC类结构的底层实现
                 </a>
@@ -1534,152 +1677,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2019/11/21/《重构-改善既有代码的设计》系列读书笔记（八、大型重构和个人总结）/" itemprop="url">
-                  《重构-改善既有代码的设计》系列读书笔记（八、大型重构和个人总结）
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2019-11-21T11:43:34+08:00" content="2019-11-21">
-              2019-11-21
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2019/11/21/《重构-改善既有代码的设计》系列读书笔记（八、大型重构和个人总结）/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2019/11/21/《重构-改善既有代码的设计》系列读书笔记（八、大型重构和个人总结）/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="大型重构"><a href="#大型重构" class="headerlink" title="大型重构"></a>大型重构</h3><p>不要被名字吓到。。。</p>
-<h4 id="Tease-Apart-Inheritance-梳理并分解继承关系"><a href="#Tease-Apart-Inheritance-梳理并分解继承关系" class="headerlink" title="Tease Apart Inheritance(梳理并分解继承关系)"></a>Tease Apart Inheritance(梳理并分解继承关系)</h4><p>某个继承体系同时承担两项责任</p>
-<h5 id="动机"><a href="#动机" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>混乱的继承体系是一个严重的问题，它会导致重复代码，会使修改变得困难。</li>
-<li>如果继承体系中的某一特定层级上的所有类，其子类名称都以相同的形容词开始，那么这个体系很可能承担着两项不同的责任。</li>
-</ul>
-<h5 id="做法"><a href="#做法" class="headerlink" title="做法"></a>做法</h5><ul>
-<li><p>before<br><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/重构/TeaseBefore.png" alt=""></p>
-</li>
-<li><p>after</p>
-</li>
-</ul>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/重构/TeaseAfter.png" alt=""></p>
-<h4 id="Convert-Procedural-Design-to-Objects-将过程化设计转化为对象设计"><a href="#Convert-Procedural-Design-to-Objects-将过程化设计转化为对象设计" class="headerlink" title="Convert Procedural Design to Objects(将过程化设计转化为对象设计)"></a>Convert Procedural Design to Objects(将过程化设计转化为对象设计)</h4><p>你手上有一些传统过程化风格的代码</p>
-<h5 id="动机-1"><a href="#动机-1" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>在面向对象语言中，应该尽量少的使用过程化的代码，多用对象。</li>
-</ul>
-<h5 id="做法-1"><a href="#做法-1" class="headerlink" title="做法"></a>做法</h5><ul>
-<li>将数据记录变成对象，将大块的行为分割小块，并将行为移入相关对象之中。</li>
-</ul>
-<h4 id="Separate-Domain-from-Presentation-将领域和表述-显示分离"><a href="#Separate-Domain-from-Presentation-将领域和表述-显示分离" class="headerlink" title="Separate Domain from Presentation(将领域和表述/显示分离)"></a>Separate Domain from Presentation(将领域和表述/显示分离)</h4><p>某些GUI类之中包含了数据处理逻辑</p>
-<h5 id="动机-2"><a href="#动机-2" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>MVC模式。。。</li>
-<li>M 还是 VM ？这是一个问题。</li>
-</ul>
-<h5 id="做法-2"><a href="#做法-2" class="headerlink" title="做法"></a>做法</h5><ul>
-<li>将显示逻辑和数据处理逻辑分离。。。</li>
-</ul>
-<h4 id="Extract-Hierarchy-提炼继承体系"><a href="#Extract-Hierarchy-提炼继承体系" class="headerlink" title="Extract Hierarchy(提炼继承体系)"></a>Extract Hierarchy(提炼继承体系)</h4><p>你有某个类做了太多工作，其中一部分工作是以大量条件表达式完成的。</p>
-<h5 id="动机-3"><a href="#动机-3" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>当一个简单的类在不断迭代之后，可能产生一系列不同的行为，这些行为的执行依赖于各种条件和标记，日积月累，这个类就完全一团糟了。</li>
-<li>只有这些条件和标记在整个类的生命周期内保持不变时，本重构手法才适用。</li>
-<li>Extract Hierarchy是一项大型重构，可能需要花费大量的时间和精力，先易后难，循序渐进。</li>
-</ul>
-<h5 id="做法-3"><a href="#做法-3" class="headerlink" title="做法"></a>做法</h5><ul>
-<li>将各种需要条件判断的地方提炼为一个新的子类，直到将超类改为抽象类为止。</li>
-</ul>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>总结以上各种重构手段，我们不难发现，重构的最终目主要有以下两点：</p>
-<h4 id="消除重复代码"><a href="#消除重复代码" class="headerlink" title="消除重复代码"></a>消除重复代码</h4><p>我们所以要提炼函数，提炼类，消除临时变量，重新组织数据，内联函数和类，大部分操作都是在消除重复的代码。</p>
-<p>重复代码的危害是显而易见的，它除了增加你的整体代码量，使你的逻辑变得更复杂外，也阻碍着他人阅读和理解你的代码，并且大大增加了代码的维护成本。所以说消除重复代码，不止可以大大降低代码维护成本，还能减少整体代码量，提高代码的可读性，可以说是一举多得。</p>
-<p>然而在实际的开发过程中，往往还是会出现很多的重复代码，这种代码主要出现在相似的功能模块之间，而且后来者重复前人代码的比例会更大一些。可能由于懒得，开发时间，个人素质等各种原因，最终导致项目中出现大量重复代码。</p>
-<p>要解决重复代码的问题，我个人觉得首先需要提高开发者的个人素质，一个对自己代码严格要求的开发者在编码过程中会时刻提醒自己减少重复。其次，团队开发中代码review是必要的，而且应该严格执行，不能因为个人惰性，面子问题或者时间不够这些主观原因而不做或者打折扣。你做或者不做，代码都在那里，不增不减。</p>
-<h4 id="梳理代码之间的关系（类，函数等）"><a href="#梳理代码之间的关系（类，函数等）" class="headerlink" title="梳理代码之间的关系（类，函数等）"></a>梳理代码之间的关系（类，函数等）</h4><p>对代码之间关系的梳理，是能够大大改善代码的另外一个手段。程序本质上就是由各种代码串联起来的一个软体，代码间的关系决定了软件的所有行为。这些关系主要包括类的关系，函数的关系，条件语句的关系和数据的关系。</p>
-<p>计算机科学和土木工程，电子信息，机械等专业都被归于工科，说明他们之间是有一些共性存在的。我们可以参考土木工程中一个项目的整体流程，然后和计算机软件项目来一个大致的对比。土木工程师在开始一个项目时，会花费大量的时间去做方案设计，中间可能需要经过多次改版，最终方案形成后才会开始施工，而且必须是严格按照设计方案来施工，不然后面的验收可能就会不通过。反观软件工程师的开发流程，则简单很多，前期及时有方案设计，也不会事无巨细，可能几个主要的模块确定后，就可以开始编码。</p>
-<p>土木和计算机软件的主要差别就体现在“软”字上，土木的设计方案如果出问题，并且在初期并没有被发现话，对项目整体影响会很大，而软件开发中对代码的修改是随时的，并不会产生什么大的影响。正是基于软件的这种特殊属性，也就出现了大量因为设计不良，甚至根本谈不上设计的代码，而这种不经设计的代码，正是导致代码之间关系混乱的元凶。</p>
-<p>和代码重复不同的是，良好的代码关系并不是开发者多注意就可以形成的。需要大量的学习和实践才能有一些心得，而将这些心得运用到项目中又需要一些时间成本，所以总体上讲好的代码关系在实际开发过程中不可能尽善尽美，开发者能做的就是尽自己最大的努力去设计出合理的代码关系，然后在不断的重构中去进一步完善。这就要求我们对设计模式学习和实践的脚步不能停止。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1725,7 +1722,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">69</span>
+              <span class="site-state-item-count">70</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
