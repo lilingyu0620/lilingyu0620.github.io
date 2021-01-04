@@ -229,6 +229,117 @@
             
               
                 
+                <a class="post-title-link" href="/2021/01/04/从【nonpointer】探究OC类中isa指针/" itemprop="url">
+                  从【nonpointer】探究OC类中isa指针
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2021-01-04T10:45:18+08:00" content="2021-01-04">
+              2021-01-04
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2021/01/04/从【nonpointer】探究OC类中isa指针/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/01/04/从【nonpointer】探究OC类中isa指针/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h4 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h4><p>在这篇文章<a href="http://llyblog.com/2021/01/01/从【class-getInstanceSize方法】探究iOS的内存分配策略/" target="_blank" rel="noopener">从【class_getInstanceSize方法】探究iOS的内存分配策略</a>中，我们分析了OC类的内存分配策略，但是具体的初始化过程并没有提及，这里我们来探究下OC在内存的初始化过程中都做了什么。</p>
+<h4 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h4><p>我们还是先看一下整个OC类的创建流程，如下图：</p>
+<p><img src="https://raw.githubusercontent.com/lilingyu0620/LLYBlogImageSource/master/Alloc分析/alloc01.png" alt=""></p>
+<p>其中标红的<em>_class_createInstanceFromZone</em>函数就是核心内容，我们直接来看看其内部实现逻辑：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div></pre></td><td class="code"><pre><div class="line">static ALWAYS_INLINE id</div><div class="line">_class_createInstanceFromZone(Class cls, size_t extraBytes, void *zone,</div><div class="line">                              int construct_flags = OBJECT_CONSTRUCT_NONE,</div><div class="line">                              bool cxxConstruct = true,</div><div class="line">                              size_t *outAllocatedSize = nil)</div><div class="line">&#123;</div><div class="line">    ASSERT(cls-&gt;isRealized());</div><div class="line"></div><div class="line">    // Read class&apos;s info bits all at once for performance</div><div class="line">    bool hasCxxCtor = cxxConstruct &amp;&amp; cls-&gt;hasCxxCtor();</div><div class="line">    bool hasCxxDtor = cls-&gt;hasCxxDtor();</div><div class="line">    bool fast = cls-&gt;canAllocNonpointer(); //是否支持nonpointer 这个是关键</div><div class="line">    size_t size;</div><div class="line"></div><div class="line">    size = cls-&gt;instanceSize(extraBytes);</div><div class="line">    if (outAllocatedSize) *outAllocatedSize = size;</div><div class="line"></div><div class="line">    id obj;</div><div class="line">    if (zone) &#123;</div><div class="line">        obj = (id)malloc_zone_calloc((malloc_zone_t *)zone, 1, size);</div><div class="line">    &#125; else &#123;</div><div class="line">        obj = (id)calloc(1, size);</div><div class="line">    &#125;</div><div class="line">    if (slowpath(!obj)) &#123;</div><div class="line">        if (construct_flags &amp; OBJECT_CONSTRUCT_CALL_BADALLOC) &#123;</div><div class="line">            return _objc_callBadAllocHandler(cls);</div><div class="line">        &#125;</div><div class="line">        return nil;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    if (!zone &amp;&amp; fast) &#123;</div><div class="line">        obj-&gt;initInstanceIsa(cls, hasCxxDtor); // 支持nonpointer的类初始化过程 见下面的分析</div><div class="line">    &#125; else &#123;</div><div class="line">        // Use raw pointer isa on the assumption that they might be</div><div class="line">        // doing something weird with the zone or RR.</div><div class="line">        obj-&gt;initIsa(cls); // 不支持nonpointer的类初始化过程 见下面的分析</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    if (fastpath(!hasCxxCtor)) &#123;</div><div class="line">        return obj;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    construct_flags |= OBJECT_CONSTRUCT_FREE_ONFAILURE;</div><div class="line">    return object_cxxConstructFromClass(obj, cls, construct_flags); // 默认添加一个cxx的析构函数</div><div class="line">    </div><div class="line">&#125;</div><div class="line"></div><div class="line">inline void </div><div class="line">objc_object::initInstanceIsa(Class cls, bool hasCxxDtor)</div><div class="line">&#123;</div><div class="line">    ASSERT(!cls-&gt;instancesRequireRawIsa());</div><div class="line">    ASSERT(hasCxxDtor == cls-&gt;hasCxxDtor());</div><div class="line"></div><div class="line">    initIsa(cls, true, hasCxxDtor); // nonpointer直接写死为true</div><div class="line">&#125;</div><div class="line"></div><div class="line">inline void </div><div class="line">objc_object::initIsa(Class cls, bool nonpointer, bool hasCxxDtor) </div><div class="line">&#123; </div><div class="line">    ASSERT(!isTaggedPointer());  // 小对象类型直接返回 没有isa指针</div><div class="line">    </div><div class="line">    if (!nonpointer) &#123;</div><div class="line">        isa = isa_t((uintptr_t)cls); // 不支持nonpointer的对象直接将类对象赋值给isa</div><div class="line">    &#125; else &#123;</div><div class="line">        ASSERT(!DisableNonpointerIsa);</div><div class="line">        ASSERT(!cls-&gt;instancesRequireRawIsa());</div><div class="line"></div><div class="line">        isa_t newisa(0);</div><div class="line">#if SUPPORT_INDEXED_ISA //判断平台</div><div class="line">        ASSERT(cls-&gt;classArrayIndex() &gt; 0);</div><div class="line">        newisa.bits = ISA_INDEX_MAGIC_VALUE;</div><div class="line">        // isa.magic is part of ISA_MAGIC_VALUE</div><div class="line">        // isa.nonpointer is part of ISA_MAGIC_VALUE</div><div class="line">        newisa.has_cxx_dtor = hasCxxDtor;</div><div class="line">        newisa.indexcls = (uintptr_t)cls-&gt;classArrayIndex();</div><div class="line">#else</div><div class="line">        newisa.bits = ISA_MAGIC_VALUE;</div><div class="line">        // isa.magic is part of ISA_MAGIC_VALUE</div><div class="line">        // isa.nonpointer is part of ISA_MAGIC_VALUE</div><div class="line">        newisa.has_cxx_dtor = hasCxxDtor;</div><div class="line">        newisa.shiftcls = (uintptr_t)cls &gt;&gt; 3; // 前三位都不是存的类信息 所以先抛弃前三位再赋值</div><div class="line">#endif</div><div class="line">        // This write must be performed in a single store in some cases</div><div class="line">        // (for example when realizing a class because other threads</div><div class="line">        // may simultaneously try to use the class).</div><div class="line">        // fixme use atomics here to guarantee single-store and to</div><div class="line">        // guarantee memory order w.r.t. the class index table</div><div class="line">        // ...but not too atomic because we don&apos;t want to hurt instantiation</div><div class="line">        isa = newisa;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>从上面的源码中我们看到初始化的过程实际上就是对<em>isa</em>指针赋值的过程，对于不满足nonpointer的对象，isa指针直接等于类对象，而nonpointer对象的isa就比较复杂了，这里我们再来分析下nonpointer下的isa指针的数据结构，如下：</p>
+<h5 id="isa结构分析"><a href="#isa结构分析" class="headerlink" title="isa结构分析"></a>isa结构分析</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div></pre></td><td class="code"><pre><div class="line">// isa_t 也就是isa指针的结构类型是一个联合体，cls和bits共享64位的内存空间</div><div class="line">union isa_t &#123;</div><div class="line">    isa_t() &#123; &#125;</div><div class="line">    isa_t(uintptr_t value) : bits(value) &#123; &#125;</div><div class="line"></div><div class="line">    Class cls;</div><div class="line">    uintptr_t bits;</div><div class="line">#if defined(ISA_BITFIELD)</div><div class="line">    struct &#123;</div><div class="line">        ISA_BITFIELD;  // defined in isa.h</div><div class="line">    &#125;;</div><div class="line">#endif</div><div class="line">&#125;;</div><div class="line"></div><div class="line"># if __arm64__</div><div class="line">#   define ISA_MASK        0x0000000ffffffff8ULL</div><div class="line">#   define ISA_MAGIC_MASK  0x000003f000000001ULL</div><div class="line">#   define ISA_MAGIC_VALUE 0x000001a000000001ULL</div><div class="line">#   define ISA_BITFIELD                                                      \</div><div class="line">      uintptr_t nonpointer        : 1; //是否是nonponiter类型                                     \</div><div class="line">      uintptr_t has_assoc         : 1; //是否有关联对象                                     \</div><div class="line">      uintptr_t has_cxx_dtor      : 1; //是否添加了cxx的析构函数                                     \</div><div class="line">      uintptr_t shiftcls          : 33;//类对象信息 /*MACH_VM_MAX_ADDRESS 0x1000000000*/ \</div><div class="line">      uintptr_t magic             : 6; //魔数                                      \</div><div class="line">      uintptr_t weakly_referenced : 1; //是否有弱引用                                     \</div><div class="line">      uintptr_t deallocating      : 1; //是否正在析构                                      \</div><div class="line">      uintptr_t has_sidetable_rc  : 1; //引用计数表中是否存了该对象的引用计数                                      \</div><div class="line">      uintptr_t extra_rc          : 19 //引用计数</div><div class="line">#   define RC_ONE   (1ULL&lt;&lt;45)</div><div class="line">#   define RC_HALF  (1ULL&lt;&lt;18)</div><div class="line"></div><div class="line"># elif __x86_64__</div><div class="line">#   define ISA_MASK        0x00007ffffffffff8ULL</div><div class="line">#   define ISA_MAGIC_MASK  0x001f800000000001ULL</div><div class="line">#   define ISA_MAGIC_VALUE 0x001d800000000001ULL</div><div class="line">#   define ISA_BITFIELD                                                        \</div><div class="line">      uintptr_t nonpointer        : 1;                                         \</div><div class="line">      uintptr_t has_assoc         : 1;                                         \</div><div class="line">      uintptr_t has_cxx_dtor      : 1;                                         \</div><div class="line">      uintptr_t shiftcls          : 44; /*MACH_VM_MAX_ADDRESS 0x7fffffe00000*/ \</div><div class="line">      uintptr_t magic             : 6;                                         \</div><div class="line">      uintptr_t weakly_referenced : 1;                                         \</div><div class="line">      uintptr_t deallocating      : 1;                                         \</div><div class="line">      uintptr_t has_sidetable_rc  : 1;                                         \</div><div class="line">      uintptr_t extra_rc          : 8</div><div class="line">#   define RC_ONE   (1ULL&lt;&lt;56)</div><div class="line">#   define RC_HALF  (1ULL&lt;&lt;7)</div></pre></td></tr></table></figure>
+<p>可视化结构</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/ISA/isa.jpeg" alt=""></p>
+<p>结合上面的源码和图，nonpointer的isa指针的结构应该就比较清楚了。这个结构我们之后在分析iOS的内存管理的时候应该还会在具体分析。这里暂时先只做了解。</p>
+<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>通过以上分析，OC类的创建过程就比较清晰了，首先是通过内存对齐原则计算需要分配的内存大小，然后对类的isa指针进行初始化。到这里就可以确定一个类的对象了，那么类中superclass,cache（第一次有消息发送行为时创建内存）,bits等是在何时初始化的呢，这个留在以后探究。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2021/01/03/OC方法调用快查找流程底层逻辑探究/" itemprop="url">
                   OC方法调用快查找流程底层逻辑探究
                 </a>
@@ -1390,141 +1501,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2020/05/06/MBP搭建本地Https服务器实现ipa文件的下载/" itemprop="url">
-                  MBP搭建本地Https服务器实现ipa文件的下载
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2020-05-06T20:02:59+08:00" content="2020-05-06">
-              2020-05-06
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2020/05/06/MBP搭建本地Https服务器实现ipa文件的下载/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2020/05/06/MBP搭建本地Https服务器实现ipa文件的下载/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h4 id="起因"><a href="#起因" class="headerlink" title="起因"></a>起因</h4><p>2020年新春，本是阖家欢乐，走亲访友的好时节。没想到一场疫情改变了所有计划，本人刚好又处于风暴的中心湖北，按时返京是不太可能了，于是只得开启漫长的在家办公的旅程。回家时带了个mbp，没有带TypeC的装接头，没有办法真机调试，而我们的项目又不能在模拟器上运行，这样的工作环境想想就头大。只能是硬着头皮使用打包上传fir的方式进行开发和调试，但是村里的网络也不太给力，可能一次打包上传再到安装在真机上需要一个多小时，效率实在太低，于是开始思考有啥办法可能提高现在的效率，也就有了下面的实践经历。</p>
-<h4 id="经过"><a href="#经过" class="headerlink" title="经过"></a>经过</h4><h5 id="安装nginx"><a href="#安装nginx" class="headerlink" title="安装nginx"></a>安装nginx</h5><p>我是使用的nginx来搭建的https服务，因为之前也用它搭过rtmp服务，使用起来会比较顺手吧。推荐使用homebrew来安装。</p>
-<p>安装完后使用一下命令来进行nginx的相关操作：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">sudo nginx //启动Nginx</div><div class="line">sudo nginx -s reload //重启Nginx</div><div class="line">sudo nginx -s stop //快速停止Nginx</div></pre></td></tr></table></figure>
-<p>开启nginx成功后，在Safari里面输入<a href="http://127.0.0.1" target="_blank" rel="noopener">http://127.0.0.1</a> 应该就能正常访问到nginx自带的一个html了，接下来是支持https。</p>
-<h5 id="安装openssl"><a href="#安装openssl" class="headerlink" title="安装openssl"></a>安装openssl</h5><p>生成证书时需要使用openssl服务。同上，使用homebrew安装。</p>
-<h5 id="生成证书"><a href="#生成证书" class="headerlink" title="生成证书"></a>生成证书</h5><p>推荐使用下面的脚本来生成：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">cd /usr/local/etc/nginx # 进入希望生成证书和私钥的目录，这里我们选择nginx.conf所在目录</div><div class="line">openssl genrsa -des3 -out 172.20.10.9.key 1024   # 创建服务器私钥，该命令会让你输入一个口令</div><div class="line">openssl req -new -key 172.20.10.9.key -out 172.20.10.9.csr    # 创建签名请求的证书(CSR)</div><div class="line">cp 172.20.10.9.key 172.20.10.9.key.org    </div><div class="line">openssl rsa -in 172.20.10.9.key.org -out 172.20.10.9.key  # 在加载SSL支持的Nginx并使用上述私钥时除去必须的口令</div><div class="line">openssl x509 -req -days 365 -in 172.20.10.9.csr -signkey 172.20.10.9.key -out 172.20.10.9.crt  # 最后标记证书使用上述私钥和CSR</div></pre></td></tr></table></figure>
-<p>每一句的具体作用参考上面的注释，这里的<strong>172.20.10.9</strong>是我电脑的内网IP，用来做证书名方便识别，在生成证书时，会需要输入密码和一些企业信息，其他的信息都可以随意（密码需要一致），<strong>重点：有一个Common Name字段信息需要和你服务器地址（我这里也就是我的内网IP）保持一致，因为在下载ipa进行证书校验时需要校验这两个是否一致，如果不一致会报：无法连接到“xxx”的错误</strong></p>
-<p>下面是openssl生成几个文件</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/nginxipa/nginxopenssl.png" alt=""></p>
-<h5 id="配置nginx-conf"><a href="#配置nginx-conf" class="headerlink" title="配置nginx.conf"></a>配置nginx.conf</h5><p>nginx.conf目录地址：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">/usr/local/etc/nginx</div></pre></td></tr></table></figure>
-<p>具体配置项参考如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#user  nobody;</div><div class="line">worker_processes  1;</div><div class="line"></div><div class="line">#error_log  logs/error.log;</div><div class="line">#error_log  logs/error.log  notice;</div><div class="line">#error_log  logs/error.log  info;</div><div class="line"></div><div class="line">#pid        logs/nginx.pid;</div><div class="line"></div><div class="line"></div><div class="line">events &#123;</div><div class="line">    worker_connections  1024;</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line">http &#123;</div><div class="line">    include       mime.types;</div><div class="line">    default_type  application/octet-stream;</div><div class="line"></div><div class="line">    #log_format  main  &apos;$remote_addr - $remote_user [$time_local] &quot;$request&quot; &apos;</div><div class="line">    #                  &apos;$status $body_bytes_sent &quot;$http_referer&quot; &apos;</div><div class="line">    #                  &apos;&quot;$http_user_agent&quot; &quot;$http_x_forwarded_for&quot;&apos;;</div><div class="line"></div><div class="line">    #access_log  logs/access.log  main;</div><div class="line"></div><div class="line">    sendfile        on;</div><div class="line">    #tcp_nopush     on;</div><div class="line"></div><div class="line">    #keepalive_timeout  0;</div><div class="line">    keepalive_timeout  65;</div><div class="line"></div><div class="line">    #gzip  on;</div><div class="line"></div><div class="line">    server &#123;</div><div class="line"></div><div class="line">		listen       443 ssl;</div><div class="line">        server_name  localhost	;</div><div class="line"></div><div class="line">        ssl_certificate      172.20.10.9.crt;</div><div class="line">        ssl_certificate_key  172.20.10.9.key;</div><div class="line"></div><div class="line">        #charset koi8-r;</div><div class="line"></div><div class="line">        #access_log  logs/host.access.log  main;</div><div class="line"></div><div class="line">        location / &#123;</div><div class="line">            root   /usr/local/etc/nginx/doki;</div><div class="line">            index  download.html index.htm;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        #error_page  404              /404.html;</div><div class="line"></div><div class="line">        # redirect server error pages to the static page /50x.html</div><div class="line">        #</div><div class="line">        error_page   500 502 503 504  /50x.html;</div><div class="line">        location = /50x.html &#123;</div><div class="line">            root   html;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        # proxy the PHP scripts to Apache listening on 127.0.0.1:80</div><div class="line">        #</div><div class="line">        #location ~ \.php$ &#123;</div><div class="line">        #    proxy_pass   http://127.0.0.1;</div><div class="line">        #&#125;</div><div class="line"></div><div class="line">        # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000</div><div class="line">        #</div><div class="line">        #location ~ \.php$ &#123;</div><div class="line">        #    root           html;</div><div class="line">        #    fastcgi_pass   127.0.0.1:9000;</div><div class="line">        #    fastcgi_index  index.php;</div><div class="line">        #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;</div><div class="line">        #    include        fastcgi_params;</div><div class="line">        #&#125;</div><div class="line"></div><div class="line">        # deny access to .htaccess files, if Apache&apos;s document root</div><div class="line">        # concurs with nginx&apos;s one</div><div class="line">        #</div><div class="line">        #location ~ /\.ht &#123;</div><div class="line">        #    deny  all;</div><div class="line">        #&#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line"></div><div class="line">    # another virtual host using mix of IP-, name-, and port-based configuration</div><div class="line">    #</div><div class="line">    #server &#123;</div><div class="line">    #    listen       8000;</div><div class="line">    #    listen       somename:8080;</div><div class="line">    #    server_name  somename  alias  another.alias;</div><div class="line"></div><div class="line">    #    location / &#123;</div><div class="line">    #        root   html;</div><div class="line">    #        index  index.html index.htm;</div><div class="line">    #    &#125;</div><div class="line">    #&#125;</div><div class="line"></div><div class="line"></div><div class="line">    # HTTPS server</div><div class="line">    #</div><div class="line"></div><div class="line">    #server &#123;</div><div class="line">    #    listen       443 ssl;</div><div class="line">    #    server_name  localhost;</div><div class="line"></div><div class="line">    #   ssl_certificate      server.crt;</div><div class="line">    #    ssl_certificate_key  cert.key;</div><div class="line"></div><div class="line">    #    ssl_session_cache    shared:SSL:1m;</div><div class="line">    #    ssl_session_timeout  5m;</div><div class="line"></div><div class="line">    #    ssl_ciphers  HIGH:!aNULL:!MD5;</div><div class="line">    #    ssl_prefer_server_ciphers  on;</div><div class="line"></div><div class="line">    #    location / &#123;</div><div class="line">    #        root   html;</div><div class="line">    #        index  index.html index.htm;</div><div class="line">    #    &#125;</div><div class="line">    #&#125;</div><div class="line">    include servers/*;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>需要注意一下，上面的</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">ssl_certificate      172.20.10.9.crt;</div><div class="line">ssl_certificate_key  172.20.10.9.key;</div></pre></td></tr></table></figure>
-<p>就是你之前使用openssl生成的证书和私钥。这个要保持一致，而且最好放在同一个目录下。</p>
-<h5 id="新建下载页html-配置plist-复制ipa文件和crt文件到指定目录。"><a href="#新建下载页html-配置plist-复制ipa文件和crt文件到指定目录。" class="headerlink" title="新建下载页html,配置plist,复制ipa文件和crt文件到指定目录。"></a>新建下载页html,配置plist,复制ipa文件和crt文件到指定目录。</h5><p>上面配置的location就是你的网页资源所有在的目录：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">location / &#123;</div><div class="line">    root   /usr/local/etc/nginx/doki;</div><div class="line">    index  download.html index.htm;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>这里我是在nginx目录下新建了一个doki（名字无要求）目录。可以参考一下我的目录结构：</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/nginxipa/dokiipa.png" alt=""></p>
-<p>然后我们分别来看一下这几个文件的格式：</p>
-<p>html:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Transitional//EN&quot; &quot;http://     www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd&quot;&gt;</div><div class="line">&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;</div><div class="line">&lt;head&gt;</div><div class="line">&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=utf-8&quot; /&gt;</div><div class="line">&lt;title&gt;DokoDokiLive&lt;/title&gt;</div><div class="line">&lt;/head&gt;</div><div class="line">&lt;body&gt;</div><div class="line">&lt;h1 style=&quot;font-size:40pt&quot;&gt;iOS应用OTA安装&lt;h1/&gt;</div><div class="line">&lt;h1 style=&quot;font-size:40pt&quot;&gt;</div><div class="line">&lt;a title=&quot;iPhone&quot; href=&quot;itms-services://?action=download-manifest&amp;url=https://172.20.10.9/DokiDokiLive.plist&quot;&gt;点击安装&lt;/a&gt;</div><div class="line">&lt;h1/&gt;</div><div class="line">&lt;a title=&quot;iPhone&quot; href=&quot;https://172.20.10.9/172.20.10.9.crt&quot;&gt;ssl 证书安装&lt;/a&gt;</div><div class="line">&lt;h1/&gt;</div><div class="line">&lt;/body&gt;</div><div class="line">&lt;/html&gt;</div></pre></td></tr></table></figure>
-<p>plist:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</div><div class="line">&lt;!DOCTYPE plist PUBLIC &quot;-//Apple//DTD PLIST 1.0//EN&quot; &quot;http://www.apple.com/DTDs/PropertyList-1.0.dtd&quot;&gt;</div><div class="line">&lt;plist version=&quot;1.0&quot;&gt;</div><div class="line">&lt;dict&gt;</div><div class="line">	&lt;key&gt;items&lt;/key&gt;</div><div class="line">	&lt;array&gt;</div><div class="line">		&lt;dict&gt;</div><div class="line">			&lt;key&gt;assets&lt;/key&gt;</div><div class="line">			&lt;array&gt;</div><div class="line">				&lt;dict&gt;</div><div class="line">					&lt;key&gt;kind&lt;/key&gt;</div><div class="line">					&lt;string&gt;software-package&lt;/string&gt;</div><div class="line">					&lt;key&gt;url&lt;/key&gt;</div><div class="line">					&lt;string&gt;https://172.20.10.9/DokiDokiLive.ipa&lt;/string&gt;</div><div class="line">				&lt;/dict&gt;</div><div class="line">			&lt;/array&gt;</div><div class="line">			&lt;key&gt;metadata&lt;/key&gt;</div><div class="line">			&lt;dict&gt;</div><div class="line">				&lt;key&gt;title&lt;/key&gt;</div><div class="line">				&lt;string&gt;DokiDoki App download&lt;/string&gt;</div><div class="line">				&lt;key&gt;bundle-version&lt;/key&gt;</div><div class="line">				&lt;string&gt;1.0.0&lt;/string&gt;</div><div class="line">				&lt;key&gt;kind&lt;/key&gt;</div><div class="line">				&lt;string&gt;software&lt;/string&gt;</div><div class="line">				&lt;key&gt;bundle-identifier&lt;/key&gt;</div><div class="line">				&lt;string&gt;com.xxx.xxx&lt;/string&gt;</div><div class="line">			&lt;/dict&gt;</div><div class="line">		&lt;/dict&gt;</div><div class="line">	&lt;/array&gt;</div><div class="line">&lt;/dict&gt;</div><div class="line">&lt;/plist&gt;</div></pre></td></tr></table></figure>
-<p>把上面的IP地址和bundle-identifier做相应的替换即可。</p>
-<h4 id="成果"><a href="#成果" class="headerlink" title="成果"></a>成果</h4><p>reload一下nginx,然后在手机Safari上输入<a href="https://172.20.10.9" target="_blank" rel="noopener">https://172.20.10.9</a> 这个时候可能会提示网站安全，选择查看网站内容，出现下面的界面，说明环境搭建成功。</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/nginxipa/download.PNG" alt=""></p>
-<p>先安装ssl证书，记得在设置中信任证书（有两处地方需要信任），然后点击安装即可。</p>
-<h4 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h4><p>通过搭建本地服务，省去了上传fir的操作，局域网下载ipa速度也比从fir上下载快很多，之前重新安装一个包需要1个多小时的，现在只要十分钟不到就搞定了，所以，遇到问题还是应该多思考，争取能找到更好的解决方案。</p>
-<h4 id="后续"><a href="#后续" class="headerlink" title="后续"></a>后续</h4><p>原来可以直接把IPA文件通过AirDrop的方式安装到手机上，以上的步骤都可以省略了。不过也是一次好的学习经验。</p>
-<p>参考文档：</p>
-<p><a href="https://www.jianshu.com/p/75f01a638a07" target="_blank" rel="noopener">https://www.jianshu.com/p/75f01a638a07</a><br><a href="https://blog.csdn.net/shuaihj/article/details/49999529" target="_blank" rel="noopener">https://blog.csdn.net/shuaihj/article/details/49999529</a></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1570,7 +1546,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">72</span>
+              <span class="site-state-item-count">73</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

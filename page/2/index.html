@@ -229,6 +229,141 @@
             
               
                 
+                <a class="post-title-link" href="/2020/05/06/MBP搭建本地Https服务器实现ipa文件的下载/" itemprop="url">
+                  MBP搭建本地Https服务器实现ipa文件的下载
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2020-05-06T20:02:59+08:00" content="2020-05-06">
+              2020-05-06
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2020/05/06/MBP搭建本地Https服务器实现ipa文件的下载/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2020/05/06/MBP搭建本地Https服务器实现ipa文件的下载/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h4 id="起因"><a href="#起因" class="headerlink" title="起因"></a>起因</h4><p>2020年新春，本是阖家欢乐，走亲访友的好时节。没想到一场疫情改变了所有计划，本人刚好又处于风暴的中心湖北，按时返京是不太可能了，于是只得开启漫长的在家办公的旅程。回家时带了个mbp，没有带TypeC的装接头，没有办法真机调试，而我们的项目又不能在模拟器上运行，这样的工作环境想想就头大。只能是硬着头皮使用打包上传fir的方式进行开发和调试，但是村里的网络也不太给力，可能一次打包上传再到安装在真机上需要一个多小时，效率实在太低，于是开始思考有啥办法可能提高现在的效率，也就有了下面的实践经历。</p>
+<h4 id="经过"><a href="#经过" class="headerlink" title="经过"></a>经过</h4><h5 id="安装nginx"><a href="#安装nginx" class="headerlink" title="安装nginx"></a>安装nginx</h5><p>我是使用的nginx来搭建的https服务，因为之前也用它搭过rtmp服务，使用起来会比较顺手吧。推荐使用homebrew来安装。</p>
+<p>安装完后使用一下命令来进行nginx的相关操作：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">sudo nginx //启动Nginx</div><div class="line">sudo nginx -s reload //重启Nginx</div><div class="line">sudo nginx -s stop //快速停止Nginx</div></pre></td></tr></table></figure>
+<p>开启nginx成功后，在Safari里面输入<a href="http://127.0.0.1" target="_blank" rel="noopener">http://127.0.0.1</a> 应该就能正常访问到nginx自带的一个html了，接下来是支持https。</p>
+<h5 id="安装openssl"><a href="#安装openssl" class="headerlink" title="安装openssl"></a>安装openssl</h5><p>生成证书时需要使用openssl服务。同上，使用homebrew安装。</p>
+<h5 id="生成证书"><a href="#生成证书" class="headerlink" title="生成证书"></a>生成证书</h5><p>推荐使用下面的脚本来生成：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">cd /usr/local/etc/nginx # 进入希望生成证书和私钥的目录，这里我们选择nginx.conf所在目录</div><div class="line">openssl genrsa -des3 -out 172.20.10.9.key 1024   # 创建服务器私钥，该命令会让你输入一个口令</div><div class="line">openssl req -new -key 172.20.10.9.key -out 172.20.10.9.csr    # 创建签名请求的证书(CSR)</div><div class="line">cp 172.20.10.9.key 172.20.10.9.key.org    </div><div class="line">openssl rsa -in 172.20.10.9.key.org -out 172.20.10.9.key  # 在加载SSL支持的Nginx并使用上述私钥时除去必须的口令</div><div class="line">openssl x509 -req -days 365 -in 172.20.10.9.csr -signkey 172.20.10.9.key -out 172.20.10.9.crt  # 最后标记证书使用上述私钥和CSR</div></pre></td></tr></table></figure>
+<p>每一句的具体作用参考上面的注释，这里的<strong>172.20.10.9</strong>是我电脑的内网IP，用来做证书名方便识别，在生成证书时，会需要输入密码和一些企业信息，其他的信息都可以随意（密码需要一致），<strong>重点：有一个Common Name字段信息需要和你服务器地址（我这里也就是我的内网IP）保持一致，因为在下载ipa进行证书校验时需要校验这两个是否一致，如果不一致会报：无法连接到“xxx”的错误</strong></p>
+<p>下面是openssl生成几个文件</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/nginxipa/nginxopenssl.png" alt=""></p>
+<h5 id="配置nginx-conf"><a href="#配置nginx-conf" class="headerlink" title="配置nginx.conf"></a>配置nginx.conf</h5><p>nginx.conf目录地址：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">/usr/local/etc/nginx</div></pre></td></tr></table></figure>
+<p>具体配置项参考如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#user  nobody;</div><div class="line">worker_processes  1;</div><div class="line"></div><div class="line">#error_log  logs/error.log;</div><div class="line">#error_log  logs/error.log  notice;</div><div class="line">#error_log  logs/error.log  info;</div><div class="line"></div><div class="line">#pid        logs/nginx.pid;</div><div class="line"></div><div class="line"></div><div class="line">events &#123;</div><div class="line">    worker_connections  1024;</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line">http &#123;</div><div class="line">    include       mime.types;</div><div class="line">    default_type  application/octet-stream;</div><div class="line"></div><div class="line">    #log_format  main  &apos;$remote_addr - $remote_user [$time_local] &quot;$request&quot; &apos;</div><div class="line">    #                  &apos;$status $body_bytes_sent &quot;$http_referer&quot; &apos;</div><div class="line">    #                  &apos;&quot;$http_user_agent&quot; &quot;$http_x_forwarded_for&quot;&apos;;</div><div class="line"></div><div class="line">    #access_log  logs/access.log  main;</div><div class="line"></div><div class="line">    sendfile        on;</div><div class="line">    #tcp_nopush     on;</div><div class="line"></div><div class="line">    #keepalive_timeout  0;</div><div class="line">    keepalive_timeout  65;</div><div class="line"></div><div class="line">    #gzip  on;</div><div class="line"></div><div class="line">    server &#123;</div><div class="line"></div><div class="line">		listen       443 ssl;</div><div class="line">        server_name  localhost	;</div><div class="line"></div><div class="line">        ssl_certificate      172.20.10.9.crt;</div><div class="line">        ssl_certificate_key  172.20.10.9.key;</div><div class="line"></div><div class="line">        #charset koi8-r;</div><div class="line"></div><div class="line">        #access_log  logs/host.access.log  main;</div><div class="line"></div><div class="line">        location / &#123;</div><div class="line">            root   /usr/local/etc/nginx/doki;</div><div class="line">            index  download.html index.htm;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        #error_page  404              /404.html;</div><div class="line"></div><div class="line">        # redirect server error pages to the static page /50x.html</div><div class="line">        #</div><div class="line">        error_page   500 502 503 504  /50x.html;</div><div class="line">        location = /50x.html &#123;</div><div class="line">            root   html;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        # proxy the PHP scripts to Apache listening on 127.0.0.1:80</div><div class="line">        #</div><div class="line">        #location ~ \.php$ &#123;</div><div class="line">        #    proxy_pass   http://127.0.0.1;</div><div class="line">        #&#125;</div><div class="line"></div><div class="line">        # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000</div><div class="line">        #</div><div class="line">        #location ~ \.php$ &#123;</div><div class="line">        #    root           html;</div><div class="line">        #    fastcgi_pass   127.0.0.1:9000;</div><div class="line">        #    fastcgi_index  index.php;</div><div class="line">        #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;</div><div class="line">        #    include        fastcgi_params;</div><div class="line">        #&#125;</div><div class="line"></div><div class="line">        # deny access to .htaccess files, if Apache&apos;s document root</div><div class="line">        # concurs with nginx&apos;s one</div><div class="line">        #</div><div class="line">        #location ~ /\.ht &#123;</div><div class="line">        #    deny  all;</div><div class="line">        #&#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line"></div><div class="line">    # another virtual host using mix of IP-, name-, and port-based configuration</div><div class="line">    #</div><div class="line">    #server &#123;</div><div class="line">    #    listen       8000;</div><div class="line">    #    listen       somename:8080;</div><div class="line">    #    server_name  somename  alias  another.alias;</div><div class="line"></div><div class="line">    #    location / &#123;</div><div class="line">    #        root   html;</div><div class="line">    #        index  index.html index.htm;</div><div class="line">    #    &#125;</div><div class="line">    #&#125;</div><div class="line"></div><div class="line"></div><div class="line">    # HTTPS server</div><div class="line">    #</div><div class="line"></div><div class="line">    #server &#123;</div><div class="line">    #    listen       443 ssl;</div><div class="line">    #    server_name  localhost;</div><div class="line"></div><div class="line">    #   ssl_certificate      server.crt;</div><div class="line">    #    ssl_certificate_key  cert.key;</div><div class="line"></div><div class="line">    #    ssl_session_cache    shared:SSL:1m;</div><div class="line">    #    ssl_session_timeout  5m;</div><div class="line"></div><div class="line">    #    ssl_ciphers  HIGH:!aNULL:!MD5;</div><div class="line">    #    ssl_prefer_server_ciphers  on;</div><div class="line"></div><div class="line">    #    location / &#123;</div><div class="line">    #        root   html;</div><div class="line">    #        index  index.html index.htm;</div><div class="line">    #    &#125;</div><div class="line">    #&#125;</div><div class="line">    include servers/*;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>需要注意一下，上面的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">ssl_certificate      172.20.10.9.crt;</div><div class="line">ssl_certificate_key  172.20.10.9.key;</div></pre></td></tr></table></figure>
+<p>就是你之前使用openssl生成的证书和私钥。这个要保持一致，而且最好放在同一个目录下。</p>
+<h5 id="新建下载页html-配置plist-复制ipa文件和crt文件到指定目录。"><a href="#新建下载页html-配置plist-复制ipa文件和crt文件到指定目录。" class="headerlink" title="新建下载页html,配置plist,复制ipa文件和crt文件到指定目录。"></a>新建下载页html,配置plist,复制ipa文件和crt文件到指定目录。</h5><p>上面配置的location就是你的网页资源所有在的目录：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">location / &#123;</div><div class="line">    root   /usr/local/etc/nginx/doki;</div><div class="line">    index  download.html index.htm;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里我是在nginx目录下新建了一个doki（名字无要求）目录。可以参考一下我的目录结构：</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/nginxipa/dokiipa.png" alt=""></p>
+<p>然后我们分别来看一下这几个文件的格式：</p>
+<p>html:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Transitional//EN&quot; &quot;http://     www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd&quot;&gt;</div><div class="line">&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;</div><div class="line">&lt;head&gt;</div><div class="line">&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=utf-8&quot; /&gt;</div><div class="line">&lt;title&gt;DokoDokiLive&lt;/title&gt;</div><div class="line">&lt;/head&gt;</div><div class="line">&lt;body&gt;</div><div class="line">&lt;h1 style=&quot;font-size:40pt&quot;&gt;iOS应用OTA安装&lt;h1/&gt;</div><div class="line">&lt;h1 style=&quot;font-size:40pt&quot;&gt;</div><div class="line">&lt;a title=&quot;iPhone&quot; href=&quot;itms-services://?action=download-manifest&amp;url=https://172.20.10.9/DokiDokiLive.plist&quot;&gt;点击安装&lt;/a&gt;</div><div class="line">&lt;h1/&gt;</div><div class="line">&lt;a title=&quot;iPhone&quot; href=&quot;https://172.20.10.9/172.20.10.9.crt&quot;&gt;ssl 证书安装&lt;/a&gt;</div><div class="line">&lt;h1/&gt;</div><div class="line">&lt;/body&gt;</div><div class="line">&lt;/html&gt;</div></pre></td></tr></table></figure>
+<p>plist:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</div><div class="line">&lt;!DOCTYPE plist PUBLIC &quot;-//Apple//DTD PLIST 1.0//EN&quot; &quot;http://www.apple.com/DTDs/PropertyList-1.0.dtd&quot;&gt;</div><div class="line">&lt;plist version=&quot;1.0&quot;&gt;</div><div class="line">&lt;dict&gt;</div><div class="line">	&lt;key&gt;items&lt;/key&gt;</div><div class="line">	&lt;array&gt;</div><div class="line">		&lt;dict&gt;</div><div class="line">			&lt;key&gt;assets&lt;/key&gt;</div><div class="line">			&lt;array&gt;</div><div class="line">				&lt;dict&gt;</div><div class="line">					&lt;key&gt;kind&lt;/key&gt;</div><div class="line">					&lt;string&gt;software-package&lt;/string&gt;</div><div class="line">					&lt;key&gt;url&lt;/key&gt;</div><div class="line">					&lt;string&gt;https://172.20.10.9/DokiDokiLive.ipa&lt;/string&gt;</div><div class="line">				&lt;/dict&gt;</div><div class="line">			&lt;/array&gt;</div><div class="line">			&lt;key&gt;metadata&lt;/key&gt;</div><div class="line">			&lt;dict&gt;</div><div class="line">				&lt;key&gt;title&lt;/key&gt;</div><div class="line">				&lt;string&gt;DokiDoki App download&lt;/string&gt;</div><div class="line">				&lt;key&gt;bundle-version&lt;/key&gt;</div><div class="line">				&lt;string&gt;1.0.0&lt;/string&gt;</div><div class="line">				&lt;key&gt;kind&lt;/key&gt;</div><div class="line">				&lt;string&gt;software&lt;/string&gt;</div><div class="line">				&lt;key&gt;bundle-identifier&lt;/key&gt;</div><div class="line">				&lt;string&gt;com.xxx.xxx&lt;/string&gt;</div><div class="line">			&lt;/dict&gt;</div><div class="line">		&lt;/dict&gt;</div><div class="line">	&lt;/array&gt;</div><div class="line">&lt;/dict&gt;</div><div class="line">&lt;/plist&gt;</div></pre></td></tr></table></figure>
+<p>把上面的IP地址和bundle-identifier做相应的替换即可。</p>
+<h4 id="成果"><a href="#成果" class="headerlink" title="成果"></a>成果</h4><p>reload一下nginx,然后在手机Safari上输入<a href="https://172.20.10.9" target="_blank" rel="noopener">https://172.20.10.9</a> 这个时候可能会提示网站安全，选择查看网站内容，出现下面的界面，说明环境搭建成功。</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/nginxipa/download.PNG" alt=""></p>
+<p>先安装ssl证书，记得在设置中信任证书（有两处地方需要信任），然后点击安装即可。</p>
+<h4 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h4><p>通过搭建本地服务，省去了上传fir的操作，局域网下载ipa速度也比从fir上下载快很多，之前重新安装一个包需要1个多小时的，现在只要十分钟不到就搞定了，所以，遇到问题还是应该多思考，争取能找到更好的解决方案。</p>
+<h4 id="后续"><a href="#后续" class="headerlink" title="后续"></a>后续</h4><p>原来可以直接把IPA文件通过AirDrop的方式安装到手机上，以上的步骤都可以省略了。不过也是一次好的学习经验。</p>
+<p>参考文档：</p>
+<p><a href="https://www.jianshu.com/p/75f01a638a07" target="_blank" rel="noopener">https://www.jianshu.com/p/75f01a638a07</a><br><a href="https://blog.csdn.net/shuaihj/article/details/49999529" target="_blank" rel="noopener">https://blog.csdn.net/shuaihj/article/details/49999529</a></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2020/01/04/iOS基于GPUImage带Alpha的mp4播放方案/" itemprop="url">
                   iOS基于GPUImage带Alpha的mp4播放方案
                 </a>
@@ -1692,182 +1827,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2019/10/10/《重构-改善既有代码的设计》系列读书笔记（一、从第一个案例说起）/" itemprop="url">
-                  《重构-改善既有代码的设计》系列读书笔记（一、从第一个案例说起）
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2019-10-10T21:40:25+08:00" content="2019-10-10">
-              2019-10-10
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2019/10/10/《重构-改善既有代码的设计》系列读书笔记（一、从第一个案例说起）/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2019/10/10/《重构-改善既有代码的设计》系列读书笔记（一、从第一个案例说起）/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>读完了martin老师的《代码XX之道》系列后，颇有收获，代码质量也有比较明显的提高，渐渐对代码也有了自己的一些理解。但是学习的脚步不能停，《重构》这本书也是提高代码质量方面的经典书籍，当然不能错过了。</p>
-<h3 id="从第一个案例说起–影片租赁系统"><a href="#从第一个案例说起–影片租赁系统" class="headerlink" title="从第一个案例说起–影片租赁系统"></a>从第一个案例说起–影片租赁系统</h3><p>发现问题-编写测试用例（测试用例的重构的根本）- 步步为营的修改</p>
-<p>重构的本质：尽可能小的修改，这样任何可能出现的错误都会很容易发现。</p>
-<h4 id="如何拆分一个臃肿的函数"><a href="#如何拆分一个臃肿的函数" class="headerlink" title="如何拆分一个臃肿的函数"></a>如何拆分一个臃肿的函数</h4><ul>
-<li>处理函数内部的参数和变量，不变的变量以参数形式传入，可变的变量可以抽出为一个函数已返回值的形式赋值</li>
-<li>先分再治：先将函数拆分为尽可能小的函数，然后再对每个函数进行修改</li>
-<li>好的代码应该清晰的表达出自己的功能，变量名称就是代码清晰的关键</li>
-<li>任何一个傻瓜都是写出计算机可以理解的代码，唯有写出人类容易理解的代码，才是优秀的程序员</li>
-<li>绝大多数情况下，函数应该放在他所使用的数据的所属对象内。</li>
-<li>去掉多余的临时变量，临时变量会引发问题，导致大量没有必要的参数传递，并且很容易被跟丢，尤其是在很长的函数中。</li>
-<li>尽量使用查询函数替代可能的局部变量。</li>
-</ul>
-<h3 id="重构原则"><a href="#重构原则" class="headerlink" title="重构原则"></a>重构原则</h3><ul>
-<li><p>重构的名词解释：对软件内部结构的一种调整，目的是在不改变软件可观察行为的前提下，提高其可理解性，降低其修改成本</p>
-</li>
-<li><p>重构的动词解释：使用一些列重构手法，在不改变软件可观察行为的前提下，调整其结构</p>
-</li>
-</ul>
-<h4 id="两顶帽子理论"><a href="#两顶帽子理论" class="headerlink" title="两顶帽子理论"></a>两顶帽子理论</h4><ul>
-<li>添加新功能时，你不应该修改既有代码，只管添加新代码。</li>
-<li>重构时你不能再添加功能，只管改进程序结构。</li>
-<li>编码过程中我们会经常变换帽子。</li>
-</ul>
-<h4 id="重构的目的"><a href="#重构的目的" class="headerlink" title="重构的目的"></a>重构的目的</h4><ul>
-<li>重构改进软件设计，如果没有重构，程序的设计会逐渐腐败变质。消除重复是重构的重要手段之一。</li>
-<li>重构使软件更容易理解，始终提醒自己一点，代码是写给人看的。</li>
-<li>重构帮助找到BUG</li>
-<li>重构提高编程速度，因为良好的设计是快速开发的根本。</li>
-</ul>
-<h4 id="何时重构"><a href="#何时重构" class="headerlink" title="何时重构"></a>何时重构</h4><p>不应该专门抽时间来重构，而应该随时重构，只要你发现代码有重构的必要时，就着手重构。重构的原因是你需要做别的事情，而重构能帮助你把事情做得更好。</p>
-<p>三次法则：第一次做这件事情时尽管去做，第二次做相似的事情时不情愿的去做，第三次再遇到这种事情时，坚决的重构。</p>
-<ul>
-<li>添加功能时重构</li>
-<li>修补错误时重构</li>
-<li>复审代码时重构</li>
-</ul>
-<p>好的代码应该具备以下特性：</p>
-<ul>
-<li>容易阅读</li>
-<li>所有逻辑都只在唯一地点指定</li>
-<li>新的改动不会危及现有行为</li>
-<li>尽可能简单表达条件逻辑</li>
-</ul>
-<p>当代码不能正常工作时，应该选择重写而不是重构。重构之前的代码，至少大部分情况下是能正常运行的。</p>
-<p>项目接近最后期限时，应该避免重构。未完成的重构工作可以比作技术债务，而维护和扩展代码所花费的额外成本就是利息。一定程度的利息是可以接受的，但是如果利息太高，就会被压垮。把债务管理好很重要，应该随时通过重构来偿还一部分债务。</p>
-<h4 id="重构的难点"><a href="#重构的难点" class="headerlink" title="重构的难点"></a>重构的难点</h4><ul>
-<li>数据库的重构，需要加上中间层和做好数据迁移</li>
-<li>接口的重构，添加新接口，让老接口去调用新接口，不要复制函数，并将旧接口标记为deprecated</li>
-</ul>
-<h3 id="坏代码的味道"><a href="#坏代码的味道" class="headerlink" title="坏代码的味道"></a>坏代码的味道</h3><ul>
-<li>坏代码没有一个统一的评判标准，你必须培养出自己的判断力，学会判断一个类内有多少实例变量算是太大，一个函数内有多少行代码算太长。</li>
-</ul>
-<h4 id="坏代码条款"><a href="#坏代码条款" class="headerlink" title="坏代码条款"></a>坏代码条款</h4><ul>
-<li>重复代码</li>
-<li>过长函数</li>
-<li>过大的类</li>
-<li>过长的参数</li>
-<li>发散式变化（拆分）</li>
-<li>霰(xian)弹式修改（合并） </li>
-<li>依恋情结（类中方法应该只对该类感兴趣，而不应该依恋其他类）</li>
-<li>数据泥团（一些需要同时出现的数据，合并为一个新的对象）</li>
-<li>基本类型偏执（比如结合数值和币种的money类等）</li>
-<li>switch惊悚现身（使用多态替换）</li>
-<li>平行继承体系</li>
-<li>冗赘类（删除无用类）</li>
-<li>夸夸其谈未来性（不要企图使用钩子或者特殊判断处理并未发生的事情）</li>
-<li>令人迷惑的暂时字段</li>
-<li>过度耦合的消息链</li>
-<li>过度滥用的中间人</li>
-<li>狎昵关系</li>
-<li>异曲同工的类</li>
-<li>不完美的库类</li>
-<li>纯粹的数据类（需要良好的封装，只读取少修改）</li>
-<li>被拒绝的遗赠（使用代理替带方法集成）</li>
-<li>过多的注释（不要过度依赖注释，如果一段代码需要注释，则应该将它们提炼为一个新的方法）</li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1913,7 +1872,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">72</span>
+              <span class="site-state-item-count">73</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

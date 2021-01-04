@@ -1,0 +1,578 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="前言在这篇文章从【class_getInstanceSize方法】探究iOS的内存分配策略中，我们分析了OC类的内存分配策略，但是具体的初始化过程并没有提及，这里我们来探究下OC在内存的初始化过程中都做了什么。 源码分析我们还是先看一下整个OC类的创建流程，如下图：  其中标红的_class_createInstanceFromZone函数就是核心内容，我们直接来看看其内部实现逻辑： 123456">
+<meta property="og:type" content="article">
+<meta property="og:title" content="从【nonpointer】探究OC类中isa指针">
+<meta property="og:url" content="http://yoursite.com/2021/01/04/从【nonpointer】探究OC类中isa指针/index.html">
+<meta property="og:site_name" content="lly&#39;s Blog">
+<meta property="og:description" content="前言在这篇文章从【class_getInstanceSize方法】探究iOS的内存分配策略中，我们分析了OC类的内存分配策略，但是具体的初始化过程并没有提及，这里我们来探究下OC在内存的初始化过程中都做了什么。 源码分析我们还是先看一下整个OC类的创建流程，如下图：  其中标红的_class_createInstanceFromZone函数就是核心内容，我们直接来看看其内部实现逻辑： 123456">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://raw.githubusercontent.com/lilingyu0620/LLYBlogImageSource/master/Alloc分析/alloc01.png">
+<meta property="og:image" content="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/ISA/isa.jpeg">
+<meta property="og:updated_time" content="2021-01-04T02:45:58.569Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="从【nonpointer】探究OC类中isa指针">
+<meta name="twitter:description" content="前言在这篇文章从【class_getInstanceSize方法】探究iOS的内存分配策略中，我们分析了OC类的内存分配策略，但是具体的初始化过程并没有提及，这里我们来探究下OC在内存的初始化过程中都做了什么。 源码分析我们还是先看一下整个OC类的创建流程，如下图：  其中标红的_class_createInstanceFromZone函数就是核心内容，我们直接来看看其内部实现逻辑： 123456">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/lilingyu0620/LLYBlogImageSource/master/Alloc分析/alloc01.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2021/01/04/从【nonpointer】探究OC类中isa指针/"/>
+
+  <title> 从【nonpointer】探究OC类中isa指针 | lly's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">lly's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">用心记录点滴</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                从【nonpointer】探究OC类中isa指针
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2021-01-04T10:45:18+08:00" content="2021-01-04">
+              2021-01-04
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2021/01/04/从【nonpointer】探究OC类中isa指针/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/01/04/从【nonpointer】探究OC类中isa指针/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h4><p>在这篇文章<a href="http://llyblog.com/2021/01/01/从【class-getInstanceSize方法】探究iOS的内存分配策略/" target="_blank" rel="noopener">从【class_getInstanceSize方法】探究iOS的内存分配策略</a>中，我们分析了OC类的内存分配策略，但是具体的初始化过程并没有提及，这里我们来探究下OC在内存的初始化过程中都做了什么。</p>
+<h4 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h4><p>我们还是先看一下整个OC类的创建流程，如下图：</p>
+<p><img src="https://raw.githubusercontent.com/lilingyu0620/LLYBlogImageSource/master/Alloc分析/alloc01.png" alt=""></p>
+<p>其中标红的<em>_class_createInstanceFromZone</em>函数就是核心内容，我们直接来看看其内部实现逻辑：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div></pre></td><td class="code"><pre><div class="line">static ALWAYS_INLINE id</div><div class="line">_class_createInstanceFromZone(Class cls, size_t extraBytes, void *zone,</div><div class="line">                              int construct_flags = OBJECT_CONSTRUCT_NONE,</div><div class="line">                              bool cxxConstruct = true,</div><div class="line">                              size_t *outAllocatedSize = nil)</div><div class="line">&#123;</div><div class="line">    ASSERT(cls-&gt;isRealized());</div><div class="line"></div><div class="line">    // Read class&apos;s info bits all at once for performance</div><div class="line">    bool hasCxxCtor = cxxConstruct &amp;&amp; cls-&gt;hasCxxCtor();</div><div class="line">    bool hasCxxDtor = cls-&gt;hasCxxDtor();</div><div class="line">    bool fast = cls-&gt;canAllocNonpointer(); //是否支持nonpointer 这个是关键</div><div class="line">    size_t size;</div><div class="line"></div><div class="line">    size = cls-&gt;instanceSize(extraBytes);</div><div class="line">    if (outAllocatedSize) *outAllocatedSize = size;</div><div class="line"></div><div class="line">    id obj;</div><div class="line">    if (zone) &#123;</div><div class="line">        obj = (id)malloc_zone_calloc((malloc_zone_t *)zone, 1, size);</div><div class="line">    &#125; else &#123;</div><div class="line">        obj = (id)calloc(1, size);</div><div class="line">    &#125;</div><div class="line">    if (slowpath(!obj)) &#123;</div><div class="line">        if (construct_flags &amp; OBJECT_CONSTRUCT_CALL_BADALLOC) &#123;</div><div class="line">            return _objc_callBadAllocHandler(cls);</div><div class="line">        &#125;</div><div class="line">        return nil;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    if (!zone &amp;&amp; fast) &#123;</div><div class="line">        obj-&gt;initInstanceIsa(cls, hasCxxDtor); // 支持nonpointer的类初始化过程 见下面的分析</div><div class="line">    &#125; else &#123;</div><div class="line">        // Use raw pointer isa on the assumption that they might be</div><div class="line">        // doing something weird with the zone or RR.</div><div class="line">        obj-&gt;initIsa(cls); // 不支持nonpointer的类初始化过程 见下面的分析</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    if (fastpath(!hasCxxCtor)) &#123;</div><div class="line">        return obj;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    construct_flags |= OBJECT_CONSTRUCT_FREE_ONFAILURE;</div><div class="line">    return object_cxxConstructFromClass(obj, cls, construct_flags); // 默认添加一个cxx的析构函数</div><div class="line">    </div><div class="line">&#125;</div><div class="line"></div><div class="line">inline void </div><div class="line">objc_object::initInstanceIsa(Class cls, bool hasCxxDtor)</div><div class="line">&#123;</div><div class="line">    ASSERT(!cls-&gt;instancesRequireRawIsa());</div><div class="line">    ASSERT(hasCxxDtor == cls-&gt;hasCxxDtor());</div><div class="line"></div><div class="line">    initIsa(cls, true, hasCxxDtor); // nonpointer直接写死为true</div><div class="line">&#125;</div><div class="line"></div><div class="line">inline void </div><div class="line">objc_object::initIsa(Class cls, bool nonpointer, bool hasCxxDtor) </div><div class="line">&#123; </div><div class="line">    ASSERT(!isTaggedPointer());  // 小对象类型直接返回 没有isa指针</div><div class="line">    </div><div class="line">    if (!nonpointer) &#123;</div><div class="line">        isa = isa_t((uintptr_t)cls); // 不支持nonpointer的对象直接将类对象赋值给isa</div><div class="line">    &#125; else &#123;</div><div class="line">        ASSERT(!DisableNonpointerIsa);</div><div class="line">        ASSERT(!cls-&gt;instancesRequireRawIsa());</div><div class="line"></div><div class="line">        isa_t newisa(0);</div><div class="line">#if SUPPORT_INDEXED_ISA //判断平台</div><div class="line">        ASSERT(cls-&gt;classArrayIndex() &gt; 0);</div><div class="line">        newisa.bits = ISA_INDEX_MAGIC_VALUE;</div><div class="line">        // isa.magic is part of ISA_MAGIC_VALUE</div><div class="line">        // isa.nonpointer is part of ISA_MAGIC_VALUE</div><div class="line">        newisa.has_cxx_dtor = hasCxxDtor;</div><div class="line">        newisa.indexcls = (uintptr_t)cls-&gt;classArrayIndex();</div><div class="line">#else</div><div class="line">        newisa.bits = ISA_MAGIC_VALUE;</div><div class="line">        // isa.magic is part of ISA_MAGIC_VALUE</div><div class="line">        // isa.nonpointer is part of ISA_MAGIC_VALUE</div><div class="line">        newisa.has_cxx_dtor = hasCxxDtor;</div><div class="line">        newisa.shiftcls = (uintptr_t)cls &gt;&gt; 3; // 前三位都不是存的类信息 所以先抛弃前三位再赋值</div><div class="line">#endif</div><div class="line">        // This write must be performed in a single store in some cases</div><div class="line">        // (for example when realizing a class because other threads</div><div class="line">        // may simultaneously try to use the class).</div><div class="line">        // fixme use atomics here to guarantee single-store and to</div><div class="line">        // guarantee memory order w.r.t. the class index table</div><div class="line">        // ...but not too atomic because we don&apos;t want to hurt instantiation</div><div class="line">        isa = newisa;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>从上面的源码中我们看到初始化的过程实际上就是对<em>isa</em>指针赋值的过程，对于不满足nonpointer的对象，isa指针直接等于类对象，而nonpointer对象的isa就比较复杂了，这里我们再来分析下nonpointer下的isa指针的数据结构，如下：</p>
+<h5 id="isa结构分析"><a href="#isa结构分析" class="headerlink" title="isa结构分析"></a>isa结构分析</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div></pre></td><td class="code"><pre><div class="line">// isa_t 也就是isa指针的结构类型是一个联合体，cls和bits共享64位的内存空间</div><div class="line">union isa_t &#123;</div><div class="line">    isa_t() &#123; &#125;</div><div class="line">    isa_t(uintptr_t value) : bits(value) &#123; &#125;</div><div class="line"></div><div class="line">    Class cls;</div><div class="line">    uintptr_t bits;</div><div class="line">#if defined(ISA_BITFIELD)</div><div class="line">    struct &#123;</div><div class="line">        ISA_BITFIELD;  // defined in isa.h</div><div class="line">    &#125;;</div><div class="line">#endif</div><div class="line">&#125;;</div><div class="line"></div><div class="line"># if __arm64__</div><div class="line">#   define ISA_MASK        0x0000000ffffffff8ULL</div><div class="line">#   define ISA_MAGIC_MASK  0x000003f000000001ULL</div><div class="line">#   define ISA_MAGIC_VALUE 0x000001a000000001ULL</div><div class="line">#   define ISA_BITFIELD                                                      \</div><div class="line">      uintptr_t nonpointer        : 1; //是否是nonponiter类型                                     \</div><div class="line">      uintptr_t has_assoc         : 1; //是否有关联对象                                     \</div><div class="line">      uintptr_t has_cxx_dtor      : 1; //是否添加了cxx的析构函数                                     \</div><div class="line">      uintptr_t shiftcls          : 33;//类对象信息 /*MACH_VM_MAX_ADDRESS 0x1000000000*/ \</div><div class="line">      uintptr_t magic             : 6; //魔数                                      \</div><div class="line">      uintptr_t weakly_referenced : 1; //是否有弱引用                                     \</div><div class="line">      uintptr_t deallocating      : 1; //是否正在析构                                      \</div><div class="line">      uintptr_t has_sidetable_rc  : 1; //引用计数表中是否存了该对象的引用计数                                      \</div><div class="line">      uintptr_t extra_rc          : 19 //引用计数</div><div class="line">#   define RC_ONE   (1ULL&lt;&lt;45)</div><div class="line">#   define RC_HALF  (1ULL&lt;&lt;18)</div><div class="line"></div><div class="line"># elif __x86_64__</div><div class="line">#   define ISA_MASK        0x00007ffffffffff8ULL</div><div class="line">#   define ISA_MAGIC_MASK  0x001f800000000001ULL</div><div class="line">#   define ISA_MAGIC_VALUE 0x001d800000000001ULL</div><div class="line">#   define ISA_BITFIELD                                                        \</div><div class="line">      uintptr_t nonpointer        : 1;                                         \</div><div class="line">      uintptr_t has_assoc         : 1;                                         \</div><div class="line">      uintptr_t has_cxx_dtor      : 1;                                         \</div><div class="line">      uintptr_t shiftcls          : 44; /*MACH_VM_MAX_ADDRESS 0x7fffffe00000*/ \</div><div class="line">      uintptr_t magic             : 6;                                         \</div><div class="line">      uintptr_t weakly_referenced : 1;                                         \</div><div class="line">      uintptr_t deallocating      : 1;                                         \</div><div class="line">      uintptr_t has_sidetable_rc  : 1;                                         \</div><div class="line">      uintptr_t extra_rc          : 8</div><div class="line">#   define RC_ONE   (1ULL&lt;&lt;56)</div><div class="line">#   define RC_HALF  (1ULL&lt;&lt;7)</div></pre></td></tr></table></figure>
+<p>可视化结构</p>
+<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/ISA/isa.jpeg" alt=""></p>
+<p>结合上面的源码和图，nonpointer的isa指针的结构应该就比较清楚了。这个结构我们之后在分析iOS的内存管理的时候应该还会在具体分析。这里暂时先只做了解。</p>
+<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>通过以上分析，OC类的创建过程就比较清晰了，首先是通过内存对齐原则计算需要分配的内存大小，然后对类的isa指针进行初始化。到这里就可以确定一个类的对象了，那么类中superclass,cache（第一次有消息发送行为时创建内存）,bits等是在何时初始化的呢，这个留在以后探究。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/01/03/OC方法调用快查找流程底层逻辑探究/" rel="next" title="OC方法调用快查找流程底层逻辑探究">
+                <i class="fa fa-chevron-left"></i> OC方法调用快查找流程底层逻辑探究
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2021/01/04/从【nonpointer】探究OC类中isa指针/"
+           data-title="从【nonpointer】探究OC类中isa指针" data-url="http://yoursite.com/2021/01/04/从【nonpointer】探究OC类中isa指针/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/head.png"
+               alt="lly" />
+          <p class="site-author-name" itemprop="name">lly</p>
+          <p class="site-description motion-element" itemprop="description">耿直的一Boy</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">73</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#源码分析"><span class="nav-number">2.</span> <span class="nav-text">源码分析</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#isa结构分析"><span class="nav-number">2.1.</span> <span class="nav-text">isa结构分析</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#小结"><span class="nav-number">3.</span> <span class="nav-text">小结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lly</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"llyblog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
