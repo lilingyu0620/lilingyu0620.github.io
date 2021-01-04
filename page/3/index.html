@@ -229,6 +229,165 @@
             
               
                 
+                <a class="post-title-link" href="/2019/11/06/《重构-改善既有代码的设计》系列读书笔记（三、类的重构）/" itemprop="url">
+                  《重构-改善既有代码的设计》系列读书笔记（三、类的重构）
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-11-06T15:17:12+08:00" content="2019-11-06">
+              2019-11-06
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2019/11/06/《重构-改善既有代码的设计》系列读书笔记（三、类的重构）/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2019/11/06/《重构-改善既有代码的设计》系列读书笔记（三、类的重构）/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="在对象之间搬移特性"><a href="#在对象之间搬移特性" class="headerlink" title="在对象之间搬移特性"></a>在对象之间搬移特性</h3><p>在对象的设计过程中，决定把责任放在哪里，即使不是最重要的事情，也是最重要的使用之一，虽然不能一开始就完全设计正确，但是我们可以使用重构去完善自己的设计</p>
+<h4 id="Move-Method-搬移函数"><a href="#Move-Method-搬移函数" class="headerlink" title="Move Method(搬移函数)"></a>Move Method(搬移函数)</h4><p>你的程序中，有个函数与其所在类之外的其他类进行更多的交流，调用后者，或者被后者调用</p>
+<h5 id="动机"><a href="#动机" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>如果一个类有太多行为，就会承担过多的责任，请为这个类减负</li>
+<li>如果一个类与另一个类有太多合作，会形成高度的耦合</li>
+<li>如果一个函数使用外部类的次数比使用所在类的次数还多，则应该被移出所在类</li>
+</ul>
+<h5 id="做法"><a href="#做法" class="headerlink" title="做法"></a>做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div></pre></td><td class="code"><pre><div class="line">// before</div><div class="line">class Account...</div><div class="line">	double overdraftCharge() &#123;</div><div class="line">		if (_type.isPremium() )&#123;</div><div class="line">			double result = 10;</div><div class="line">			if (_daysOverdrawn &gt; 7) result += (_daysOverdrawn - 7) * 0.85;</div><div class="line">			return result;</div><div class="line">		&#125;</div><div class="line">		else &#123;</div><div class="line">			return _daysOverdrawn * 1.75</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	double bankCharge() &#123;</div><div class="line">		double result = 4.5;</div><div class="line">		if (_daysOverdrawn &gt; 0) result += overdraftCharge();</div><div class="line">		return result;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	private AccountType _type;</div><div class="line">	private int _daysOverdrawn;</div><div class="line"></div><div class="line">// after</div><div class="line">class AccountType...</div><div class="line">	double overdraftCharge(Account account) &#123;</div><div class="line">		if (isPremium()) &#123;</div><div class="line">			double result = 10;</div><div class="line">			if (account.getDaysOverdrawn() - 7) &#123;</div><div class="line">				result += (account.getDaysOverdrawn() - 7) * 0.85;</div><div class="line">			&#125;</div><div class="line">			else &#123;</div><div class="line">				return result;</div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">		else &#123;</div><div class="line">			return account.getDaysOverdrawn() * 1.75;</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">class Account...</div><div class="line">		double bankCharge() &#123;</div><div class="line">		double result = 4.5;</div><div class="line">		if (_daysOverdrawn &gt; 0) </div><div class="line">			result += _type.overdraftCharge(self);</div><div class="line">		return result;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	private AccountType _type;</div><div class="line">	private int _daysOverdrawn;</div></pre></td></tr></table></figure>
+<h4 id="Move-Field-搬移字段"><a href="#Move-Field-搬移字段" class="headerlink" title="Move Field(搬移字段)"></a>Move Field(搬移字段)</h4><p>某个字段被其所在类之外的另一个类更多的用到，搬移它到正确的地方。</p>
+<h5 id="动机-1"><a href="#动机-1" class="headerlink" title="动机"></a>动机</h5><h5 id="做法-1"><a href="#做法-1" class="headerlink" title="做法"></a>做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line">// before</div><div class="line">class Account...</div><div class="line">	private AccountType _type;</div><div class="line">	private double _interestRate;//搬移到AccountType</div><div class="line"></div><div class="line">	double interestForAmount_days (double amount,int days) &#123;</div><div class="line">		return _interestRate * amount * days / 365;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">//after</div><div class="line">class AccountType...</div><div class="line">	private double _interestRate;</div><div class="line">	</div><div class="line">	void setInterestRate (double arg) &#123;</div><div class="line">		_interestRate = arg</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	double getInterestRate () &#123;</div><div class="line">		return _interestRate;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">class Account...	</div><div class="line">	private AccountType _type;</div><div class="line"></div><div class="line">	double interestForAmount_days (double amount,int days) &#123;</div><div class="line">		return getInterestRate() * amount * days / 365;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	private void setInterestRate(double arg)&#123;</div><div class="line">		_type.setInteresetRate(arg);</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	private double getInterestRate() &#123;</div><div class="line">		return _type.getInteresetRate();</div><div class="line">	&#125;</div></pre></td></tr></table></figure>
+<h4 id="Extract-Class-提炼类"><a href="#Extract-Class-提炼类" class="headerlink" title="Extract Class (提炼类)"></a>Extract Class (提炼类)</h4><p>某个类做了应该由两个类做的事。</p>
+<h5 id="动机-2"><a href="#动机-2" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>一个类应该是一个清楚的抽象，处理一些明确的责任。</li>
+<li>类的不断迭代，会导致体积不断增大，责任越来越多。</li>
+<li>如果某些数据和函数总是一起出现，某些数据经常同时变化甚至彼此依赖，这就表示你应该将它们分离出去</li>
+<li>如果一个类在子类化时出现分歧，则该类可能需要被分解。</li>
+</ul>
+<h5 id="做法-2"><a href="#做法-2" class="headerlink" title="做法"></a>做法</h5><ul>
+<li>新建类，将需要分离的代码拷贝过来。</li>
+<li>建立从旧类访问新类的连接关系。</li>
+<li>使用上面的Move Method 和 Move Field方法对新类进行重构。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div></pre></td><td class="code"><pre><div class="line">// before</div><div class="line">class Person...</div><div class="line">	public String getName() &#123;</div><div class="line">		return _name;</div><div class="line">	&#125;</div><div class="line">	public String getTelephoneNumber() &#123;</div><div class="line">		return (&quot;(&quot; + _officeAreaCode + &quot;)&quot; + _officeNumber);</div><div class="line">	&#125;</div><div class="line">	String getOfficeAreaCode() &#123;</div><div class="line">		return _officeAreaCode;</div><div class="line">	&#125;</div><div class="line">	void setOfficeAreaCode(String arg) &#123;</div><div class="line">		_officeAreaCode = arg;</div><div class="line">	&#125;</div><div class="line">	String getOfficeNumber() &#123;</div><div class="line">		return _officeNumber;</div><div class="line">	&#125;</div><div class="line">	void setOfficeNumber(String arg) &#123;</div><div class="line">		_officeNumber = arg;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	private String _name;</div><div class="line">	private String _officeAreaCode;</div><div class="line">	private String _officeNumber;</div><div class="line">	</div><div class="line">//after</div><div class="line">class Person...</div><div class="line">	public String getName() &#123;</div><div class="line">		return _name;</div><div class="line">	&#125;</div><div class="line">	public String getTelephoneNumber() &#123;</div><div class="line">		return _officeTelephone.getTelephoneNumber();</div><div class="line">	&#125;</div><div class="line">	TelephoneNumber getOfficeTelephone() &#123;</div><div class="line">		return _officeTelephone;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	private String _name;</div><div class="line">	private TelephoneNumber _officeTelephone = new TelephoneNumber()</div><div class="line">	</div><div class="line">class TelephoneNumber...</div><div class="line">	public String getTelephoneNumber() &#123;</div><div class="line">		return (&quot;(&quot; + _officeAreaCode + &quot;)&quot; + _number);</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	String getAreaCode() &#123;</div><div class="line">		return _areaCode;</div><div class="line">	&#125;</div><div class="line">	void setAreaCode(String arg) &#123;</div><div class="line">		_areaCode = arg;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	String getNumber() &#123;</div><div class="line">		return _number;</div><div class="line">	&#125;</div><div class="line">	void setNumber(String arg) &#123;</div><div class="line">		_number = arg;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	private String _number;</div><div class="line">	private String _areaCode;</div></pre></td></tr></table></figure>
+<h4 id="Inline-Class-将类内联化"><a href="#Inline-Class-将类内联化" class="headerlink" title="Inline Class (将类内联化)"></a>Inline Class (将类内联化)</h4><p>某个类没有做太多事</p>
+<h5 id="动机-3"><a href="#动机-3" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>如果一个类不再承担足够的责任，不再有单独存在的理由，将它内联到另一个类中</li>
+</ul>
+<h5 id="做法-3"><a href="#做法-3" class="headerlink" title="做法"></a>做法</h5><ul>
+<li>Extract Class的逆过程</li>
+</ul>
+<h4 id="Hide-Delegate-隐藏委托关系"><a href="#Hide-Delegate-隐藏委托关系" class="headerlink" title="Hide Delegate(隐藏委托关系)"></a>Hide Delegate(隐藏委托关系)</h4><p>客户通过一个委托类来调用另外一个对象</p>
+<h5 id="动机-4"><a href="#动机-4" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>封装意味着每个对象应该尽量少的了解系统的其他部分，如果发生变化，需要了解这个变化的对象就会很少，这会使变化更容易</li>
+<li>针对上面的例子，如果委托关系发生变化，客户也得相应变化。</li>
+</ul>
+<h5 id="做法-4"><a href="#做法-4" class="headerlink" title="做法"></a>做法</h5><ul>
+<li>在委托类中加一个代理方法，将获取对象的逻辑留在这个类中，不要暴露给客户</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div></pre></td><td class="code"><pre><div class="line">// before</div><div class="line">class Person...</div><div class="line">	Department _department;</div><div class="line">	</div><div class="line">	public Department getDepartment() &#123;</div><div class="line">		return _department;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	public void setDepartment(Department arg) &#123;</div><div class="line">		_department = arg;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">class Department &#123;</div><div class="line">	private String _chargeCode;</div><div class="line">	private String _manager;</div><div class="line"></div><div class="line">	public Department(Person manager) &#123;</div><div class="line">		_manager = manager;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	public Person getManager() &#123;</div><div class="line">		return _manager;</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">//after</div><div class="line">class Person...	</div><div class="line">	Department _department;</div><div class="line">	</div><div class="line">	public void setDepartment(Department arg) &#123;</div><div class="line">		_department = arg;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	//新加一个代理方法</div><div class="line">	public Person getManager() &#123;</div><div class="line">		return _department.getManager();</div><div class="line">	&#125;</div><div class="line"></div><div class="line">class Department &#123;</div><div class="line">	private String _chargeCode;</div><div class="line">	private String _manager;</div><div class="line"></div><div class="line">	public Department(Person manager) &#123;</div><div class="line">		_manager = manager;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	public Person getManager() &#123;</div><div class="line">		return _manager;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="Remove-Middle-Man-移除中间人"><a href="#Remove-Middle-Man-移除中间人" class="headerlink" title="Remove Middle Man (移除中间人)"></a>Remove Middle Man (移除中间人)</h4><p>某个类做了过多的简单协议</p>
+<h5 id="动机-5"><a href="#动机-5" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>如果某个类的代理方法越来越多，变成了一个完全的中间人，此时你应该让客户直接调用委托对象本身</li>
+<li>Hide Delegate 和 Remove Middle Man是一对可逆的过程，代码总是在变化的，之前的修改可能在之后变得并不适用，不用说对不起，继续把这个问题修补好就行了。</li>
+</ul>
+<h5 id="做法-5"><a href="#做法-5" class="headerlink" title="做法"></a>做法</h5><ul>
+<li>和Hide Delegate过程刚好相反</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">//before</div><div class="line">class Person...	</div><div class="line">	Department _department;</div><div class="line"></div><div class="line">	public void setDepartment(Department arg) &#123;</div><div class="line">		_department = arg;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	public Person getManager() &#123;</div><div class="line">		return _department.getManager();</div><div class="line">	&#125;</div><div class="line"></div><div class="line">//after</div><div class="line">class Person...	</div><div class="line">	Department _department;</div><div class="line">	</div><div class="line">	public Department getDepartment() &#123;</div><div class="line">		return _department;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	public void setDepartment(Department arg) &#123;</div><div class="line">		_department = arg;</div><div class="line">	&#125;</div></pre></td></tr></table></figure>
+<h4 id="Introduce-Foreign-Method-引用外加函数"><a href="#Introduce-Foreign-Method-引用外加函数" class="headerlink" title="Introduce Foreign Method(引用外加函数)"></a>Introduce Foreign Method(引用外加函数)</h4><p>你需要为提供服务的类增加一个函数，但是你无法修改这个类</p>
+<h5 id="动机-6"><a href="#动机-6" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>需要为不能修改源代码的类增加函数</li>
+<li>如果这个函数只使用一次，可能没有必要，如果需要多次使用，则应该这么做。</li>
+</ul>
+<h5 id="做法-6"><a href="#做法-6" class="headerlink" title="做法"></a>做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">//before</div><div class="line">Date newStart = new Date (previousEnd.getYear(),previousEnd.getMonth(),previousEnd.getDay() + 1);</div><div class="line"></div><div class="line">//after</div><div class="line">Date newStart = nextDay(previousEnd);</div><div class="line"></div><div class="line">private static Date nextDay(Date arg)&#123;</div><div class="line">	return new Date(previousEnd.getYear(),previousEnd.getMonth(),previousEnd.getDay() + 1);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="Introduce-Local-Extension-引入本地扩展"><a href="#Introduce-Local-Extension-引入本地扩展" class="headerlink" title="Introduce Local Extension(引入本地扩展)"></a>Introduce Local Extension(引入本地扩展)</h4><p>你需要为服务类提供一些额外函数，但是你无法修改这个类。</p>
+<h5 id="动机-7"><a href="#动机-7" class="headerlink" title="动机"></a>动机</h5><ul>
+<li>如果需要加多个函数，则应该对这些函数做一个封装，而不是散落在各处</li>
+<li>子类是更好的扩展方式</li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2019/11/04/《重构-改善既有代码的设计》系列读书笔记（二、函数的重构）/" itemprop="url">
                   《重构-改善既有代码的设计》系列读书笔记（二、函数的重构）
                 </a>
@@ -1695,399 +1854,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/10/08/iOS性能优化的一些套路/" itemprop="url">
-                  iOS性能优化的一些套路
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-10-08T17:56:56+08:00" content="2018-10-08">
-              2018-10-08
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2018/10/08/iOS性能优化的一些套路/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/10/08/iOS性能优化的一些套路/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">程序优化第一法则：不要优化</div><div class="line">							————编程珠玑（续）</div><div class="line">							</div><div class="line">过早的优化是万恶之源</div><div class="line">							————Donald Knuth</div></pre></td></tr></table></figure>
-<p>不要过早优化，也不要为了优化而优化，只有在项目真正需要优化的时候再优化。我们实际工作中，在开始一个项目时，应该也不会太多去考虑性能优化的问题。不过随着项目版本的不断迭代，模块和代码量不断增加，研发团队人员变动，以及其他各种原因，难免会出现一些实现不太友好的代码和方案，影响到app的用户体验，这个时候就需要相应的优化来提升app的性能。</p>
-<p>iOS的性能优化是一个比较有挑战的工作，有一定的难度，需要着手优化的人有一定的姿势积累，能够分析出各方面可能出现的性能问题。所以一般也是进阶必须掌握的技能。当然，优化的过程和可优化的一些点也是有套路的，综合网上的方案和自身的一些经验，这里做一下简单的总结：</p>
-<h3 id="启动优化"><a href="#启动优化" class="headerlink" title="启动优化"></a>启动优化</h3><p>这里说的启动优化指的是冷启动，根据启动的流程，可以分为2部分来分别优化，具体如下：</p>
-<h4 id="main函数之前"><a href="#main函数之前" class="headerlink" title="main函数之前"></a>main函数之前</h4><p>ipa实际上就是一堆二进制文件（.o文件）的集合，而这堆二进制文件就是xcode编译我们的代码后生产的最终产物，文件头部会给操作系统留下入口（这个入口不是main，而是@start标识）。当应用被启动，系统首先找到程序入口，将二进制文件分页映射到虚拟内存（mmap），然后加载动态库（load image），然后对需要rel的符号的地址进行rebase和bind，之后就是对使用的oc类和分类的注册和初始化。至此，mian函数前的工作做完了。</p>
-<h5 id="优化点"><a href="#优化点" class="headerlink" title="优化点"></a>优化点</h5><p>知道了具体流程，我们就可以对流程中各个环节进行有针对性的优化了：</p>
-<ul>
-<li>利用Xcode的DYLD_PRINT_STATISTICS环境变量监测mian函数前的耗时.</li>
-<li>尽可能精简代码量，减少mmap次数。</li>
-<li>动态库的使用，移除不必要的动态库依赖。</li>
-<li>合并或者删除无用的oc类和分类。</li>
-<li>删除没有被调用的方法,减少非唯一selector的个数。</li>
-<li>将不必须的初始化方法从+load移到+initialize。</li>
-</ul>
-<h4 id="main函数之后"><a href="#main函数之后" class="headerlink" title="main函数之后"></a>main函数之后</h4><p>这部分内容就是业务相关的东西了，根据各自app的需求会有不同的优化方案，不像上面的部分具有通用性。启动优化的最终目的肯定都是最快的展示首页内容，这里列举一些常用的优化套路。</p>
-<ul>
-<li>能延迟执行的就延迟执行。比如SDK的注册，非首页UI的创建等。</li>
-<li>不能延迟执行的，尽量放到后台执行。比如网络请求，数据读取，原始JSON数据转对象，日志发送等。</li>
-<li>既不能延时又不能后台执行的尽量已懒加载的方式创建实例。</li>
-<li>利用检测工具监测启动阶段函数调用的耗时情况，进行针对性优化。</li>
-</ul>
-<p>具体细节可参考<a href="https://techblog.toutiao.com/2018/05/29/untitled-24/" target="_blank" rel="noopener">今日头条这篇优化文章</a></p>
-<h3 id="内存优化"><a href="#内存优化" class="headerlink" title="内存优化"></a>内存优化</h3><p>蒸米大大的<a href="https://mp.weixin.qq.com/s/WQ7rrTJm-cn3Cb6e_zZ4cA" target="_blank" rel="noopener">这一篇文章</a>比较详细的描述了iOS中的虚拟内存和物理内存相关的内容。我们一般说的在程序中分配和回收内存指的都是虚拟内存，程序员一般不直接和物理内存（cpu内存，不包括磁盘）打交道。更多虚拟内存和物理内存的内容可阅读操作系统相关的文章和书籍去学习。</p>
-<p>在计算机发展的初期，程序员都是直接访问物理内存，随着计算机技术的飞速发展，这种内存访问方式不再满足程序员的需求，新的内存访问方式出现，这就是被沿用至今的<strong>虚拟内存</strong>。虚拟内存在程序员和物理内存之间提供了一个良好的中间环境，它隔离了程序员直接使用物理内存带来的各种危险操作，提高了物理内存的利用率，简化了内存管理方式，保证了进程的安全。所以有这样一句古话：<strong>计算机科学领域的任何问题都可以通过增加一个间接的中间层来解决</strong>，看来不是没有道理的。</p>
-<p>言归正传，下面我们从创建、复用、回收三个方面总结一下iOS在内存使用过程中的一些需要注意的点：</p>
-<h4 id="创建"><a href="#创建" class="headerlink" title="创建"></a>创建</h4><ul>
-<li>减少大图的使用。</li>
-<li>weak strong dance保证self的生命周期。</li>
-<li>weak替换unsafe_unretain，保证指针安全。</li>
-<li>合理利用自动释放池，避免内存暴涨导致OOM。</li>
-<li>尽量使用懒加载的方式创建对象，避免无用和重复创建，减少不必要的内存开销。</li>
-<li>在子线程手动申请（malloc）大内存的的时候 ping 一下主线程，因为子线程无法收到内存警告的传递。</li>
-</ul>
-<h4 id="缓存和复用"><a href="#缓存和复用" class="headerlink" title="缓存和复用"></a>缓存和复用</h4><ul>
-<li>合理使用缓存减轻CPU的计算压力。</li>
-<li>复用UI对象内存，通过绑定model更新UI。</li>
-<li>合理使用缓存数据结构（NSCache VS NSMapTable VS NSHashTable VS NSDictionary）。</li>
-</ul>
-<h4 id="回收"><a href="#回收" class="headerlink" title="回收"></a>回收</h4><ul>
-<li>保证使用的内存能够被正确的回收掉，避免内存泄露（timer,delegate,block）。</li>
-<li>使用适当的工具对内存的回收进行检测，发生内存泄露及时抛出提示。</li>
-<li>处理系统的内存警告。</li>
-</ul>
-<h3 id="UI优化"><a href="#UI优化" class="headerlink" title="UI优化"></a>UI优化</h3><p>先说一下iOS中UI展示的过程。iOS中的视图容器是CALayer,所有的显示在屏幕上的内容最终都是被渲染到CALayer上。CPU计算好需要渲染的内容放入渲染缓冲区，GPU从渲染缓冲区拿到数据，OpenGLES经过顶点着色，光栅化，片元着色，逐片段操作等一系列流程，将处理好的数据（bitmap）丢到后帧缓冲区，前帧缓冲区再从后帧缓冲区更新数据，最终渲染到CALayer。</p>
-<p>从上面展示的流程可以看到，UI的展示分为两个部分，CPU处理部分和GPU处理部分。如果某一部分的处理被阻塞的话，UI显示就会出现卡顿。所以，可以从这两部分着手优化。</p>
-<h4 id="CPU优化"><a href="#CPU优化" class="headerlink" title="CPU优化"></a>CPU优化</h4><ul>
-<li>利用UI卡顿检测工具检测屏幕的fps。</li>
-<li>懒加载方式创建UI对象，使用CALayer替换UIView。</li>
-<li>减少视图相关属性的修改，避免视图层级的调整，尽量不要动态添加和移除视图。</li>
-<li>文本的异步计算和渲染。</li>
-<li>尽量提前计算好视图布局并缓存，避免动态计算和更新布局。</li>
-<li>异步解码图片和绘制视图。</li>
-</ul>
-<h4 id="GPU优化"><a href="#GPU优化" class="headerlink" title="GPU优化"></a>GPU优化</h4><ul>
-<li>将多个小图合并为一张大图显示，控制图片尺寸不要大于GPU处理上限。</li>
-<li>避免带透明度的视图重叠显示，会产生像素的混合。</li>
-<li>避免出现离屏渲染。</li>
-</ul>
-<p>具体细节参考<a href="https://blog.ibireme.com/2015/11/12/smooth_user_interfaces_for_ios/" target="_blank" rel="noopener">YY的这篇文章</a></p>
-<h3 id="ipa包大小优化"><a href="#ipa包大小优化" class="headerlink" title="ipa包大小优化"></a>ipa包大小优化</h3><p>上面提到过，iOS的ipa包实际上就是一堆二进制文件的集合。而这堆二进制文件，就是我们的代码经过Xcode编译之后的产物。这里简单介绍一下Xcode点击run后的整个流程：</p>
-<h4 id="预编译"><a href="#预编译" class="headerlink" title="预编译"></a>预编译</h4><ul>
-<li>将所有的 <em>#deifne</em> 删除 并展开所有的宏定义。</li>
-<li>处理所有的条件编译指令 比如#if #else #ifdef #endif 等等。</li>
-<li>处理#include预编译指令 将所包含的文件插入到预编译指令的位置。</li>
-<li>删除所有的注释 // /<em> </em>/ 等等。</li>
-<li>添加行号和文件名标识。</li>
-<li>保留所有#pragma编译器指令。</li>
-</ul>
-<h4 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h4><p>编译过程就是把预处理完成的文件进行一系列词法分析，语法分析，语义分析及优化后生成相应的汇编代码文件（词法分析-&gt;语法分析-&gt;语义分析-&gt;源代码优化-&gt;代码生成&gt;目标代码优化）。</p>
-<h5 id="词法分析"><a href="#词法分析" class="headerlink" title="词法分析"></a>词法分析</h5><ul>
-<li>利用有限状态机扫描源代码 生成一系列记号（Token）。</li>
-<li>记号分类：关键字、标识符、字面量（包括数字，字符串）、特殊符号（+、=）。</li>
-<li>每种记号存入对应的表内。</li>
-<li>词法规则可以自定义。</li>
-</ul>
-<h5 id="语法分析"><a href="#语法分析" class="headerlink" title="语法分析"></a>语法分析</h5><ul>
-<li>对上面的词法表进行语法分析、生成语法树。</li>
-<li>整个分析过程采用上下文无关语法。</li>
-<li>语法树以表达式为节点。</li>
-</ul>
-<h5 id="语义分析"><a href="#语义分析" class="headerlink" title="语义分析"></a>语义分析</h5><ul>
-<li>编译器所能分析的语义是静态语义。</li>
-<li>静态语义通常包括声明和类型的匹配，类型的转换。</li>
-<li>经过语义分析，语法树被标识了类型。</li>
-<li>语义分析判断该语法是否合法。</li>
-</ul>
-<h5 id="中间语言生成"><a href="#中间语言生成" class="headerlink" title="中间语言生成"></a>中间语言生成</h5><ul>
-<li>直接在语法树上面优化比较困难，所以源代码优化器会先将语法树转换为中间代码。</li>
-<li>中间代码是设备无关的。</li>
-<li>编译器前端负责产生机器无关的中间代码，后端负责将中间代码转换成目标机器代码。</li>
-<li>跨平台编译器就是有一个前端和多个后端的组合。</li>
-</ul>
-<h5 id="目标代码生成与优化"><a href="#目标代码生成与优化" class="headerlink" title="目标代码生成与优化"></a>目标代码生成与优化</h5><ul>
-<li>编译器后端主要包括代码生成器和目标代码优化器。</li>
-</ul>
-<h4 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h4><ul>
-<li>链接的过程主要包括：地址和空间分配、符号决议、重定向。</li>
-<li>目标文件和库一起链接生成可执行文件。</li>
-<li>库其实是一种编译后的目标文件。</li>
-<li>目标文件之间的函数和变量的访问在链接过程中被重定向。</li>
-</ul>
-<h4 id="可执行文件的装载（即上面提到的main函数前的部分）"><a href="#可执行文件的装载（即上面提到的main函数前的部分）" class="headerlink" title="可执行文件的装载（即上面提到的main函数前的部分）"></a>可执行文件的装载（即上面提到的main函数前的部分）</h4><p>了解了二进制文件的产生过程后，我们可以利用一些工具来对它们做一些针对性的优化工作：</p>
-<h4 id="二进制文件的优化"><a href="#二进制文件的优化" class="headerlink" title="二进制文件的优化"></a>二进制文件的优化</h4><h5 id="查看mach-o文件的大小"><a href="#查看mach-o文件的大小" class="headerlink" title="查看mach.o文件的大小"></a>查看mach.o文件的大小</h5><p>首先，在Xcode（Debug下）中开启编译选项<strong>Write Link Map File</strong>，然后在这个目录下面（这里以OpenCourse为例）找到下面这个txt文件。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">~/Library/Developer/Xcode/DerivedData/OpenCourse-gyfdubhkhvixzvetgqbmqrzplarc/Build/Intermediates.noindex/OpenCourse.build/Debug2-iphoneos/OpenCourse.build/OpenCourse-LinkMap-normal-arm64.txt</div></pre></td></tr></table></figure>
-<p>这个LinkMap里展示了整个可执行文件的全貌，列出了编译后的每一个.o目标文件的信息（包括静态链接库.a里的），以及每一个目标文件的代码段，数据段存储详情。对于比较大的文件，进行对应的优化即可。</p>
-<p><a href="https://github.com/daheli/iOS-linkmap-tools" target="_blank" rel="noopener">查看mach.o文件大小的工具</a></p>
-<h5 id="编译优化"><a href="#编译优化" class="headerlink" title="编译优化"></a>编译优化</h5><ul>
-<li>Optimization Level release使用Fastest。</li>
-<li>Strip Linked Product release设置为YES。</li>
-<li>Symbols Hidden by Default release设置为YES。</li>
-</ul>
-<h4 id="资源文件的优化"><a href="#资源文件的优化" class="headerlink" title="资源文件的优化"></a>资源文件的优化</h4><ul>
-<li>图片资源在打包过程中压缩比很低，基本是原图copy。减少图片数量和大小可以直接降低ipa的大小。</li>
-<li>及时删除无用代码（包括无用的类，依赖，方法，测试用例等）。</li>
-</ul>
-<p><a href="https://tinypng.com" target="_blank" rel="noopener">压缩图片大小的工具</a></p>
-<p><a href="https://github.com/tinymind/LSUnusedResource" target="_blank" rel="noopener">检测无用的图片的工具</a></p>
-<p><a href="https://github.com/dblock/fui" target="_blank" rel="noopener">检测无用类和依赖的工具</a></p>
-<h3 id="编码和架构优化"><a href="#编码和架构优化" class="headerlink" title="编码和架构优化"></a>编码和架构优化</h3><p>好的代码质量和架构设计是项目稳定运行和迭代的基石。而编码高手和低手之间很大一部分区别在于对细节的处理上，要养成良好的编码习惯非一朝一夕，需要时间的积累和大量的练习，同时，也需要一些理论上的支持。下面推荐几本经典书籍，平时编码过程中，需要经常提醒自己甚至强迫自己按照书中这些tips去做，养成良好的编码习惯，提升技术上的综合素质。</p>
-<h4 id="代码的设计原则和架构方案《架构整理之道》"><a href="#代码的设计原则和架构方案《架构整理之道》" class="headerlink" title="代码的设计原则和架构方案《架构整理之道》"></a>代码的设计原则和架构方案《架构整理之道》</h4><p>总结一下本书中比较重要的几个章节：</p>
-<h5 id="SRP单一职责原则"><a href="#SRP单一职责原则" class="headerlink" title="SRP单一职责原则"></a>SRP单一职责原则</h5><ul>
-<li>函数设计也需要遵循SRP原则</li>
-<li>任何一个软件模块都应该有且仅有一个被修改的原因</li>
-<li>任何一个软件模块都应该只对某一类行为者负责</li>
-<li>Employee类中各行为应该被分解</li>
-</ul>
-<h5 id="OCP开闭原则"><a href="#OCP开闭原则" class="headerlink" title="OCP开闭原则"></a>OCP开闭原则</h5><ul>
-<li>良好的设计软件应该易于扩展,同时抗拒修改</li>
-<li>如果A组件不想被B组件上发生的修改所影响,那么就应该让B组件依赖于A组件</li>
-<li>利用SRP分解功能,利用DIP反转依赖</li>
-<li>软件系统不应该依赖不直接使用的组件</li>
-</ul>
-<h5 id="LSP里氏替换原则"><a href="#LSP里氏替换原则" class="headerlink" title="LSP里氏替换原则"></a>LSP里氏替换原则</h5><ul>
-<li>以接口或者多态的形式实现函数调用的可替换性</li>
-</ul>
-<h5 id="ISP接口隔离原则"><a href="#ISP接口隔离原则" class="headerlink" title="ISP接口隔离原则"></a>ISP接口隔离原则</h5><ul>
-<li>利用接口隔离原则隔离掉不需要的依赖关系,因为不需要的依赖会导致不必要的重新编译和重新部署</li>
-</ul>
-<h5 id="DIP依赖反转原则"><a href="#DIP依赖反转原则" class="headerlink" title="DIP依赖反转原则"></a>DIP依赖反转原则</h5><ul>
-<li>如果想要设计一个灵活的系统,在源代码层面的依赖关系中就应该多引用抽象类型而非具体实现</li>
-<li>接口比具体实现更稳定,因为如果修改接口必须修改实现,但是反之则不一定.</li>
-<li>不要在具体实现类上创建子类,具体实现应该放到子类去做,除非是比较稳定且通用的逻辑.</li>
-<li>不要覆盖包含具体实现的函数,如果必须这样,请在覆盖方法中先调用父类方法.</li>
-<li>源代码依赖方向永远是控制流方向的反转</li>
-</ul>
-<h5 id="组件聚合"><a href="#组件聚合" class="headerlink" title="组件聚合"></a>组件聚合</h5><h6 id="复用-发布等同原则-REP"><a href="#复用-发布等同原则-REP" class="headerlink" title="复用/发布等同原则(REP)"></a>复用/发布等同原则(REP)</h6><ul>
-<li>软件复用的最小粒度应等同于其发布的最小粒度</li>
-<li>ERP原则就是指组件中的类与模块必须是彼此紧密相关的,一个组件不能由一组毫无关联的类和模块组成</li>
-<li>一个组件中包含的类与模块还应该是可以同时发布的</li>
-</ul>
-<h6 id="共同闭包原则-CCP"><a href="#共同闭包原则-CCP" class="headerlink" title="共同闭包原则(CCP)"></a>共同闭包原则(CCP)</h6><ul>
-<li>我们应该将那些会同时修改,并且为相同目的而修改的类放到同一个组件中,而将不会同时修改,并且不会为了相同目的而修改的那些类放到不同的组件中</li>
-<li>CCP原则是SRP原则和OCP原则的组件版</li>
-</ul>
-<h6 id="共同复用原则-CRP"><a href="#共同复用原则-CRP" class="headerlink" title="共同复用原则(CRP)"></a>共同复用原则(CRP)</h6><ul>
-<li>不要强迫一个组件的用户依赖他们不需要的东西</li>
-<li>我们希望组件中的所有类是不可拆分的,不应该出现别人只需要依赖它的某几个类而不需要其他类的情况</li>
-<li>CRP的作用不仅是告诉我们应该将哪些类放在一起,更重要的是要告诉我们应该将哪些类分开</li>
-<li>CRP原则实际上是ISP原则的一个普适版,ISP建议我们不要依赖不需要的类,CRP建议我们不要依赖不需要的组件</li>
-<li>优秀的架构师应该在REP,CCP和CRP原则间找到一个好的平衡点,一个项目的组件结构设计的重心是根据该项目的开发时间和成熟度不断变化的</li>
-</ul>
-<h5 id="组件耦合"><a href="#组件耦合" class="headerlink" title="组件耦合"></a>组件耦合</h5><h6 id="无依赖环原则"><a href="#无依赖环原则" class="headerlink" title="无依赖环原则"></a>无依赖环原则</h6><ul>
-<li>组件依赖关系图中不应该出现环</li>
-<li>依赖环会导致组件之间的发布和运行很难稳定下来</li>
-<li>每周构建是指team每一周专门抽出一天来进行组件的构建调试工作,而其他时间则忽略组件的构建问题</li>
-<li>消除循环依赖的一个解决办法是将研发项目划分成一些可单独发布的组件,这些组件独立完成构建和发布</li>
-<li>DIP原则打破循环依赖好的选择</li>
-</ul>
-<h6 id="自上而下的设计"><a href="#自上而下的设计" class="headerlink" title="自上而下的设计"></a>自上而下的设计</h6><ul>
-<li>组件结构图是不可能自上而下被设计出来的,它必须随着软件系统的变化而变化和扩张.</li>
-<li>组件结构图并不是用来描述应用程序功能的,它更像是应用程序在构建性与维护性方面的一张地图</li>
-<li>组件结构图的一个重要目的是如何隔离频繁的变更</li>
-</ul>
-<h6 id="稳定依赖原则"><a href="#稳定依赖原则" class="headerlink" title="稳定依赖原则"></a>稳定依赖原则</h6><ul>
-<li>依赖关系必须要指向更稳定的方向</li>
-<li>任何一个我们预期会经常变更的组件都不应该被一个难于修改的组件所依赖</li>
-<li>稳定性指标的计算方法:出口依赖/(出口依赖+入口依赖). 0最稳定,1最不稳定.</li>
-<li>组件并不是都需要稳定</li>
-</ul>
-<h6 id="稳定抽象原则"><a href="#稳定抽象原则" class="headerlink" title="稳定抽象原则"></a>稳定抽象原则</h6><ul>
-<li>一个组件的抽象化程度应该与其稳定性保持一致</li>
-<li>组件抽象化的计算方法:组件中的抽象类和接口/组件中类的个数 0表现没有抽象类 1表示全是抽象类</li>
-<li>好的组件结构应该在抽象和稳定之间找到一个好的平衡点</li>
-</ul>
-<h4 id="编码规范和原则《程序员修炼之道》"><a href="#编码规范和原则《程序员修炼之道》" class="headerlink" title="编码规范和原则《程序员修炼之道》"></a>编码规范和原则《程序员修炼之道》</h4><p>从小工到专家，你需要做到下面这些：</p>
-<h5 id="DRY"><a href="#DRY" class="headerlink" title="DRY"></a>DRY</h5><p><strong>DRY</strong>:系统中的每一项知识都必须具有单一,无歧义,权威的表示.</p>
-<p>重复是怎样产生的:</p>
-<ul>
-<li>强加的重复,开发着觉得无可选择,环境要求.</li>
-<li>无意的重复,开发者没有意识到他们在重复.</li>
-<li>无耐性的重复,开发者偷懒,copy比较容易.</li>
-<li>开发者之间的重复,几个人重复了同样的信息.</li>
-</ul>
-<h5 id="正交性"><a href="#正交性" class="headerlink" title="正交性"></a>正交性</h5><p>正交性是从几何学中借来的术语,如果两条直线相交成直角,它们就是正交的.沿着某一条直线移动,你投影到另一条直线上的位置不变.</p>
-<p>正交性的好处:消除无关事物之间的影响(解耦不必要的依赖)</p>
-<p><strong>分层设计</strong>是正交系统的强大方式..因为每层都只适用在其下面的层次提供的抽象,在改动底层实现,而又不影响其他代码方面,你拥有极大的灵活性.分层也降低了模块间依赖关系失控的风险.</p>
-<p>正交性的简单测试方法:如果我显著的改变某个特定功能背后的需求,有多少模块会受影响?在正交系统中,答案是<strong>一个</strong></p>
-<p>正交性在编码中的应用:</p>
-<ul>
-<li>让你的代码保持解耦</li>
-<li>避免使用全局数据</li>
-<li>避免编写相似的函数</li>
-<li>养成不断批判对待自己代码的习惯.寻找任何重新进行组织,以改善其结构和正交性的机会,这个过程叫做重构,它非常重要.</li>
-</ul>
-<h5 id="调试"><a href="#调试" class="headerlink" title="调试"></a>调试</h5><p>调试的心理学:</p>
-<ul>
-<li>调试是解决问题,要据此发起进攻</li>
-<li>要修正问题,而不是发出指责(bug是你的还是别人的,这不是真的很有关系.)</li>
-<li>不要恐慌,如果你看到bug报告的第一反应是<strong>那不可能</strong>,你就完全错了.一个脑细胞都不要浪费在以<strong>“但那时不可能”</strong>起头的思路上,因为很明显,那不仅可能,而且已经发生.</li>
-<li>小心近视,要抵制只修正你看到的症状的急迫愿望,更有可能的情况是,实际的故障离你正在观察的地方可能还有几步远,并且可能涉及许多其他的相关事物.</li>
-</ul>
-<p>调试策略:</p>
-<ul>
-<li>你需要与qa面谈,搜集比最初给你的数据更多的数据.</li>
-<li>qa不可能全覆盖所有的case,你需要系统的进行这样的测试,比如分支语句,你可能需要自己造数据去覆盖所有的分支.</li>
-<li>复现bug</li>
-<li>数据可视化(log)</li>
-<li>堆栈和断点</li>
-<li>橡皮鸭,把你的逻辑对着桌上的橡皮鸭描述一遍,看看有没有漏洞.</li>
-<li>消除过程,二分调试</li>
-<li>遇到自认为不可能的bug时,不要假定,要证明.</li>
-</ul>
-<h5 id="解耦与得墨忒耳法则"><a href="#解耦与得墨忒耳法则" class="headerlink" title="解耦与得墨忒耳法则"></a>解耦与得墨忒耳法则</h5><p>多模块耦合的危害</p>
-<ul>
-<li>调用链冗长</li>
-<li>对一个模块的简单改动会传遍系统中的一些无关模块</li>
-<li>开发者害怕改动代码,因为他们不清楚哪些代码可能受影响</li>
-</ul>
-<p>函数的得墨忒耳法则规定,某个对象的任何方法都应该只调用以下情形的方法:</p>
-<ul>
-<li>它自身的方法</li>
-<li>传入该方法的任何对象的方法</li>
-<li>它创建的任何对象的方法</li>
-<li>任何直接持有的组件的对象的方法(比如全局对象)</li>
-</ul>
-<h5 id="不要靠巧合编程"><a href="#不要靠巧合编程" class="headerlink" title="不要靠巧合编程"></a>不要靠巧合编程</h5><p>深思熟虑的编程,而不是靠运气和偶然的成功.</p>
-<p>怎样深思熟虑的编程:</p>
-<ul>
-<li>总是意识到你在做什么</li>
-<li>不要盲目的编程</li>
-<li>按照计划行事</li>
-<li>依靠可靠的事物,不要依靠巧合或假定</li>
-<li>为你的假定建立文档</li>
-<li>不要只是测试你的代码,还要测试你的假定</li>
-<li>为你的工作划分优先级</li>
-<li>不要做历史的奴隶,不要让已有的代码支配将来的代码,如果不再适用,所有的代码都可以被替换.</li>
-</ul>
-<h5 id="重构"><a href="#重构" class="headerlink" title="重构"></a>重构</h5><p>何时重构:</p>
-<ul>
-<li>重复,你发现了对DRY原则的违反</li>
-<li>非正交的设计</li>
-<li>过时的知识</li>
-<li>性能问题</li>
-</ul>
-<p>早重构,常重构</p>
-<p>如何重构:</p>
-<ul>
-<li>不要试图在重构的同时增加功能</li>
-<li>在开始重构之前,确保你拥有良好的测试.</li>
-<li>采取短小,深思熟虑的步骤.</li>
-</ul>
-<h5 id="注重实效的团队"><a href="#注重实效的团队" class="headerlink" title="注重实效的团队"></a>注重实效的团队</h5><ul>
-<li>不要留破窗户</li>
-<li>不要做温水里的青蛙</li>
-<li>交流的重要性</li>
-<li>DRY</li>
-<li>正交性</li>
-</ul>
-<h4 id="无情的测试"><a href="#无情的测试" class="headerlink" title="无情的测试"></a>无情的测试</h4><p>早测试,常测试,自动测试</p>
-<p>要到通过全部测试,编码才算完成</p>
-<p>测试什么:</p>
-<ul>
-<li><p>单元测试</p>
-<p>  模块测试</p>
-</li>
-<li><p>集成测试</p>
-<p>  子系统能很好的系统工作</p>
-</li>
-<li><p>验证和校验</p>
-<p>  用户回归</p>
-</li>
-<li><p>资源耗尽,错误及恢复</p>
-<p>  1.内存空间<br>  2.磁盘空间<br>  3.cpu带宽<br>  4.挂钟时间<br>  5.磁盘带宽<br>  6.网络带宽<br>  7.调色板<br>  8.视频分辨率<br>  9.fps</p>
-</li>
-<li><p>性能测试</p>
-<p>  预期的用户数,连接数或每秒事务数</p>
-</li>
-<li><p>可用性测试</p>
-<p>  qa,灰度…</p>
-</li>
-</ul>
-<h5 id="傲慢与偏见"><a href="#傲慢与偏见" class="headerlink" title="傲慢与偏见"></a>傲慢与偏见</h5><p>在你的作品上签名,你的签名应该被视为质量的保证，如果有一天你离开了网易，是否会因为代码质量问题而把自己的签名换成netease呢？（手动@学姐😁）。</p>
-<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>以上是一个iOSer项目优化的简单总结，一部分可能是iOS特有的优化项目，还有一部分则具有普适性，因为不管什么技术方向，最终它们的产物都会是二进制。技术的深度和广度这两个方向的发展问题也一直都是程序员们讨论的话题，其实不管是深度和广度，只要找准一个方向一直走下去，就可以了。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2133,7 +1899,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">74</span>
+              <span class="site-state-item-count">75</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

@@ -229,6 +229,107 @@
             
               
                 
+                <a class="post-title-link" href="/2020/06/13/《程序员修炼之道-通向务实的最高境界（第二版）》/" itemprop="url">
+                  《程序员修炼之道-通向务实的最高境界（第二版）》
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2020-06-13T14:44:53+08:00" content="2020-06-13">
+              2020-06-13
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2020/06/13/《程序员修炼之道-通向务实的最高境界（第二版）》/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2020/06/13/《程序员修炼之道-通向务实的最高境界（第二版）》/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h4 id="人生是你自己的"><a href="#人生是你自己的" class="headerlink" title="人生是你自己的"></a>人生是你自己的</h4><p>如果你觉得当前的工作状况很糟糕，为什么不去尝试改变呢，如果你既不能改变环境，也不想改变自己，为什么不换一个环境呢？</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2020/05/08/直播项目总结/" itemprop="url">
                   直播项目总结
                 </a>
@@ -1624,165 +1725,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2019/11/06/《重构-改善既有代码的设计》系列读书笔记（三、类的重构）/" itemprop="url">
-                  《重构-改善既有代码的设计》系列读书笔记（三、类的重构）
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2019-11-06T15:17:12+08:00" content="2019-11-06">
-              2019-11-06
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2019/11/06/《重构-改善既有代码的设计》系列读书笔记（三、类的重构）/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2019/11/06/《重构-改善既有代码的设计》系列读书笔记（三、类的重构）/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="在对象之间搬移特性"><a href="#在对象之间搬移特性" class="headerlink" title="在对象之间搬移特性"></a>在对象之间搬移特性</h3><p>在对象的设计过程中，决定把责任放在哪里，即使不是最重要的事情，也是最重要的使用之一，虽然不能一开始就完全设计正确，但是我们可以使用重构去完善自己的设计</p>
-<h4 id="Move-Method-搬移函数"><a href="#Move-Method-搬移函数" class="headerlink" title="Move Method(搬移函数)"></a>Move Method(搬移函数)</h4><p>你的程序中，有个函数与其所在类之外的其他类进行更多的交流，调用后者，或者被后者调用</p>
-<h5 id="动机"><a href="#动机" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>如果一个类有太多行为，就会承担过多的责任，请为这个类减负</li>
-<li>如果一个类与另一个类有太多合作，会形成高度的耦合</li>
-<li>如果一个函数使用外部类的次数比使用所在类的次数还多，则应该被移出所在类</li>
-</ul>
-<h5 id="做法"><a href="#做法" class="headerlink" title="做法"></a>做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div></pre></td><td class="code"><pre><div class="line">// before</div><div class="line">class Account...</div><div class="line">	double overdraftCharge() &#123;</div><div class="line">		if (_type.isPremium() )&#123;</div><div class="line">			double result = 10;</div><div class="line">			if (_daysOverdrawn &gt; 7) result += (_daysOverdrawn - 7) * 0.85;</div><div class="line">			return result;</div><div class="line">		&#125;</div><div class="line">		else &#123;</div><div class="line">			return _daysOverdrawn * 1.75</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	double bankCharge() &#123;</div><div class="line">		double result = 4.5;</div><div class="line">		if (_daysOverdrawn &gt; 0) result += overdraftCharge();</div><div class="line">		return result;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	private AccountType _type;</div><div class="line">	private int _daysOverdrawn;</div><div class="line"></div><div class="line">// after</div><div class="line">class AccountType...</div><div class="line">	double overdraftCharge(Account account) &#123;</div><div class="line">		if (isPremium()) &#123;</div><div class="line">			double result = 10;</div><div class="line">			if (account.getDaysOverdrawn() - 7) &#123;</div><div class="line">				result += (account.getDaysOverdrawn() - 7) * 0.85;</div><div class="line">			&#125;</div><div class="line">			else &#123;</div><div class="line">				return result;</div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">		else &#123;</div><div class="line">			return account.getDaysOverdrawn() * 1.75;</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">class Account...</div><div class="line">		double bankCharge() &#123;</div><div class="line">		double result = 4.5;</div><div class="line">		if (_daysOverdrawn &gt; 0) </div><div class="line">			result += _type.overdraftCharge(self);</div><div class="line">		return result;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	private AccountType _type;</div><div class="line">	private int _daysOverdrawn;</div></pre></td></tr></table></figure>
-<h4 id="Move-Field-搬移字段"><a href="#Move-Field-搬移字段" class="headerlink" title="Move Field(搬移字段)"></a>Move Field(搬移字段)</h4><p>某个字段被其所在类之外的另一个类更多的用到，搬移它到正确的地方。</p>
-<h5 id="动机-1"><a href="#动机-1" class="headerlink" title="动机"></a>动机</h5><h5 id="做法-1"><a href="#做法-1" class="headerlink" title="做法"></a>做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line">// before</div><div class="line">class Account...</div><div class="line">	private AccountType _type;</div><div class="line">	private double _interestRate;//搬移到AccountType</div><div class="line"></div><div class="line">	double interestForAmount_days (double amount,int days) &#123;</div><div class="line">		return _interestRate * amount * days / 365;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">//after</div><div class="line">class AccountType...</div><div class="line">	private double _interestRate;</div><div class="line">	</div><div class="line">	void setInterestRate (double arg) &#123;</div><div class="line">		_interestRate = arg</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	double getInterestRate () &#123;</div><div class="line">		return _interestRate;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">class Account...	</div><div class="line">	private AccountType _type;</div><div class="line"></div><div class="line">	double interestForAmount_days (double amount,int days) &#123;</div><div class="line">		return getInterestRate() * amount * days / 365;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	private void setInterestRate(double arg)&#123;</div><div class="line">		_type.setInteresetRate(arg);</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	private double getInterestRate() &#123;</div><div class="line">		return _type.getInteresetRate();</div><div class="line">	&#125;</div></pre></td></tr></table></figure>
-<h4 id="Extract-Class-提炼类"><a href="#Extract-Class-提炼类" class="headerlink" title="Extract Class (提炼类)"></a>Extract Class (提炼类)</h4><p>某个类做了应该由两个类做的事。</p>
-<h5 id="动机-2"><a href="#动机-2" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>一个类应该是一个清楚的抽象，处理一些明确的责任。</li>
-<li>类的不断迭代，会导致体积不断增大，责任越来越多。</li>
-<li>如果某些数据和函数总是一起出现，某些数据经常同时变化甚至彼此依赖，这就表示你应该将它们分离出去</li>
-<li>如果一个类在子类化时出现分歧，则该类可能需要被分解。</li>
-</ul>
-<h5 id="做法-2"><a href="#做法-2" class="headerlink" title="做法"></a>做法</h5><ul>
-<li>新建类，将需要分离的代码拷贝过来。</li>
-<li>建立从旧类访问新类的连接关系。</li>
-<li>使用上面的Move Method 和 Move Field方法对新类进行重构。</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div></pre></td><td class="code"><pre><div class="line">// before</div><div class="line">class Person...</div><div class="line">	public String getName() &#123;</div><div class="line">		return _name;</div><div class="line">	&#125;</div><div class="line">	public String getTelephoneNumber() &#123;</div><div class="line">		return (&quot;(&quot; + _officeAreaCode + &quot;)&quot; + _officeNumber);</div><div class="line">	&#125;</div><div class="line">	String getOfficeAreaCode() &#123;</div><div class="line">		return _officeAreaCode;</div><div class="line">	&#125;</div><div class="line">	void setOfficeAreaCode(String arg) &#123;</div><div class="line">		_officeAreaCode = arg;</div><div class="line">	&#125;</div><div class="line">	String getOfficeNumber() &#123;</div><div class="line">		return _officeNumber;</div><div class="line">	&#125;</div><div class="line">	void setOfficeNumber(String arg) &#123;</div><div class="line">		_officeNumber = arg;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	private String _name;</div><div class="line">	private String _officeAreaCode;</div><div class="line">	private String _officeNumber;</div><div class="line">	</div><div class="line">//after</div><div class="line">class Person...</div><div class="line">	public String getName() &#123;</div><div class="line">		return _name;</div><div class="line">	&#125;</div><div class="line">	public String getTelephoneNumber() &#123;</div><div class="line">		return _officeTelephone.getTelephoneNumber();</div><div class="line">	&#125;</div><div class="line">	TelephoneNumber getOfficeTelephone() &#123;</div><div class="line">		return _officeTelephone;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	private String _name;</div><div class="line">	private TelephoneNumber _officeTelephone = new TelephoneNumber()</div><div class="line">	</div><div class="line">class TelephoneNumber...</div><div class="line">	public String getTelephoneNumber() &#123;</div><div class="line">		return (&quot;(&quot; + _officeAreaCode + &quot;)&quot; + _number);</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	String getAreaCode() &#123;</div><div class="line">		return _areaCode;</div><div class="line">	&#125;</div><div class="line">	void setAreaCode(String arg) &#123;</div><div class="line">		_areaCode = arg;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	String getNumber() &#123;</div><div class="line">		return _number;</div><div class="line">	&#125;</div><div class="line">	void setNumber(String arg) &#123;</div><div class="line">		_number = arg;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	private String _number;</div><div class="line">	private String _areaCode;</div></pre></td></tr></table></figure>
-<h4 id="Inline-Class-将类内联化"><a href="#Inline-Class-将类内联化" class="headerlink" title="Inline Class (将类内联化)"></a>Inline Class (将类内联化)</h4><p>某个类没有做太多事</p>
-<h5 id="动机-3"><a href="#动机-3" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>如果一个类不再承担足够的责任，不再有单独存在的理由，将它内联到另一个类中</li>
-</ul>
-<h5 id="做法-3"><a href="#做法-3" class="headerlink" title="做法"></a>做法</h5><ul>
-<li>Extract Class的逆过程</li>
-</ul>
-<h4 id="Hide-Delegate-隐藏委托关系"><a href="#Hide-Delegate-隐藏委托关系" class="headerlink" title="Hide Delegate(隐藏委托关系)"></a>Hide Delegate(隐藏委托关系)</h4><p>客户通过一个委托类来调用另外一个对象</p>
-<h5 id="动机-4"><a href="#动机-4" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>封装意味着每个对象应该尽量少的了解系统的其他部分，如果发生变化，需要了解这个变化的对象就会很少，这会使变化更容易</li>
-<li>针对上面的例子，如果委托关系发生变化，客户也得相应变化。</li>
-</ul>
-<h5 id="做法-4"><a href="#做法-4" class="headerlink" title="做法"></a>做法</h5><ul>
-<li>在委托类中加一个代理方法，将获取对象的逻辑留在这个类中，不要暴露给客户</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div></pre></td><td class="code"><pre><div class="line">// before</div><div class="line">class Person...</div><div class="line">	Department _department;</div><div class="line">	</div><div class="line">	public Department getDepartment() &#123;</div><div class="line">		return _department;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	public void setDepartment(Department arg) &#123;</div><div class="line">		_department = arg;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">class Department &#123;</div><div class="line">	private String _chargeCode;</div><div class="line">	private String _manager;</div><div class="line"></div><div class="line">	public Department(Person manager) &#123;</div><div class="line">		_manager = manager;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	public Person getManager() &#123;</div><div class="line">		return _manager;</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">//after</div><div class="line">class Person...	</div><div class="line">	Department _department;</div><div class="line">	</div><div class="line">	public void setDepartment(Department arg) &#123;</div><div class="line">		_department = arg;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	//新加一个代理方法</div><div class="line">	public Person getManager() &#123;</div><div class="line">		return _department.getManager();</div><div class="line">	&#125;</div><div class="line"></div><div class="line">class Department &#123;</div><div class="line">	private String _chargeCode;</div><div class="line">	private String _manager;</div><div class="line"></div><div class="line">	public Department(Person manager) &#123;</div><div class="line">		_manager = manager;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	public Person getManager() &#123;</div><div class="line">		return _manager;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h4 id="Remove-Middle-Man-移除中间人"><a href="#Remove-Middle-Man-移除中间人" class="headerlink" title="Remove Middle Man (移除中间人)"></a>Remove Middle Man (移除中间人)</h4><p>某个类做了过多的简单协议</p>
-<h5 id="动机-5"><a href="#动机-5" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>如果某个类的代理方法越来越多，变成了一个完全的中间人，此时你应该让客户直接调用委托对象本身</li>
-<li>Hide Delegate 和 Remove Middle Man是一对可逆的过程，代码总是在变化的，之前的修改可能在之后变得并不适用，不用说对不起，继续把这个问题修补好就行了。</li>
-</ul>
-<h5 id="做法-5"><a href="#做法-5" class="headerlink" title="做法"></a>做法</h5><ul>
-<li>和Hide Delegate过程刚好相反</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">//before</div><div class="line">class Person...	</div><div class="line">	Department _department;</div><div class="line"></div><div class="line">	public void setDepartment(Department arg) &#123;</div><div class="line">		_department = arg;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	public Person getManager() &#123;</div><div class="line">		return _department.getManager();</div><div class="line">	&#125;</div><div class="line"></div><div class="line">//after</div><div class="line">class Person...	</div><div class="line">	Department _department;</div><div class="line">	</div><div class="line">	public Department getDepartment() &#123;</div><div class="line">		return _department;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	public void setDepartment(Department arg) &#123;</div><div class="line">		_department = arg;</div><div class="line">	&#125;</div></pre></td></tr></table></figure>
-<h4 id="Introduce-Foreign-Method-引用外加函数"><a href="#Introduce-Foreign-Method-引用外加函数" class="headerlink" title="Introduce Foreign Method(引用外加函数)"></a>Introduce Foreign Method(引用外加函数)</h4><p>你需要为提供服务的类增加一个函数，但是你无法修改这个类</p>
-<h5 id="动机-6"><a href="#动机-6" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>需要为不能修改源代码的类增加函数</li>
-<li>如果这个函数只使用一次，可能没有必要，如果需要多次使用，则应该这么做。</li>
-</ul>
-<h5 id="做法-6"><a href="#做法-6" class="headerlink" title="做法"></a>做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">//before</div><div class="line">Date newStart = new Date (previousEnd.getYear(),previousEnd.getMonth(),previousEnd.getDay() + 1);</div><div class="line"></div><div class="line">//after</div><div class="line">Date newStart = nextDay(previousEnd);</div><div class="line"></div><div class="line">private static Date nextDay(Date arg)&#123;</div><div class="line">	return new Date(previousEnd.getYear(),previousEnd.getMonth(),previousEnd.getDay() + 1);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h4 id="Introduce-Local-Extension-引入本地扩展"><a href="#Introduce-Local-Extension-引入本地扩展" class="headerlink" title="Introduce Local Extension(引入本地扩展)"></a>Introduce Local Extension(引入本地扩展)</h4><p>你需要为服务类提供一些额外函数，但是你无法修改这个类。</p>
-<h5 id="动机-7"><a href="#动机-7" class="headerlink" title="动机"></a>动机</h5><ul>
-<li>如果需要加多个函数，则应该对这些函数做一个封装，而不是散落在各处</li>
-<li>子类是更好的扩展方式</li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1828,7 +1770,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">74</span>
+              <span class="site-state-item-count">75</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
