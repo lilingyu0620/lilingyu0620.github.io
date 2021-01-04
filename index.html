@@ -229,6 +229,124 @@
             
               
                 
+                <a class="post-title-link" href="/2021/01/04/OC方法调用慢查找流程底层逻辑探究/" itemprop="url">
+                  OC方法调用慢查找流程底层逻辑探究
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2021-01-04T13:54:47+08:00" content="2021-01-04">
+              2021-01-04
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2021/01/04/OC方法调用慢查找流程底层逻辑探究/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/01/04/OC方法调用慢查找流程底层逻辑探究/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>在<a href="http://llyblog.com/2021/01/03/OC方法调用快查找流程底层逻辑探究/" target="_blank" rel="noopener">OC方法调用快查找流程底层逻辑探究</a>中,我们分析了方法调用快查找的逻辑，所谓的快查找也就是对方法缓存列表的查找，如果没有命中缓存，则会进入到慢查找的逻辑，即对类的方法列表的查找，下面我们就来探究下OC底层是如何进行慢查找的。</p>
+<p>在快查找未命中的出口，有如下的代码逻辑:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div></pre></td><td class="code"><pre><div class="line">.macro JumpMiss</div><div class="line">.if $0 == GETIMP</div><div class="line">	b	LGetImpMiss</div><div class="line">.elseif $0 == NORMAL</div><div class="line">	b	__objc_msgSend_uncached</div><div class="line">.elseif $0 == LOOKUP</div><div class="line">	b	__objc_msgLookup_uncached</div><div class="line">.else</div><div class="line">.abort oops</div><div class="line">.endif</div><div class="line">.endmacro</div><div class="line"></div><div class="line">STATIC_ENTRY __objc_msgSend_uncached</div><div class="line">UNWIND __objc_msgSend_uncached, FrameWithNoSaves</div><div class="line"></div><div class="line">// THIS IS NOT A CALLABLE C FUNCTION</div><div class="line">// Out-of-band p16 is the class to search</div><div class="line">	</div><div class="line">MethodTableLookup</div><div class="line">TailCallFunctionPointer x17</div><div class="line"></div><div class="line">END_ENTRY __objc_msgSend_uncached</div><div class="line"></div><div class="line"></div><div class="line">STATIC_ENTRY __objc_msgLookup_uncached</div><div class="line">UNWIND __objc_msgLookup_uncached, FrameWithNoSaves</div><div class="line"></div><div class="line">// THIS IS NOT A CALLABLE C FUNCTION</div><div class="line">// Out-of-band p16 is the class to search</div><div class="line">	</div><div class="line">MethodTableLookup</div><div class="line">ret</div><div class="line"></div><div class="line">END_ENTRY __objc_msgLookup_uncached</div></pre></td></tr></table></figure>
+<p>共同指向了<em>MethodTableLookup</em>这个方法，我们来看看这个方法的实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div></pre></td><td class="code"><pre><div class="line">.macro MethodTableLookup</div><div class="line">	</div><div class="line">// push frame</div><div class="line">SignLR</div><div class="line">stp	fp, lr, [sp, #-16]!</div><div class="line">mov	fp, sp</div><div class="line"></div><div class="line">// save parameter registers: x0..x8, q0..q7</div><div class="line">sub	sp, sp, #(10*8 + 8*16)</div><div class="line">stp	q0, q1, [sp, #(0*16)]</div><div class="line">stp	q2, q3, [sp, #(2*16)]</div><div class="line">stp	q4, q5, [sp, #(4*16)]</div><div class="line">stp	q6, q7, [sp, #(6*16)]</div><div class="line">stp	x0, x1, [sp, #(8*16+0*8)]</div><div class="line">stp	x2, x3, [sp, #(8*16+2*8)]</div><div class="line">stp	x4, x5, [sp, #(8*16+4*8)]</div><div class="line">stp	x6, x7, [sp, #(8*16+6*8)]</div><div class="line">str	x8,     [sp, #(8*16+8*8)]</div><div class="line"></div><div class="line">// lookUpImpOrForward(obj, sel, cls, LOOKUP_INITIALIZE | LOOKUP_RESOLVER)</div><div class="line">// receiver and selector already in x0 and x1</div><div class="line">mov	x2, x16</div><div class="line">mov	x3, #3</div><div class="line">bl	_lookUpImpOrForward</div><div class="line"></div><div class="line">// IMP in x0</div><div class="line">mov	x17, x0</div><div class="line">	</div><div class="line">// restore registers and return</div><div class="line">ldp	q0, q1, [sp, #(0*16)]</div><div class="line">ldp	q2, q3, [sp, #(2*16)]</div><div class="line">ldp	q4, q5, [sp, #(4*16)]</div><div class="line">ldp	q6, q7, [sp, #(6*16)]</div><div class="line">ldp	x0, x1, [sp, #(8*16+0*8)]</div><div class="line">ldp	x2, x3, [sp, #(8*16+2*8)]</div><div class="line">ldp	x4, x5, [sp, #(8*16+4*8)]</div><div class="line">ldp	x6, x7, [sp, #(8*16+6*8)]</div><div class="line">ldr	x8,     [sp, #(8*16+8*8)]</div><div class="line"></div><div class="line">mov	sp, fp</div><div class="line">ldp	fp, lr, [sp], #16</div><div class="line">AuthenticateLR</div><div class="line"></div><div class="line">.endmacro</div></pre></td></tr></table></figure>
+<p>我们暂时忽略寄存器先关操作，主要看方法调用逻辑，可以看到，内部是调用了<em>_lookUpImpOrForward</em> 这个方法，看命名应该能猜到是跟imp的查找和转发逻辑相关，那我们找找这个函数的定义，发现在汇编代码中没有相关定义，我们去runtime原文件中看看，果然在<em>objc_runtime-new.mm</em>的6094行发现了该函数的定义：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div></pre></td><td class="code"><pre><div class="line">/***********************************************************************</div><div class="line">* lookUpImpOrForward.</div><div class="line">* The standard IMP lookup. </div><div class="line">* Without LOOKUP_INITIALIZE: tries to avoid +initialize (but sometimes fails)</div><div class="line">* Without LOOKUP_CACHE: skips optimistic unlocked lookup (but uses cache elsewhere)</div><div class="line">* Most callers should use LOOKUP_INITIALIZE and LOOKUP_CACHE</div><div class="line">* inst is an instance of cls or a subclass thereof, or nil if none is known. </div><div class="line">*   If cls is an un-initialized metaclass then a non-nil inst is faster.</div><div class="line">* May return _objc_msgForward_impcache. IMPs destined for external use </div><div class="line">*   must be converted to _objc_msgForward or _objc_msgForward_stret.</div><div class="line">*   If you don&apos;t want forwarding at all, use LOOKUP_NIL.</div><div class="line">**********************************************************************/</div><div class="line">IMP lookUpImpOrForward(id inst, SEL sel, Class cls, int behavior)</div><div class="line">&#123;</div><div class="line">    const IMP forward_imp = (IMP)_objc_msgForward_impcache; // 这里imp有一个默认值 是一个坑点 具体下面解释。</div><div class="line">    </div><div class="line">    IMP imp = nil;</div><div class="line">    Class curClass;</div><div class="line"></div><div class="line">    runtimeLock.assertUnlocked();</div><div class="line"></div><div class="line">    // Optimistic cache lookup // 再去缓存中查找一遍，防止多线程已调用</div><div class="line">    if (fastpath(behavior &amp; LOOKUP_CACHE)) &#123;</div><div class="line">        imp = cache_getImp(cls, sel);</div><div class="line">        if (imp) goto done_nolock;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    runtimeLock.lock(); // 线程安全哦</div><div class="line"></div><div class="line">    checkIsKnownClass(cls);</div><div class="line"></div><div class="line">	// 下面两个操作是对类的继承链,ro,rw等数据的递归实例化，比较重要，不过不在这个文章的讨论范围 先不进去细看。</div><div class="line">    if (slowpath(!cls-&gt;isRealized())) &#123;</div><div class="line">        cls = realizeClassMaybeSwiftAndLeaveLocked(cls, runtimeLock);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    if (slowpath((behavior &amp; LOOKUP_INITIALIZE) &amp;&amp; !cls-&gt;isInitialized())) &#123;</div><div class="line">        cls = initializeAndLeaveLocked(cls, inst, runtimeLock);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    runtimeLock.assertLocked();</div><div class="line">    curClass = cls;</div><div class="line"></div><div class="line">    for (unsigned attempts = unreasonableClassCount();;) &#123;</div><div class="line">        </div><div class="line">        // 直接能从当前类的方法列表中查找到 </div><div class="line">        Method meth = getMethodNoSuper_nolock(curClass, sel);</div><div class="line">        if (meth) &#123;</div><div class="line">            imp = meth-&gt;imp;</div><div class="line">            goto done;</div><div class="line">        &#125;</div><div class="line">			</div><div class="line">		  // 如果已经查找完当前类的父类中了 给imp一个默认值然后跳出本次递归 </div><div class="line">		  // 还没有查找则将当前类赋值为父类 下面继续对父类进行查找</div><div class="line">        if (slowpath((curClass = curClass-&gt;superclass) == nil)) &#123;</div><div class="line">            imp = forward_imp;</div><div class="line">            break;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        // 是否还在继承链中查找</div><div class="line">        if (slowpath(--attempts == 0)) &#123;</div><div class="line">            _objc_fatal(&quot;Memory corruption in class list.&quot;);</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        // 从父类的缓存中查找 curclass已经在上面被赋值为父类了</div><div class="line">        // 这个方法也是汇编实现 复用的快查找的逻辑</div><div class="line">        imp = cache_getImp(curClass, sel);</div><div class="line">        </div><div class="line">        // 父类缓存中没有找到 跳出本轮递归 下次又从父类的父类中开始查找</div><div class="line">        if (slowpath(imp == forward_imp)) &#123;</div><div class="line">           break;</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        // 找到了 goto done </div><div class="line">        if (fastpath(imp)) &#123;</div><div class="line">            goto done;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">	// 以上逻辑走完，说明imp还是没有找到，这个时候会做一个动态的方法决议，这部分属于方法转发逻辑，暂时不进去细看。</div><div class="line">    if (slowpath(behavior &amp; LOOKUP_RESOLVER)) &#123;</div><div class="line">        behavior ^= LOOKUP_RESOLVER;</div><div class="line">        return resolveMethod_locked(inst, sel, cls, behavior);</div><div class="line">    &#125;</div><div class="line"></div><div class="line"> done:</div><div class="line"> 	// imp找到了，则进行缓存，缓存逻辑参考之前的文章</div><div class="line">    log_and_fill_cache(cls, imp, sel, inst, curClass);</div><div class="line">    runtimeLock.unlock();</div><div class="line"> done_nolock:</div><div class="line">    if (slowpath((behavior &amp; LOOKUP_NIL) &amp;&amp; imp == forward_imp)) &#123;</div><div class="line">        return nil;</div><div class="line">    &#125;</div><div class="line">    return imp;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>以上源码就是慢查找的整个流程，整体是一个递归查找继承连的过程，其中还有一些小的点可以在扩展下。</p>
+<h5 id="扩展一-对当前方法列表的查找策略"><a href="#扩展一-对当前方法列表的查找策略" class="headerlink" title="扩展一 对当前方法列表的查找策略"></a>扩展一 对当前方法列表的查找策略</h5><p>我们可以深入看看代码逻辑</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div></pre></td><td class="code"><pre><div class="line">static method_t *</div><div class="line">getMethodNoSuper_nolock(Class cls, SEL sel)</div><div class="line">&#123;</div><div class="line">    runtimeLock.assertLocked();</div><div class="line"></div><div class="line">    ASSERT(cls-&gt;isRealized());</div><div class="line">    // fixme nil cls? </div><div class="line">    // fixme nil sel?</div><div class="line"></div><div class="line">	// 方法列表是多级的 </div><div class="line">    auto const methods = cls-&gt;data()-&gt;methods();</div><div class="line">    for (auto mlists = methods.beginLists(),</div><div class="line">              end = methods.endLists();</div><div class="line">         mlists != end;</div><div class="line">         ++mlists)</div><div class="line">    &#123;</div><div class="line">       method_t *m = search_method_list_inline(*mlists, sel);</div><div class="line">        if (m) return m;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    return nil;</div><div class="line">&#125;</div><div class="line"></div><div class="line">ALWAYS_INLINE static method_t *</div><div class="line">search_method_list_inline(const method_list_t *mlist, SEL sel)</div><div class="line">&#123;</div><div class="line">    int methodListIsFixedUp = mlist-&gt;isFixedUp();</div><div class="line">    int methodListHasExpectedSize = mlist-&gt;entsize() == sizeof(method_t);</div><div class="line">    </div><div class="line">    if (fastpath(methodListIsFixedUp &amp;&amp; methodListHasExpectedSize)) &#123;</div><div class="line">        // 对已排序数据进行查找 你想到了什么？？？</div><div class="line">        return findMethodInSortedMethodList(sel, mlist);</div><div class="line">    &#125; else &#123;</div><div class="line">        // Linear search of unsorted method list</div><div class="line">        for (auto&amp; meth : *mlist) &#123;</div><div class="line">            if (meth.name == sel) return &amp;meth;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    return nil;</div><div class="line">&#125;</div><div class="line"></div><div class="line">ALWAYS_INLINE static method_t *</div><div class="line">findMethodInSortedMethodList(SEL key, const method_list_t *list)</div><div class="line">&#123;</div><div class="line">    ASSERT(list);</div><div class="line"></div><div class="line">    const method_t * const first = &amp;list-&gt;first;</div><div class="line">    const method_t *base = first;</div><div class="line">    const method_t *probe;</div><div class="line">    uintptr_t keyValue = (uintptr_t)key;</div><div class="line">    uint32_t count;</div><div class="line">    </div><div class="line">    // 没有错 就是折半查找 不过apple的折半写的比较有逼格。</div><div class="line">    for (count = list-&gt;count; count != 0; count &gt;&gt;= 1) &#123;</div><div class="line">        probe = base + (count &gt;&gt; 1);</div><div class="line">        </div><div class="line">        uintptr_t probeValue = (uintptr_t)probe-&gt;name;</div><div class="line">        </div><div class="line">        // 如果已找到 则找到同名方法的第一个 这里说明列表内可能有方法名相同的方法，什么情况会出现呢？比如分类同名方法。说明一点，上层的结论在底层都是都代码依据的。</div><div class="line">        if (keyValue == probeValue) &#123;</div><div class="line">            while (probe &gt; first &amp;&amp; keyValue == (uintptr_t)probe[-1].name) &#123;</div><div class="line">                probe--;</div><div class="line">            &#125;</div><div class="line">            return (method_t *)probe;</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        if (keyValue &gt; probeValue) &#123;</div><div class="line">            base = probe + 1;</div><div class="line">            count--;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    return nil;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h5 id="扩展二-默认的imp"><a href="#扩展二-默认的imp" class="headerlink" title="扩展二 默认的imp"></a>扩展二 默认的imp</h5><p>在查找函数的最前面，有下面这行初始化代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">const IMP forward_imp = (IMP)_objc_msgForward_impcache;</div></pre></td></tr></table></figure>
+<p>这个默认的imp具体指向哪里，我们来全局查找一下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">STATIC_ENTRY __objc_msgForward_impcache</div><div class="line"></div><div class="line">// No stret specialization.</div><div class="line">b	__objc_msgForward</div><div class="line"></div><div class="line">END_ENTRY __objc_msgForward_impcache</div><div class="line"></div><div class="line"></div><div class="line">ENTRY __objc_msgForward</div><div class="line">// Non-stret version</div><div class="line"></div><div class="line">MI_GET_EXTERN(r12, __objc_forward_handler)</div><div class="line">ldr	r12, [r12]</div><div class="line">bx	r12</div><div class="line"></div><div class="line">END_ENTRY __objc_msgForward</div></pre></td></tr></table></figure>
+<p>在汇编代码中找到<em> __objc_forward_handler</em>这里就线索中断，这个猜测应该是一个回调函数，ok，那我们去源代码里面看看。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">// Default forward handler halts the process.</div><div class="line">__attribute__((noreturn, cold)) void</div><div class="line">objc_defaultForwardHandler(id self, SEL sel)</div><div class="line">&#123;</div><div class="line">    _objc_fatal(&quot;%c[%s %s]: unrecognized selector sent to instance %p &quot;</div><div class="line">                &quot;(no message forward handler is installed)&quot;, </div><div class="line">                class_isMetaClass(object_getClass(self)) ? &apos;+&apos; : &apos;-&apos;, </div><div class="line">                object_getClassName(self), sel_getName(sel), self);</div><div class="line">&#125;</div><div class="line">void *_objc_forward_handler = (void*)objc_defaultForwardHandler;</div></pre></td></tr></table></figure>
+<p>是不是看到了我们非常熟悉的一个错误信息，没有错，这个默认的imp就是找不到方法实现的错误处理函数。此时，坑点也就出现了，如果你使用<em>class_getMethodImplementation</em>去查找一个未实现的方法时，不会返回空，而是返回这个函数的地址，这里需要注意一下。</p>
+<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>以上就是整个慢查找的流程和其中的一些相关的知识点的梳理，除了整体流程的分析，上面的两个扩展也是比较重要的。其中还有一些比较重要的内容没有做深入分析，如<em>realizeClassMaybeSwiftAndLeaveLocked</em>和<em>initializeAndLeaveLocked</em>,留到以后再做分析，毕竟这篇文章主要分析慢查找的流程。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2021/01/04/从【nonpointer】探究OC类中isa指针/" itemprop="url">
                   从【nonpointer】探究OC类中isa指针
                 </a>
@@ -1393,114 +1511,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2020/05/08/直播项目总结/" itemprop="url">
-                  直播项目总结
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2020-05-08T20:04:34+08:00" content="2020-05-08">
-              2020-05-08
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2020/05/08/直播项目总结/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2020/05/08/直播项目总结/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h4 id="iOS音视频播放总结"><a href="#iOS音视频播放总结" class="headerlink" title="iOS音视频播放总结"></a>iOS音视频播放总结</h4><p>iOS音视频播放器主要分系统播放器和三方播放器，系统播放器以AVPlayer应用最为方便和广泛，三方播放器以IJK+FFMPEG使用作为常见。在直播项目中，很少有使用AVPlayer做拉流播放器的，因为AVPlayer不支持常见的推流协议RTMP，虽然AVPlayer支持苹果自家的HLS协议，但该协议在直播时延迟很高，一般不采用，只会在点播的时候采用。直播中常用的则是IJK+FFMPEG作为播放器。实际上FFMPEG本身并不具备播放视频的能力，它是一个音视频的编解码器，在iOS一个典型的播放流程中，会先使用FFMPEG对音视频进行解码，音频数据被解码为PCM，视频数据被解码为NSData(luma,chromaB,chromaR),解码数据被保存在缓冲区，会有一个音视频同步器去决定当前需要播放的数据，将音频数据丢给音频播放器（一般是AUGraph+AudioUnit）,视频数据丢给视频播放器（OPENGLES）。</p>
-<p>RTMP是一种直播流的传输协议，主要有BaseHeader,MessageHeader,ExtendedTimestamp和ChunkData四部分组成，其中BaseHeader中的type又决定了MessageHeader的类型，主要有4类。Type = 0时是完整数据，说明该数据帧是IDR或者I帧数据，应该是一个Gop的第一帧。其他type则代表p,b帧等数据。ExtendedTimestamp是扩展时间戳，只会在MessageHeader存储不下时间戳时才会有数据。扩展时间戳里面存的是完整的绝对时间，而MessageHeader里面存的是减去时间戳或时间差值。ChunkData里面存的就是被编码的音视频数据了，H.264使用NAL Uint来标示具体的一帧数据，可能是SPS（序列参数集），PPS（图像参数集）I，P，B帧等。一系列的NAL Uint组成一个GoP,当摄像头静止时，GoP可能会很长，而在运动中时，GoP应该尽量短，保证视频数据完整性。在提高直播秒开率上面，我们也需要从GoP上去做文章，如果GoP太长，当前连接的用户可能因为错过I帧而导致长时间等待的情况，解决这个问题的一种方案是服务器对上一个GoP做一个缓冲，有新用户连接时先推这个缓存的GoP,不过这种方案不太适合对延迟很敏感的场景，其他方案就是怎么去合适的设置GoP之间的时间间隔。</p>
-<p>一个完整的音视频播放器应该有以下几个模块：文件存取模块，解码模块，音视频同步模块，音频播放模块，视频播放模块，完整播放器模块（对以上模块的封装）。其中，文件存取主要用来拉取数据和缓存数据，比如我们如果使用硬解的话，就需要先使用Http协议中的Get方法拉取到数据，然后对数据进行解析和分发，其中如果我们还想实现边播边缓存的功能，还需要将数据缓存到本地。解码模块主要对数据进行解码，一般会新启一个解码线程，解码线程会是一个常驻线程，解码器内部会缓存以下数据：已解码音频列表，已解码视频列表，当前已解码未播放总时长，当已解码未播放总时长大于解码器的最大阈值，解码线程会被阻塞暂停解码以节约资源，当已解码未播放时长小于了最小阈值，解码器会抛出卡顿。音视频同步模块实际上控制了整个播放器的播放流程，比较常见的同步方案是使用音频的时间戳去同步视频的时间戳，因为人对音频比对视频更敏感，既先播放音频，然后用音频的当前进度从视频缓存列表中找到合适的帧进行播放。如果视频列表中有旧数据，还需要将旧数据移除，如果没有合适的数据，则继续展示上一帧的数据。音频播放模块负责播放音频，这里解码出来的就是PCM数据，每一个PCM的采样默认是2个字节的大小，音频通常还会有多个声道，我们需要计算出一个packet的总的字节数，才能够正常的播放数据，按一个packet里面只有一帧，每一帧里面有一个双声道来计算的话，一个packet的size就是4字节32bit。还有一点需要注意的是音频的数据存放有2种方式，既线性存放和交叉存放。线性存放时，每一个声道的数据是分开的，都只有2个字节。当交叉存放时，两个声道的数据会合并到一个声道，该声道的字节数会变成4个字节。视频播放模块主要负责视频数据的播放，一帧视频数据也就是一张图片，如果是使用的硬件解码，我们可以直接将编码数据转成CVImageBuffer,如果是使用FFMPEG解码，我们还需要手动的将YUV数据转成CVImageBuffer,然后丢给OpenGLES去渲染。</p>
-<h4 id="播放器优化部分总结"><a href="#播放器优化部分总结" class="headerlink" title="播放器优化部分总结"></a>播放器优化部分总结</h4><h5 id="秒开优化"><a href="#秒开优化" class="headerlink" title="秒开优化"></a>秒开优化</h5><h5 id="卡顿优化"><a href="#卡顿优化" class="headerlink" title="卡顿优化"></a>卡顿优化</h5><h4 id="对直播间整体架构的思考"><a href="#对直播间整体架构的思考" class="headerlink" title="对直播间整体架构的思考"></a>对直播间整体架构的思考</h4><h5 id="视图层级"><a href="#视图层级" class="headerlink" title="视图层级"></a>视图层级</h5><p>根据具体业务可以拆分出不同的业务层视图，比如常驻功能层，礼物层，弹幕层，活动层等。层的优先级可以预先和运用，产品约定好，根据业务重要程度确定优先级，保证高优的业务在上层，避免视图叠加导致的遮挡。<br>同层视图之间则应避免叠加，每层可按实践业务情况进行功能区的划分，保证各功能区互不干扰，各司其职。<br>同时，我们要保证各层的点击事件不被其他层影响，在处理完自己的事件后，应将该事件抛给下一层。<br>以上层级拆分的好处是如果有新的视图需要被添加到直播间时，可以很方便的添加到正确的坐标上。维护行和扩展性都比较好。</p>
-<h5 id="弹窗"><a href="#弹窗" class="headerlink" title="弹窗"></a>弹窗</h5><p>弹窗的触发时机一直是比较头疼的问题，特别是有多个弹窗需要同时展示时，处理不好的话就会出现弹窗叠加的现象，影响用户体验。这里借鉴线程的调度策略，思考出一种弹窗展示逻辑，使用队列和优先级对弹窗进行管理，比如首页弹窗队列，直播间弹窗队列等，每个弹窗又会有（高中低）不同的优先级和一些依赖关系等（比如需要登录）。这个方案的难点在于调度这些队列的时机和方式，这个我们可以参考iOS的runloop的实现机制，每一种队列可以抽象为一种mode,当程序在直播间时，运行在直播间的mode下，既只对直播间的队列进行调度，当程序在首页时，运行在首页mode下，只对首页的队列进行调度，如果是全局的弹窗，则可以添加到这两种队列中，当然全局弹窗还需要在展示完成后对可能存在其他队列中的相同对象进行移除，这样既能保证该弹窗不会被阻塞，又解决了可能重复弹出的问题。</p>
-<h5 id="直播间模块通信"><a href="#直播间模块通信" class="headerlink" title="直播间模块通信"></a>直播间模块通信</h5><p>由于直播间相关模块众多，代码肯定不可能都堆放在一起，会按业务模块或者功能模块进行封装，这时模块之间的通信就是一个问题，如果靠block和delegate去传递的话，层级可能会非常深，导致传递的链条会很长，出现大量重复代码。解决这个问题我们可以反向去思考，模块间的相互调用实际上就是获取其他模块的某种能力，那么我们可以把常用的一些能力（发送弹幕，送礼，点赞等）抽象为一种服务（server），然后在调度程序里面注册这些服务，同时我们需要去维护一个服务列表，其他模块如果需要某种服务，只需要通过调度程序添加这个服务到服务列表既可，对服务列表的调度会在调度程序内部去进行，不需要暴露给外界。这种方案的好处是解耦了各业务模块的依赖，简化了模块间的调用关系，方便代码的扩展。坏处是代码调试的关系链被断掉了，需要花更多的时间去理解代码逻辑和进行代码调试。</p>
-<h5 id="直播间大礼物播放方案"><a href="#直播间大礼物播放方案" class="headerlink" title="直播间大礼物播放方案"></a>直播间大礼物播放方案</h5><p>礼物系统是直播的重要部分，也是可能出现性能瓶颈的一个点，选取好的礼物播放方案对用户体验的提升有关键作用。礼物播放方案的优劣主要从cpu，memory和礼物资源大小这三方面去评价。目前比较常用的方案中直接使用序列帧去播放实现最简单，性能消耗和礼物资源也是最大，不是最优解。YYUED出品的SVGA使用Protobuf对数据进行编解码，所以礼物资源本身很小，礼物展示使用CALayer+多线程异步图片解码的方案使得cpu和memory的消耗都很小，是比较理想的实现方案，不过svga礼物对粒子的支持不太好。还有一种综合实力最优的方案是使用视频进行礼物的展示，该方案性能较好，支持多种礼物类型，礼物文件也很小，实现也不太复杂（基于GPUImage）。</p>
-<h5 id="直播间性能监控"><a href="#直播间性能监控" class="headerlink" title="直播间性能监控"></a>直播间性能监控</h5><p>直播间性能主要从推拉流播放器，设备性能指标和网络情况三方面来考量。播放器主要关注码率，延迟，卡顿，分辨率和帧率信息。设备性能有cpu使用率，内存情况，fps，电量几个方面。网络情况有ping，metrics和带宽。对于出现性能问题的设备，我们就可以根据上面这些指标的数据去定位可能的性能瓶颈，比如对于较低端的设备，可以适当降低推拉流的码率，帧率和分辨率，首先保证数据能正常传输。当设备性能出现瓶颈时，我们也可以根据设备出一套适配策略，将直播间比较消耗性能的模块做“降级”处理,比如减小礼物资源的分辨率和帧率，阉割部分直播间特效。对于出现网络瓶颈的用户，我们可以建议切换网络等。有一点要明确的是我们获取这些性能指标数据的作用就是为了更好的为用户服务，当用户有反馈性能问题的时候，我们能够及时的帮助定位和解决问题，增加用户好感度和粘性。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1546,7 +1556,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">73</span>
+              <span class="site-state-item-count">74</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

@@ -229,6 +229,114 @@
             
               
                 
+                <a class="post-title-link" href="/2020/05/08/直播项目总结/" itemprop="url">
+                  直播项目总结
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2020-05-08T20:04:34+08:00" content="2020-05-08">
+              2020-05-08
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2020/05/08/直播项目总结/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2020/05/08/直播项目总结/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h4 id="iOS音视频播放总结"><a href="#iOS音视频播放总结" class="headerlink" title="iOS音视频播放总结"></a>iOS音视频播放总结</h4><p>iOS音视频播放器主要分系统播放器和三方播放器，系统播放器以AVPlayer应用最为方便和广泛，三方播放器以IJK+FFMPEG使用作为常见。在直播项目中，很少有使用AVPlayer做拉流播放器的，因为AVPlayer不支持常见的推流协议RTMP，虽然AVPlayer支持苹果自家的HLS协议，但该协议在直播时延迟很高，一般不采用，只会在点播的时候采用。直播中常用的则是IJK+FFMPEG作为播放器。实际上FFMPEG本身并不具备播放视频的能力，它是一个音视频的编解码器，在iOS一个典型的播放流程中，会先使用FFMPEG对音视频进行解码，音频数据被解码为PCM，视频数据被解码为NSData(luma,chromaB,chromaR),解码数据被保存在缓冲区，会有一个音视频同步器去决定当前需要播放的数据，将音频数据丢给音频播放器（一般是AUGraph+AudioUnit）,视频数据丢给视频播放器（OPENGLES）。</p>
+<p>RTMP是一种直播流的传输协议，主要有BaseHeader,MessageHeader,ExtendedTimestamp和ChunkData四部分组成，其中BaseHeader中的type又决定了MessageHeader的类型，主要有4类。Type = 0时是完整数据，说明该数据帧是IDR或者I帧数据，应该是一个Gop的第一帧。其他type则代表p,b帧等数据。ExtendedTimestamp是扩展时间戳，只会在MessageHeader存储不下时间戳时才会有数据。扩展时间戳里面存的是完整的绝对时间，而MessageHeader里面存的是减去时间戳或时间差值。ChunkData里面存的就是被编码的音视频数据了，H.264使用NAL Uint来标示具体的一帧数据，可能是SPS（序列参数集），PPS（图像参数集）I，P，B帧等。一系列的NAL Uint组成一个GoP,当摄像头静止时，GoP可能会很长，而在运动中时，GoP应该尽量短，保证视频数据完整性。在提高直播秒开率上面，我们也需要从GoP上去做文章，如果GoP太长，当前连接的用户可能因为错过I帧而导致长时间等待的情况，解决这个问题的一种方案是服务器对上一个GoP做一个缓冲，有新用户连接时先推这个缓存的GoP,不过这种方案不太适合对延迟很敏感的场景，其他方案就是怎么去合适的设置GoP之间的时间间隔。</p>
+<p>一个完整的音视频播放器应该有以下几个模块：文件存取模块，解码模块，音视频同步模块，音频播放模块，视频播放模块，完整播放器模块（对以上模块的封装）。其中，文件存取主要用来拉取数据和缓存数据，比如我们如果使用硬解的话，就需要先使用Http协议中的Get方法拉取到数据，然后对数据进行解析和分发，其中如果我们还想实现边播边缓存的功能，还需要将数据缓存到本地。解码模块主要对数据进行解码，一般会新启一个解码线程，解码线程会是一个常驻线程，解码器内部会缓存以下数据：已解码音频列表，已解码视频列表，当前已解码未播放总时长，当已解码未播放总时长大于解码器的最大阈值，解码线程会被阻塞暂停解码以节约资源，当已解码未播放时长小于了最小阈值，解码器会抛出卡顿。音视频同步模块实际上控制了整个播放器的播放流程，比较常见的同步方案是使用音频的时间戳去同步视频的时间戳，因为人对音频比对视频更敏感，既先播放音频，然后用音频的当前进度从视频缓存列表中找到合适的帧进行播放。如果视频列表中有旧数据，还需要将旧数据移除，如果没有合适的数据，则继续展示上一帧的数据。音频播放模块负责播放音频，这里解码出来的就是PCM数据，每一个PCM的采样默认是2个字节的大小，音频通常还会有多个声道，我们需要计算出一个packet的总的字节数，才能够正常的播放数据，按一个packet里面只有一帧，每一帧里面有一个双声道来计算的话，一个packet的size就是4字节32bit。还有一点需要注意的是音频的数据存放有2种方式，既线性存放和交叉存放。线性存放时，每一个声道的数据是分开的，都只有2个字节。当交叉存放时，两个声道的数据会合并到一个声道，该声道的字节数会变成4个字节。视频播放模块主要负责视频数据的播放，一帧视频数据也就是一张图片，如果是使用的硬件解码，我们可以直接将编码数据转成CVImageBuffer,如果是使用FFMPEG解码，我们还需要手动的将YUV数据转成CVImageBuffer,然后丢给OpenGLES去渲染。</p>
+<h4 id="播放器优化部分总结"><a href="#播放器优化部分总结" class="headerlink" title="播放器优化部分总结"></a>播放器优化部分总结</h4><h5 id="秒开优化"><a href="#秒开优化" class="headerlink" title="秒开优化"></a>秒开优化</h5><h5 id="卡顿优化"><a href="#卡顿优化" class="headerlink" title="卡顿优化"></a>卡顿优化</h5><h4 id="对直播间整体架构的思考"><a href="#对直播间整体架构的思考" class="headerlink" title="对直播间整体架构的思考"></a>对直播间整体架构的思考</h4><h5 id="视图层级"><a href="#视图层级" class="headerlink" title="视图层级"></a>视图层级</h5><p>根据具体业务可以拆分出不同的业务层视图，比如常驻功能层，礼物层，弹幕层，活动层等。层的优先级可以预先和运用，产品约定好，根据业务重要程度确定优先级，保证高优的业务在上层，避免视图叠加导致的遮挡。<br>同层视图之间则应避免叠加，每层可按实践业务情况进行功能区的划分，保证各功能区互不干扰，各司其职。<br>同时，我们要保证各层的点击事件不被其他层影响，在处理完自己的事件后，应将该事件抛给下一层。<br>以上层级拆分的好处是如果有新的视图需要被添加到直播间时，可以很方便的添加到正确的坐标上。维护行和扩展性都比较好。</p>
+<h5 id="弹窗"><a href="#弹窗" class="headerlink" title="弹窗"></a>弹窗</h5><p>弹窗的触发时机一直是比较头疼的问题，特别是有多个弹窗需要同时展示时，处理不好的话就会出现弹窗叠加的现象，影响用户体验。这里借鉴线程的调度策略，思考出一种弹窗展示逻辑，使用队列和优先级对弹窗进行管理，比如首页弹窗队列，直播间弹窗队列等，每个弹窗又会有（高中低）不同的优先级和一些依赖关系等（比如需要登录）。这个方案的难点在于调度这些队列的时机和方式，这个我们可以参考iOS的runloop的实现机制，每一种队列可以抽象为一种mode,当程序在直播间时，运行在直播间的mode下，既只对直播间的队列进行调度，当程序在首页时，运行在首页mode下，只对首页的队列进行调度，如果是全局的弹窗，则可以添加到这两种队列中，当然全局弹窗还需要在展示完成后对可能存在其他队列中的相同对象进行移除，这样既能保证该弹窗不会被阻塞，又解决了可能重复弹出的问题。</p>
+<h5 id="直播间模块通信"><a href="#直播间模块通信" class="headerlink" title="直播间模块通信"></a>直播间模块通信</h5><p>由于直播间相关模块众多，代码肯定不可能都堆放在一起，会按业务模块或者功能模块进行封装，这时模块之间的通信就是一个问题，如果靠block和delegate去传递的话，层级可能会非常深，导致传递的链条会很长，出现大量重复代码。解决这个问题我们可以反向去思考，模块间的相互调用实际上就是获取其他模块的某种能力，那么我们可以把常用的一些能力（发送弹幕，送礼，点赞等）抽象为一种服务（server），然后在调度程序里面注册这些服务，同时我们需要去维护一个服务列表，其他模块如果需要某种服务，只需要通过调度程序添加这个服务到服务列表既可，对服务列表的调度会在调度程序内部去进行，不需要暴露给外界。这种方案的好处是解耦了各业务模块的依赖，简化了模块间的调用关系，方便代码的扩展。坏处是代码调试的关系链被断掉了，需要花更多的时间去理解代码逻辑和进行代码调试。</p>
+<h5 id="直播间大礼物播放方案"><a href="#直播间大礼物播放方案" class="headerlink" title="直播间大礼物播放方案"></a>直播间大礼物播放方案</h5><p>礼物系统是直播的重要部分，也是可能出现性能瓶颈的一个点，选取好的礼物播放方案对用户体验的提升有关键作用。礼物播放方案的优劣主要从cpu，memory和礼物资源大小这三方面去评价。目前比较常用的方案中直接使用序列帧去播放实现最简单，性能消耗和礼物资源也是最大，不是最优解。YYUED出品的SVGA使用Protobuf对数据进行编解码，所以礼物资源本身很小，礼物展示使用CALayer+多线程异步图片解码的方案使得cpu和memory的消耗都很小，是比较理想的实现方案，不过svga礼物对粒子的支持不太好。还有一种综合实力最优的方案是使用视频进行礼物的展示，该方案性能较好，支持多种礼物类型，礼物文件也很小，实现也不太复杂（基于GPUImage）。</p>
+<h5 id="直播间性能监控"><a href="#直播间性能监控" class="headerlink" title="直播间性能监控"></a>直播间性能监控</h5><p>直播间性能主要从推拉流播放器，设备性能指标和网络情况三方面来考量。播放器主要关注码率，延迟，卡顿，分辨率和帧率信息。设备性能有cpu使用率，内存情况，fps，电量几个方面。网络情况有ping，metrics和带宽。对于出现性能问题的设备，我们就可以根据上面这些指标的数据去定位可能的性能瓶颈，比如对于较低端的设备，可以适当降低推拉流的码率，帧率和分辨率，首先保证数据能正常传输。当设备性能出现瓶颈时，我们也可以根据设备出一套适配策略，将直播间比较消耗性能的模块做“降级”处理,比如减小礼物资源的分辨率和帧率，阉割部分直播间特效。对于出现网络瓶颈的用户，我们可以建议切换网络等。有一点要明确的是我们获取这些性能指标数据的作用就是为了更好的为用户服务，当用户有反馈性能问题的时候，我们能够及时的帮助定位和解决问题，增加用户好感度和粘性。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2020/05/06/MBP搭建本地Https服务器实现ipa文件的下载/" itemprop="url">
                   MBP搭建本地Https服务器实现ipa文件的下载
                 </a>
@@ -1675,158 +1783,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2019/11/04/《重构-改善既有代码的设计》系列读书笔记（二、函数的重构）/" itemprop="url">
-                  《重构-改善既有代码的设计》系列读书笔记（二、函数的重构）
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2019-11-04T21:41:04+08:00" content="2019-11-04">
-              2019-11-04
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2019/11/04/《重构-改善既有代码的设计》系列读书笔记（二、函数的重构）/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2019/11/04/《重构-改善既有代码的设计》系列读书笔记（二、函数的重构）/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="重新组织函数"><a href="#重新组织函数" class="headerlink" title="重新组织函数"></a>重新组织函数</h3><p>过长的函数会带来一系列问题，所以想办法重构吧。</p>
-<h4 id="Extract-Method-提炼函数"><a href="#Extract-Method-提炼函数" class="headerlink" title="Extract Method(提炼函数)"></a>Extract Method(提炼函数)</h4><h5 id="提炼动机"><a href="#提炼动机" class="headerlink" title="提炼动机"></a>提炼动机</h5><ul>
-<li>如果函数内部有一段代码需要使用注释来解释，请把这段代码提炼为一个新的函数</li>
-<li>函数粒度越小，被复用的机会就越大</li>
-<li>如果一个函数内部调用的都是小颗粒函数，该函数阅读起来会更方便</li>
-<li>小颗粒函数的重写会更容易</li>
-<li>小颗粒函数需要精准的命名</li>
-<li>函数名的长度不是问题，和函数本体之间的语义距离才是，应该做到见字如面</li>
-</ul>
-<h5 id="具体做法"><a href="#具体做法" class="headerlink" title="具体做法"></a>具体做法</h5><ul>
-<li>创建一个新函数，以它做什么而不是怎么做来命名，如果你想不出一个合适的名称时，先不要提炼</li>
-<li>拷贝代码到新函数</li>
-<li>检查新函数是否引入作用域限于源函数的变量</li>
-<li>检查临时变量（是否引入，是否修改）</li>
-<li>替换新函数，测试新函数</li>
-</ul>
-<h4 id="Inline-Method-内联函数"><a href="#Inline-Method-内联函数" class="headerlink" title="Inline Method(内联函数)"></a>Inline Method(内联函数)</h4><h5 id="提炼动机-1"><a href="#提炼动机-1" class="headerlink" title="提炼动机"></a>提炼动机</h5><ul>
-<li>将函数调用替换成函数本身，如果函数本身已经清楚易懂的话</li>
-<li>间接性可能带来帮助，但非必要间接性总是让人不舒服</li>
-<li>如果你需要重构一个函数，该函数内部又调用了一组不太合理的函数，可以将这些函数先内联到该函数中，再进行重构。</li>
-</ul>
-<h4 id="Inline-Temp-内联临时变量"><a href="#Inline-Temp-内联临时变量" class="headerlink" title="Inline Temp(内联临时变量)"></a>Inline Temp(内联临时变量)</h4><h5 id="提炼动机-2"><a href="#提炼动机-2" class="headerlink" title="提炼动机"></a>提炼动机</h5><ul>
-<li>某个临时变量被赋予某个函数调用的返回值</li>
-</ul>
-<h5 id="具体做法-1"><a href="#具体做法-1" class="headerlink" title="具体做法"></a>具体做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">// before inline</div><div class="line"></div><div class="line">double basePrice = anOrder.basePrice();</div><div class="line">return (basePrice &gt; 1000)</div><div class="line"></div><div class="line">// after inline</div><div class="line"></div><div class="line">return (anOrder.basePrice() &gt; 1000)</div></pre></td></tr></table></figure>
-<h4 id="Replace-Temp-with-Query-以查询取代临时变量"><a href="#Replace-Temp-with-Query-以查询取代临时变量" class="headerlink" title="Replace Temp with Query(以查询取代临时变量)"></a>Replace Temp with Query(以查询取代临时变量)</h4><p>当函数中的临时变量保存了一组表达式的值，请将这段表达式代码提炼为一个新的函数。</p>
-<h5 id="提炼动机-3"><a href="#提炼动机-3" class="headerlink" title="提炼动机"></a>提炼动机</h5><ul>
-<li>临时变量存储表达式的方式会使你的代码越来越长，因为这段代码是不能被复用的。</li>
-</ul>
-<h5 id="具体做法-2"><a href="#具体做法-2" class="headerlink" title="具体做法"></a>具体做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">// before </div><div class="line"></div><div class="line">double getPrice() &#123;</div><div class="line">	int basePrice = _quantity * _itemPrice;</div><div class="line">	double discountFactor;</div><div class="line">	if (basePrice &gt; 1000) discountFactor = 0.95;</div><div class="line">	else discountFactor = 0.98;</div><div class="line">	return basePrice * discountFactor;</div><div class="line">&#125;</div><div class="line"></div><div class="line">// after</div><div class="line"></div><div class="line">private int basePrice() &#123;</div><div class="line">	return _quantity * _itemPrice;</div><div class="line">&#125;</div><div class="line"></div><div class="line">private double discountFactor() &#123;</div><div class="line">	if (basePrice() &gt; 1000) return 0.95;</div><div class="line">	else return 0.98;</div><div class="line">&#125;</div><div class="line"></div><div class="line">double getPrice() &#123;</div><div class="line">	return basePrice() * discountFactor();</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>重构有啥用啊，真。。。真香。。。</p>
-<h4 id="Introduce-Explaining-Variable-引用解释性变量"><a href="#Introduce-Explaining-Variable-引用解释性变量" class="headerlink" title="Introduce Explaining Variable(引用解释性变量)"></a>Introduce Explaining Variable(引用解释性变量)</h4><p>将复杂表达式中的某部分用临时变量来解释</p>
-<h5 id="提炼动机-4"><a href="#提炼动机-4" class="headerlink" title="提炼动机"></a>提炼动机</h5><ul>
-<li>复杂的表达式难以阅读，临时变量可以帮助理解，特别是在条件判断表达式上。</li>
-</ul>
-<h5 id="具体做法-3"><a href="#具体做法-3" class="headerlink" title="具体做法"></a>具体做法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">// before</div><div class="line"></div><div class="line">double price() &#123;</div><div class="line">	return _quantity * _itemPrice -</div><div class="line">			Math.max(0,_quantity - 500) * _itemPrice * 0.05 +</div><div class="line">			Math.min(_quantity * _itemPrice * 0.1, 100.0);</div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line">// after</div><div class="line"></div><div class="line">double price() &#123;</div><div class="line">	//可以提炼为方法,看复用情况</div><div class="line">	final double basePrice = _quantity * _itemPrice;</div><div class="line">	final double quantityDiscount = Math.max(0,_quantity - 500) * _itemPrice * 0.05;</div><div class="line">	final double shipping = Math.min(basePrice * 0.1, 100.0);</div><div class="line">	return basePrice - quantityDiscount + shipping;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h4 id="Split-Temporary-Variable-分解临时变量"><a href="#Split-Temporary-Variable-分解临时变量" class="headerlink" title="Split Temporary Variable(分解临时变量)"></a>Split Temporary Variable(分解临时变量)</h4><p>临时变量被赋值多次，但它既不是循环变量，也不是计算结果收集变量。</p>
-<h5 id="提炼动机-5"><a href="#提炼动机-5" class="headerlink" title="提炼动机"></a>提炼动机</h5><ul>
-<li>临时变量被赋值多次，说明它承担了多个责任，应该被替换为多个临时变量，每个临时变量只承担一个责任。</li>
-<li>一个临时变量承担多件事情，会令代码阅读者懵圈。</li>
-</ul>
-<h4 id="Remove-Assignments-to-Parameters-移除对参数的赋值"><a href="#Remove-Assignments-to-Parameters-移除对参数的赋值" class="headerlink" title="Remove Assignments to Parameters(移除对参数的赋值)"></a>Remove Assignments to Parameters(移除对参数的赋值)</h4><p>在引用传递语言中，会改变该参数的值，在值传递语言中，不会影响外部继续使用该参数。</p>
-<h4 id="Replace-Method-with-Method-Object-以函数对象取代函数"><a href="#Replace-Method-with-Method-Object-以函数对象取代函数" class="headerlink" title="Replace Method with Method Object(以函数对象取代函数)"></a>Replace Method with Method Object(以函数对象取代函数)</h4><p>函数过大时，对其中局部变量的使用使你无法提炼出较小的函数</p>
-<h5 id="提炼动机-6"><a href="#提炼动机-6" class="headerlink" title="提炼动机"></a>提炼动机</h5><ul>
-<li>局部变量太多，无法一一提取。</li>
-<li>当使用对象时，所有局部变量就会成为成员变量，方便拆解</li>
-</ul>
-<h5 id="具体做法-4"><a href="#具体做法-4" class="headerlink" title="具体做法"></a>具体做法</h5><ul>
-<li>新建一个类，将需要的局部变量申明为对象的属性</li>
-<li>在新类建立一个构造方法，参数为所有需要的局部变量</li>
-<li>将源方法的实现拷贝过来，然后使用新建类替换源方法</li>
-</ul>
-<h4 id="Substitute-Algorithm-替换算法"><a href="#Substitute-Algorithm-替换算法" class="headerlink" title="Substitute Algorithm(替换算法)"></a>Substitute Algorithm(替换算法)</h4>
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1872,7 +1828,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">73</span>
+              <span class="site-state-item-count">74</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

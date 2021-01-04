@@ -1,0 +1,582 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="在OC方法调用快查找流程底层逻辑探究中,我们分析了方法调用快查找的逻辑，所谓的快查找也就是对方法缓存列表的查找，如果没有命中缓存，则会进入到慢查找的逻辑，即对类的方法列表的查找，下面我们就来探究下OC底层是如何进行慢查找的。 在快查找未命中的出口，有如下的代码逻辑: 12345678910111213141516171819202122232425262728293031323334.macro">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OC方法调用慢查找流程底层逻辑探究">
+<meta property="og:url" content="http://yoursite.com/2021/01/04/OC方法调用慢查找流程底层逻辑探究/index.html">
+<meta property="og:site_name" content="lly&#39;s Blog">
+<meta property="og:description" content="在OC方法调用快查找流程底层逻辑探究中,我们分析了方法调用快查找的逻辑，所谓的快查找也就是对方法缓存列表的查找，如果没有命中缓存，则会进入到慢查找的逻辑，即对类的方法列表的查找，下面我们就来探究下OC底层是如何进行慢查找的。 在快查找未命中的出口，有如下的代码逻辑: 12345678910111213141516171819202122232425262728293031323334.macro">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2021-01-04T05:55:32.701Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="OC方法调用慢查找流程底层逻辑探究">
+<meta name="twitter:description" content="在OC方法调用快查找流程底层逻辑探究中,我们分析了方法调用快查找的逻辑，所谓的快查找也就是对方法缓存列表的查找，如果没有命中缓存，则会进入到慢查找的逻辑，即对类的方法列表的查找，下面我们就来探究下OC底层是如何进行慢查找的。 在快查找未命中的出口，有如下的代码逻辑: 12345678910111213141516171819202122232425262728293031323334.macro">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2021/01/04/OC方法调用慢查找流程底层逻辑探究/"/>
+
+  <title> OC方法调用慢查找流程底层逻辑探究 | lly's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">lly's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">用心记录点滴</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                OC方法调用慢查找流程底层逻辑探究
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2021-01-04T13:54:47+08:00" content="2021-01-04">
+              2021-01-04
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2021/01/04/OC方法调用慢查找流程底层逻辑探究/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/01/04/OC方法调用慢查找流程底层逻辑探究/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>在<a href="http://llyblog.com/2021/01/03/OC方法调用快查找流程底层逻辑探究/" target="_blank" rel="noopener">OC方法调用快查找流程底层逻辑探究</a>中,我们分析了方法调用快查找的逻辑，所谓的快查找也就是对方法缓存列表的查找，如果没有命中缓存，则会进入到慢查找的逻辑，即对类的方法列表的查找，下面我们就来探究下OC底层是如何进行慢查找的。</p>
+<p>在快查找未命中的出口，有如下的代码逻辑:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div></pre></td><td class="code"><pre><div class="line">.macro JumpMiss</div><div class="line">.if $0 == GETIMP</div><div class="line">	b	LGetImpMiss</div><div class="line">.elseif $0 == NORMAL</div><div class="line">	b	__objc_msgSend_uncached</div><div class="line">.elseif $0 == LOOKUP</div><div class="line">	b	__objc_msgLookup_uncached</div><div class="line">.else</div><div class="line">.abort oops</div><div class="line">.endif</div><div class="line">.endmacro</div><div class="line"></div><div class="line">STATIC_ENTRY __objc_msgSend_uncached</div><div class="line">UNWIND __objc_msgSend_uncached, FrameWithNoSaves</div><div class="line"></div><div class="line">// THIS IS NOT A CALLABLE C FUNCTION</div><div class="line">// Out-of-band p16 is the class to search</div><div class="line">	</div><div class="line">MethodTableLookup</div><div class="line">TailCallFunctionPointer x17</div><div class="line"></div><div class="line">END_ENTRY __objc_msgSend_uncached</div><div class="line"></div><div class="line"></div><div class="line">STATIC_ENTRY __objc_msgLookup_uncached</div><div class="line">UNWIND __objc_msgLookup_uncached, FrameWithNoSaves</div><div class="line"></div><div class="line">// THIS IS NOT A CALLABLE C FUNCTION</div><div class="line">// Out-of-band p16 is the class to search</div><div class="line">	</div><div class="line">MethodTableLookup</div><div class="line">ret</div><div class="line"></div><div class="line">END_ENTRY __objc_msgLookup_uncached</div></pre></td></tr></table></figure>
+<p>共同指向了<em>MethodTableLookup</em>这个方法，我们来看看这个方法的实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div></pre></td><td class="code"><pre><div class="line">.macro MethodTableLookup</div><div class="line">	</div><div class="line">// push frame</div><div class="line">SignLR</div><div class="line">stp	fp, lr, [sp, #-16]!</div><div class="line">mov	fp, sp</div><div class="line"></div><div class="line">// save parameter registers: x0..x8, q0..q7</div><div class="line">sub	sp, sp, #(10*8 + 8*16)</div><div class="line">stp	q0, q1, [sp, #(0*16)]</div><div class="line">stp	q2, q3, [sp, #(2*16)]</div><div class="line">stp	q4, q5, [sp, #(4*16)]</div><div class="line">stp	q6, q7, [sp, #(6*16)]</div><div class="line">stp	x0, x1, [sp, #(8*16+0*8)]</div><div class="line">stp	x2, x3, [sp, #(8*16+2*8)]</div><div class="line">stp	x4, x5, [sp, #(8*16+4*8)]</div><div class="line">stp	x6, x7, [sp, #(8*16+6*8)]</div><div class="line">str	x8,     [sp, #(8*16+8*8)]</div><div class="line"></div><div class="line">// lookUpImpOrForward(obj, sel, cls, LOOKUP_INITIALIZE | LOOKUP_RESOLVER)</div><div class="line">// receiver and selector already in x0 and x1</div><div class="line">mov	x2, x16</div><div class="line">mov	x3, #3</div><div class="line">bl	_lookUpImpOrForward</div><div class="line"></div><div class="line">// IMP in x0</div><div class="line">mov	x17, x0</div><div class="line">	</div><div class="line">// restore registers and return</div><div class="line">ldp	q0, q1, [sp, #(0*16)]</div><div class="line">ldp	q2, q3, [sp, #(2*16)]</div><div class="line">ldp	q4, q5, [sp, #(4*16)]</div><div class="line">ldp	q6, q7, [sp, #(6*16)]</div><div class="line">ldp	x0, x1, [sp, #(8*16+0*8)]</div><div class="line">ldp	x2, x3, [sp, #(8*16+2*8)]</div><div class="line">ldp	x4, x5, [sp, #(8*16+4*8)]</div><div class="line">ldp	x6, x7, [sp, #(8*16+6*8)]</div><div class="line">ldr	x8,     [sp, #(8*16+8*8)]</div><div class="line"></div><div class="line">mov	sp, fp</div><div class="line">ldp	fp, lr, [sp], #16</div><div class="line">AuthenticateLR</div><div class="line"></div><div class="line">.endmacro</div></pre></td></tr></table></figure>
+<p>我们暂时忽略寄存器先关操作，主要看方法调用逻辑，可以看到，内部是调用了<em>_lookUpImpOrForward</em> 这个方法，看命名应该能猜到是跟imp的查找和转发逻辑相关，那我们找找这个函数的定义，发现在汇编代码中没有相关定义，我们去runtime原文件中看看，果然在<em>objc_runtime-new.mm</em>的6094行发现了该函数的定义：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div></pre></td><td class="code"><pre><div class="line">/***********************************************************************</div><div class="line">* lookUpImpOrForward.</div><div class="line">* The standard IMP lookup. </div><div class="line">* Without LOOKUP_INITIALIZE: tries to avoid +initialize (but sometimes fails)</div><div class="line">* Without LOOKUP_CACHE: skips optimistic unlocked lookup (but uses cache elsewhere)</div><div class="line">* Most callers should use LOOKUP_INITIALIZE and LOOKUP_CACHE</div><div class="line">* inst is an instance of cls or a subclass thereof, or nil if none is known. </div><div class="line">*   If cls is an un-initialized metaclass then a non-nil inst is faster.</div><div class="line">* May return _objc_msgForward_impcache. IMPs destined for external use </div><div class="line">*   must be converted to _objc_msgForward or _objc_msgForward_stret.</div><div class="line">*   If you don&apos;t want forwarding at all, use LOOKUP_NIL.</div><div class="line">**********************************************************************/</div><div class="line">IMP lookUpImpOrForward(id inst, SEL sel, Class cls, int behavior)</div><div class="line">&#123;</div><div class="line">    const IMP forward_imp = (IMP)_objc_msgForward_impcache; // 这里imp有一个默认值 是一个坑点 具体下面解释。</div><div class="line">    </div><div class="line">    IMP imp = nil;</div><div class="line">    Class curClass;</div><div class="line"></div><div class="line">    runtimeLock.assertUnlocked();</div><div class="line"></div><div class="line">    // Optimistic cache lookup // 再去缓存中查找一遍，防止多线程已调用</div><div class="line">    if (fastpath(behavior &amp; LOOKUP_CACHE)) &#123;</div><div class="line">        imp = cache_getImp(cls, sel);</div><div class="line">        if (imp) goto done_nolock;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    runtimeLock.lock(); // 线程安全哦</div><div class="line"></div><div class="line">    checkIsKnownClass(cls);</div><div class="line"></div><div class="line">	// 下面两个操作是对类的继承链,ro,rw等数据的递归实例化，比较重要，不过不在这个文章的讨论范围 先不进去细看。</div><div class="line">    if (slowpath(!cls-&gt;isRealized())) &#123;</div><div class="line">        cls = realizeClassMaybeSwiftAndLeaveLocked(cls, runtimeLock);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    if (slowpath((behavior &amp; LOOKUP_INITIALIZE) &amp;&amp; !cls-&gt;isInitialized())) &#123;</div><div class="line">        cls = initializeAndLeaveLocked(cls, inst, runtimeLock);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    runtimeLock.assertLocked();</div><div class="line">    curClass = cls;</div><div class="line"></div><div class="line">    for (unsigned attempts = unreasonableClassCount();;) &#123;</div><div class="line">        </div><div class="line">        // 直接能从当前类的方法列表中查找到 </div><div class="line">        Method meth = getMethodNoSuper_nolock(curClass, sel);</div><div class="line">        if (meth) &#123;</div><div class="line">            imp = meth-&gt;imp;</div><div class="line">            goto done;</div><div class="line">        &#125;</div><div class="line">			</div><div class="line">		  // 如果已经查找完当前类的父类中了 给imp一个默认值然后跳出本次递归 </div><div class="line">		  // 还没有查找则将当前类赋值为父类 下面继续对父类进行查找</div><div class="line">        if (slowpath((curClass = curClass-&gt;superclass) == nil)) &#123;</div><div class="line">            imp = forward_imp;</div><div class="line">            break;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        // 是否还在继承链中查找</div><div class="line">        if (slowpath(--attempts == 0)) &#123;</div><div class="line">            _objc_fatal(&quot;Memory corruption in class list.&quot;);</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        // 从父类的缓存中查找 curclass已经在上面被赋值为父类了</div><div class="line">        // 这个方法也是汇编实现 复用的快查找的逻辑</div><div class="line">        imp = cache_getImp(curClass, sel);</div><div class="line">        </div><div class="line">        // 父类缓存中没有找到 跳出本轮递归 下次又从父类的父类中开始查找</div><div class="line">        if (slowpath(imp == forward_imp)) &#123;</div><div class="line">           break;</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        // 找到了 goto done </div><div class="line">        if (fastpath(imp)) &#123;</div><div class="line">            goto done;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">	// 以上逻辑走完，说明imp还是没有找到，这个时候会做一个动态的方法决议，这部分属于方法转发逻辑，暂时不进去细看。</div><div class="line">    if (slowpath(behavior &amp; LOOKUP_RESOLVER)) &#123;</div><div class="line">        behavior ^= LOOKUP_RESOLVER;</div><div class="line">        return resolveMethod_locked(inst, sel, cls, behavior);</div><div class="line">    &#125;</div><div class="line"></div><div class="line"> done:</div><div class="line"> 	// imp找到了，则进行缓存，缓存逻辑参考之前的文章</div><div class="line">    log_and_fill_cache(cls, imp, sel, inst, curClass);</div><div class="line">    runtimeLock.unlock();</div><div class="line"> done_nolock:</div><div class="line">    if (slowpath((behavior &amp; LOOKUP_NIL) &amp;&amp; imp == forward_imp)) &#123;</div><div class="line">        return nil;</div><div class="line">    &#125;</div><div class="line">    return imp;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>以上源码就是慢查找的整个流程，整体是一个递归查找继承连的过程，其中还有一些小的点可以在扩展下。</p>
+<h5 id="扩展一-对当前方法列表的查找策略"><a href="#扩展一-对当前方法列表的查找策略" class="headerlink" title="扩展一 对当前方法列表的查找策略"></a>扩展一 对当前方法列表的查找策略</h5><p>我们可以深入看看代码逻辑</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div></pre></td><td class="code"><pre><div class="line">static method_t *</div><div class="line">getMethodNoSuper_nolock(Class cls, SEL sel)</div><div class="line">&#123;</div><div class="line">    runtimeLock.assertLocked();</div><div class="line"></div><div class="line">    ASSERT(cls-&gt;isRealized());</div><div class="line">    // fixme nil cls? </div><div class="line">    // fixme nil sel?</div><div class="line"></div><div class="line">	// 方法列表是多级的 </div><div class="line">    auto const methods = cls-&gt;data()-&gt;methods();</div><div class="line">    for (auto mlists = methods.beginLists(),</div><div class="line">              end = methods.endLists();</div><div class="line">         mlists != end;</div><div class="line">         ++mlists)</div><div class="line">    &#123;</div><div class="line">       method_t *m = search_method_list_inline(*mlists, sel);</div><div class="line">        if (m) return m;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    return nil;</div><div class="line">&#125;</div><div class="line"></div><div class="line">ALWAYS_INLINE static method_t *</div><div class="line">search_method_list_inline(const method_list_t *mlist, SEL sel)</div><div class="line">&#123;</div><div class="line">    int methodListIsFixedUp = mlist-&gt;isFixedUp();</div><div class="line">    int methodListHasExpectedSize = mlist-&gt;entsize() == sizeof(method_t);</div><div class="line">    </div><div class="line">    if (fastpath(methodListIsFixedUp &amp;&amp; methodListHasExpectedSize)) &#123;</div><div class="line">        // 对已排序数据进行查找 你想到了什么？？？</div><div class="line">        return findMethodInSortedMethodList(sel, mlist);</div><div class="line">    &#125; else &#123;</div><div class="line">        // Linear search of unsorted method list</div><div class="line">        for (auto&amp; meth : *mlist) &#123;</div><div class="line">            if (meth.name == sel) return &amp;meth;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    return nil;</div><div class="line">&#125;</div><div class="line"></div><div class="line">ALWAYS_INLINE static method_t *</div><div class="line">findMethodInSortedMethodList(SEL key, const method_list_t *list)</div><div class="line">&#123;</div><div class="line">    ASSERT(list);</div><div class="line"></div><div class="line">    const method_t * const first = &amp;list-&gt;first;</div><div class="line">    const method_t *base = first;</div><div class="line">    const method_t *probe;</div><div class="line">    uintptr_t keyValue = (uintptr_t)key;</div><div class="line">    uint32_t count;</div><div class="line">    </div><div class="line">    // 没有错 就是折半查找 不过apple的折半写的比较有逼格。</div><div class="line">    for (count = list-&gt;count; count != 0; count &gt;&gt;= 1) &#123;</div><div class="line">        probe = base + (count &gt;&gt; 1);</div><div class="line">        </div><div class="line">        uintptr_t probeValue = (uintptr_t)probe-&gt;name;</div><div class="line">        </div><div class="line">        // 如果已找到 则找到同名方法的第一个 这里说明列表内可能有方法名相同的方法，什么情况会出现呢？比如分类同名方法。说明一点，上层的结论在底层都是都代码依据的。</div><div class="line">        if (keyValue == probeValue) &#123;</div><div class="line">            while (probe &gt; first &amp;&amp; keyValue == (uintptr_t)probe[-1].name) &#123;</div><div class="line">                probe--;</div><div class="line">            &#125;</div><div class="line">            return (method_t *)probe;</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        if (keyValue &gt; probeValue) &#123;</div><div class="line">            base = probe + 1;</div><div class="line">            count--;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    return nil;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h5 id="扩展二-默认的imp"><a href="#扩展二-默认的imp" class="headerlink" title="扩展二 默认的imp"></a>扩展二 默认的imp</h5><p>在查找函数的最前面，有下面这行初始化代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">const IMP forward_imp = (IMP)_objc_msgForward_impcache;</div></pre></td></tr></table></figure>
+<p>这个默认的imp具体指向哪里，我们来全局查找一下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">STATIC_ENTRY __objc_msgForward_impcache</div><div class="line"></div><div class="line">// No stret specialization.</div><div class="line">b	__objc_msgForward</div><div class="line"></div><div class="line">END_ENTRY __objc_msgForward_impcache</div><div class="line"></div><div class="line"></div><div class="line">ENTRY __objc_msgForward</div><div class="line">// Non-stret version</div><div class="line"></div><div class="line">MI_GET_EXTERN(r12, __objc_forward_handler)</div><div class="line">ldr	r12, [r12]</div><div class="line">bx	r12</div><div class="line"></div><div class="line">END_ENTRY __objc_msgForward</div></pre></td></tr></table></figure>
+<p>在汇编代码中找到<em> __objc_forward_handler</em>这里就线索中断，这个猜测应该是一个回调函数，ok，那我们去源代码里面看看。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">// Default forward handler halts the process.</div><div class="line">__attribute__((noreturn, cold)) void</div><div class="line">objc_defaultForwardHandler(id self, SEL sel)</div><div class="line">&#123;</div><div class="line">    _objc_fatal(&quot;%c[%s %s]: unrecognized selector sent to instance %p &quot;</div><div class="line">                &quot;(no message forward handler is installed)&quot;, </div><div class="line">                class_isMetaClass(object_getClass(self)) ? &apos;+&apos; : &apos;-&apos;, </div><div class="line">                object_getClassName(self), sel_getName(sel), self);</div><div class="line">&#125;</div><div class="line">void *_objc_forward_handler = (void*)objc_defaultForwardHandler;</div></pre></td></tr></table></figure>
+<p>是不是看到了我们非常熟悉的一个错误信息，没有错，这个默认的imp就是找不到方法实现的错误处理函数。此时，坑点也就出现了，如果你使用<em>class_getMethodImplementation</em>去查找一个未实现的方法时，不会返回空，而是返回这个函数的地址，这里需要注意一下。</p>
+<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>以上就是整个慢查找的流程和其中的一些相关的知识点的梳理，除了整体流程的分析，上面的两个扩展也是比较重要的。其中还有一些比较重要的内容没有做深入分析，如<em>realizeClassMaybeSwiftAndLeaveLocked</em>和<em>initializeAndLeaveLocked</em>,留到以后再做分析，毕竟这篇文章主要分析慢查找的流程。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/01/04/从【nonpointer】探究OC类中isa指针/" rel="next" title="从【nonpointer】探究OC类中isa指针">
+                <i class="fa fa-chevron-left"></i> 从【nonpointer】探究OC类中isa指针
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2021/01/04/OC方法调用慢查找流程底层逻辑探究/"
+           data-title="OC方法调用慢查找流程底层逻辑探究" data-url="http://yoursite.com/2021/01/04/OC方法调用慢查找流程底层逻辑探究/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/head.png"
+               alt="lly" />
+          <p class="site-author-name" itemprop="name">lly</p>
+          <p class="site-description motion-element" itemprop="description">耿直的一Boy</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">74</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#扩展一-对当前方法列表的查找策略"><span class="nav-number">1.</span> <span class="nav-text">扩展一 对当前方法列表的查找策略</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#扩展二-默认的imp"><span class="nav-number">2.</span> <span class="nav-text">扩展二 默认的imp</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#小结"><span class="nav-number"></span> <span class="nav-text">小结</span></a></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lly</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"llyblog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
