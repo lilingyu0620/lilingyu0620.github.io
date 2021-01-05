@@ -1,0 +1,589 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="要分析类的启动加载流程，我们可以从一个点入手，即load方法的调用，因为该方法会在应用启动时自动调用，我们根据这个特性查看一下调用堆栈，如下： 12345678910111213(lldb) bt* thread #1, queue = &amp;apos;com.apple.main-thread&amp;apos;, stop reason = breakpoint 2.1  * frame #0: 0x00">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OC类从应用启动到加载流程探究">
+<meta property="og:url" content="http://yoursite.com/2021/01/05/OC类从应用启动到加载流程探究/index.html">
+<meta property="og:site_name" content="lly&#39;s Blog">
+<meta property="og:description" content="要分析类的启动加载流程，我们可以从一个点入手，即load方法的调用，因为该方法会在应用启动时自动调用，我们根据这个特性查看一下调用堆栈，如下： 12345678910111213(lldb) bt* thread #1, queue = &amp;apos;com.apple.main-thread&amp;apos;, stop reason = breakpoint 2.1  * frame #0: 0x00">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2021-01-05T04:05:59.516Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="OC类从应用启动到加载流程探究">
+<meta name="twitter:description" content="要分析类的启动加载流程，我们可以从一个点入手，即load方法的调用，因为该方法会在应用启动时自动调用，我们根据这个特性查看一下调用堆栈，如下： 12345678910111213(lldb) bt* thread #1, queue = &amp;apos;com.apple.main-thread&amp;apos;, stop reason = breakpoint 2.1  * frame #0: 0x00">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2021/01/05/OC类从应用启动到加载流程探究/"/>
+
+  <title> OC类从应用启动到加载流程探究 | lly's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">lly's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">用心记录点滴</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                OC类从应用启动到加载流程探究
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2021-01-05T12:05:30+08:00" content="2021-01-05">
+              2021-01-05
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2021/01/05/OC类从应用启动到加载流程探究/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/01/05/OC类从应用启动到加载流程探究/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>要分析类的启动加载流程，我们可以从一个点入手，即<em>load</em>方法的调用，因为该方法会在应用启动时自动调用，我们根据这个特性查看一下调用堆栈，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">(lldb) bt</div><div class="line">* thread #1, queue = &apos;com.apple.main-thread&apos;, stop reason = breakpoint 2.1</div><div class="line">  * frame #0: 0x0000000100bb9dec AppLaunch`+[ViewController load](self=ViewController, _cmd=&quot;load&quot;) at ViewController.m:17:5</div><div class="line">    frame #1: 0x00000001c0d3c25c libobjc.A.dylib`load_images + 944</div><div class="line">    frame #2: 0x0000000100fca21c dyld`dyld::notifySingle(dyld_image_states, ImageLoader const*, ImageLoader::InitializerTimingList*) + 464</div><div class="line">    frame #3: 0x0000000100fdb5e8 dyld`ImageLoader::recursiveInitialization(ImageLoader::LinkContext const&amp;, unsigned int, char const*, ImageLoader::InitializerTimingList&amp;, ImageLoader::UninitedUpwards&amp;) + 512</div><div class="line">    frame #4: 0x0000000100fd9878 dyld`ImageLoader::processInitializers(ImageLoader::LinkContext const&amp;, unsigned int, ImageLoader::InitializerTimingList&amp;, ImageLoader::UninitedUpwards&amp;) + 184</div><div class="line">    frame #5: 0x0000000100fd9940 dyld`ImageLoader::runInitializers(ImageLoader::LinkContext const&amp;, ImageLoader::InitializerTimingList&amp;) + 92</div><div class="line">    frame #6: 0x0000000100fca6d8 dyld`dyld::initializeMainExecutable() + 216</div><div class="line">    frame #7: 0x0000000100fcf928 dyld`dyld::_main(macho_header const*, unsigned long, int, char const**, char const**, char const**, unsigned long*) + 5216</div><div class="line">    frame #8: 0x0000000100fc9208 dyld`dyldbootstrap::start(dyld3::MachOLoaded const*, int, char const**, dyld3::MachOLoaded const*, unsigned long*) + 396</div><div class="line">    frame #9: 0x0000000100fc9038 dyld`_dyld_start + 56</div></pre></td></tr></table></figure>
+<p>可以看到，程序是从<em>_dyld_start</em>这个函数开始运行的，老办法，我们到<em>dyld</em>的源码中去一探究竟。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div></pre></td><td class="code"><pre><div class="line">#if __arm64__</div><div class="line">	.text</div><div class="line">	.align 2</div><div class="line">	.globl __dyld_start</div><div class="line">__dyld_start:</div><div class="line">	mov 	x28, sp</div><div class="line">	and     sp, x28, #~15		// force 16-byte alignment of stack</div><div class="line">	mov	x0, #0</div><div class="line">	mov	x1, #0</div><div class="line">	stp	x1, x0, [sp, #-16]!	// make aligned terminating frame</div><div class="line">	mov	fp, sp			// set up fp to point to terminating frame</div><div class="line">	sub	sp, sp, #16             // make room for local variables</div><div class="line">#if __LP64__</div><div class="line">	ldr     x0, [x28]               // get app&apos;s mh into x0</div><div class="line">	ldr     x1, [x28, #8]           // get argc into x1 (kernel passes 32-bit int argc as 64-bits on stack to keep alignment)</div><div class="line">	add     x2, x28, #16            // get argv into x2</div><div class="line">#else</div><div class="line">	ldr     w0, [x28]               // get app&apos;s mh into x0</div><div class="line">	ldr     w1, [x28, #4]           // get argc into x1 (kernel passes 32-bit int argc as 64-bits on stack to keep alignment)</div><div class="line">	add     w2, w28, #8             // get argv into x2</div><div class="line">#endif</div><div class="line">	adrp	x3,___dso_handle@page</div><div class="line">	add 	x3,x3,___dso_handle@pageoff // get dyld&apos;s mh in to x4</div><div class="line">	mov	x4,sp                   // x5 has &amp;startGlue</div><div class="line"></div><div class="line">	// call dyldbootstrap::start(app_mh, argc, argv, dyld_mh, &amp;startGlue)</div><div class="line">	bl	__ZN13dyldbootstrap5startEPKN5dyld311MachOLoadedEiPPKcS3_Pm</div><div class="line">	mov	x16,x0                  // save entry point address in x16</div><div class="line">#if __LP64__</div><div class="line">	ldr     x1, [sp]</div><div class="line">#else</div><div class="line">	ldr     w1, [sp]</div><div class="line">#endif</div><div class="line">	cmp	x1, #0</div><div class="line">	b.ne	Lnew</div><div class="line"></div><div class="line">	// LC_UNIXTHREAD way, clean up stack and jump to result</div><div class="line">#if __LP64__</div><div class="line">	add	sp, x28, #8             // restore unaligned stack pointer without app mh</div><div class="line">#else</div><div class="line">	add	sp, x28, #4             // restore unaligned stack pointer without app mh</div><div class="line">#endif</div><div class="line">#if __arm64e__</div><div class="line">	braaz   x16                     // jump to the program&apos;s entry point</div><div class="line">#else</div><div class="line">	br      x16                     // jump to the program&apos;s entry point</div><div class="line">#endif</div><div class="line"></div><div class="line">	// LC_MAIN case, set up stack for call to main()</div><div class="line">Lnew:	mov	lr, x1		    // simulate return address into _start in libdyld.dylib</div><div class="line">#if __LP64__</div><div class="line">	ldr	x0, [x28, #8]       // main param1 = argc</div><div class="line">	add	x1, x28, #16        // main param2 = argv</div><div class="line">	add	x2, x1, x0, lsl #3</div><div class="line">	add	x2, x2, #8          // main param3 = &amp;env[0]</div><div class="line">	mov	x3, x2</div><div class="line">Lapple:	ldr	x4, [x3]</div><div class="line">	add	x3, x3, #8</div><div class="line">#else</div><div class="line">	ldr	w0, [x28, #4]       // main param1 = argc</div><div class="line">	add	x1, x28, #8         // main param2 = argv</div><div class="line">	add	x2, x1, x0, lsl #2</div><div class="line">	add	x2, x2, #4          // main param3 = &amp;env[0]</div><div class="line">	mov	x3, x2</div><div class="line">Lapple:	ldr	w4, [x3]</div><div class="line">	add	x3, x3, #4</div><div class="line">#endif</div><div class="line">	cmp	x4, #0</div><div class="line">	b.ne	Lapple		    // main param4 = apple</div><div class="line">#if __arm64e__</div><div class="line">	braaz   x16</div><div class="line">#else</div><div class="line">	br      x16</div><div class="line">#endif</div><div class="line"></div><div class="line">#endif // __arm64__</div></pre></td></tr></table></figure>
+<p><em>dyld</em>的入口函数也是使用汇编来编写的，我们不需要逐行理解，找一下关键字，结合上面的堆栈信息和汇编注释，我们定位到<em>dyldbootstrap::start</em>这个关键方法，最终跟踪到以下调用链：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">__dyld_start -&gt; dyldbootstrap::start -&gt; _main -&gt; initializeMainExecutable -&gt; runInitializers -&gt; ImageLoader::runInitializers -&gt; ImageLoader::processInitializers -&gt; ImageLoader::recursiveInitialization -&gt; notifySingle -&gt; objc::load_images -&gt; [ViewController load]</div></pre></td></tr></table></figure>
+<p>上面的流程有一个比较奇怪的调用出现在<em>objc::load_images</em>，因为全局都没有找到这个方法的任何申明和定义，我们猜测这个函数可能是外界传过来的一个函数指针，那么如何验证呢？回到线索中断前的最后一个方法中去：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div></pre></td><td class="code"><pre><div class="line">static void notifySingle(dyld_image_states state, const ImageLoader* image, ImageLoader::InitializerTimingList* timingInfo)</div><div class="line">&#123;</div><div class="line">	//dyld::log(&quot;notifySingle(state=%d, image=%s)\n&quot;, state, image-&gt;getPath());</div><div class="line">	std::vector&lt;dyld_image_state_change_handler&gt;* handlers = stateToHandlers(state, sSingleHandlers);</div><div class="line">	if ( handlers != NULL ) &#123;</div><div class="line">		dyld_image_info info;</div><div class="line">		info.imageLoadAddress	= image-&gt;machHeader();</div><div class="line">		info.imageFilePath		= image-&gt;getRealPath();</div><div class="line">		info.imageFileModDate	= image-&gt;lastModified();</div><div class="line">		for (std::vector&lt;dyld_image_state_change_handler&gt;::iterator it = handlers-&gt;begin(); it != handlers-&gt;end(); ++it) &#123;</div><div class="line">			const char* result = (*it)(state, 1, &amp;info);</div><div class="line">			if ( (result != NULL) &amp;&amp; (state == dyld_image_state_mapped) ) &#123;</div><div class="line">				//fprintf(stderr, &quot;  image rejected by handler=%p\n&quot;, *it);</div><div class="line">				// make copy of thrown string so that later catch clauses can free it</div><div class="line">				const char* str = strdup(result);</div><div class="line">				throw str;</div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	if ( state == dyld_image_state_mapped ) &#123;</div><div class="line">		// &lt;rdar://problem/7008875&gt; Save load addr + UUID for images from outside the shared cache</div><div class="line">		if ( !image-&gt;inSharedCache() ) &#123;</div><div class="line">			dyld_uuid_info info;</div><div class="line">			if ( image-&gt;getUUID(info.imageUUID) ) &#123;</div><div class="line">				info.imageLoadAddress = image-&gt;machHeader();</div><div class="line">				addNonSharedCacheImageUUID(info);</div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	if ( (state == dyld_image_state_dependents_initialized) &amp;&amp; (sNotifyObjCInit != NULL) &amp;&amp; image-&gt;notifyObjC() ) &#123;</div><div class="line">		uint64_t t0 = mach_absolute_time();</div><div class="line">		dyld3::ScopedTimer timer(DBG_DYLD_TIMING_OBJC_INIT, (uint64_t)image-&gt;machHeader(), 0, 0);</div><div class="line">		// 重点！！！</div><div class="line">		(*sNotifyObjCInit)(image-&gt;getRealPath(), image-&gt;machHeader());</div><div class="line">		uint64_t t1 = mach_absolute_time();</div><div class="line">		uint64_t t2 = mach_absolute_time();</div><div class="line">		uint64_t timeInObjC = t1-t0;</div><div class="line">		uint64_t emptyTime = (t2-t1)*100;</div><div class="line">		if ( (timeInObjC &gt; emptyTime) &amp;&amp; (timingInfo != NULL) ) &#123;</div><div class="line">			timingInfo-&gt;addTime(image-&gt;getShortName(), timeInObjC);</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">    // mach message csdlc about dynamically unloaded images</div><div class="line">	if ( image-&gt;addFuncNotified() &amp;&amp; (state == dyld_image_state_terminated) ) &#123;</div><div class="line">		notifyKernel(*image, false);</div><div class="line">		const struct mach_header* loadAddress[] = &#123; image-&gt;machHeader() &#125;;</div><div class="line">		const char* loadPath[] = &#123; image-&gt;getPath() &#125;;</div><div class="line">		notifyMonitoringDyld(true, 1, loadAddress, loadPath);</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>果然，在里面我们发现有一些比较敏感的关键字<em>sNotifyObjCInit</em>，这个应该跟objc的初始化有关系，我们全局搜索一下，最后定位到下面的函数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">//</div><div class="line">// Note: only for use by objc runtime</div><div class="line">// Register handlers to be called when objc images are mapped, unmapped, and initialized.</div><div class="line">// Dyld will call back the &quot;mapped&quot; function with an array of images that contain an objc-image-info section.</div><div class="line">// Those images that are dylibs will have the ref-counts automatically bumped, so objc will no longer need to</div><div class="line">// call dlopen() on them to keep them from being unloaded.  During the call to _dyld_objc_notify_register(),</div><div class="line">// dyld will call the &quot;mapped&quot; function with already loaded objc images.  During any later dlopen() call,</div><div class="line">// dyld will also call the &quot;mapped&quot; function.  Dyld will call the &quot;init&quot; function when dyld would be called</div><div class="line">// initializers in that image.  This is when objc calls any +load methods in that image.</div><div class="line">//</div><div class="line">void _dyld_objc_notify_register(_dyld_objc_notify_mapped    mapped,</div><div class="line">                                _dyld_objc_notify_init      init,</div><div class="line">                                _dyld_objc_notify_unmapped  unmapped);</div><div class="line">                                </div><div class="line"></div><div class="line">void _dyld_objc_notify_register(_dyld_objc_notify_mapped    mapped,</div><div class="line">                                _dyld_objc_notify_init      init,</div><div class="line">                                _dyld_objc_notify_unmapped  unmapped)</div><div class="line">&#123;</div><div class="line">	dyld::registerObjCNotifiers(mapped, init, unmapped);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>上面的注释写得已经比较清楚，这个函数专供 objc runtime。那我们就去runtime的源码中找找嘛。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line">/***********************************************************************</div><div class="line">* _objc_init</div><div class="line">* Bootstrap initialization. Registers our image notifier with dyld.</div><div class="line">* Called by libSystem BEFORE library initialization time</div><div class="line">**********************************************************************/</div><div class="line"></div><div class="line">void _objc_init(void)</div><div class="line">&#123;</div><div class="line">    static bool initialized = false;</div><div class="line">    if (initialized) return;</div><div class="line">    initialized = true;</div><div class="line">    </div><div class="line">    // fixme defer initialization until an objc-using image is found?</div><div class="line">    environ_init();</div><div class="line">    tls_init();</div><div class="line">    static_init();</div><div class="line">    runtime_init();</div><div class="line">    exception_init();</div><div class="line">    cache_init();</div><div class="line">    _imp_implementationWithBlock_init();</div><div class="line"></div><div class="line">    _dyld_objc_notify_register(&amp;map_images, load_images, unmap_image);</div><div class="line"></div><div class="line">#if __OBJC2__</div><div class="line">    didCallDyldNotifyRegister = true;</div><div class="line">#endif</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>果然在<em>_objc_init</em>初始化函数中发现了调用逻辑，分别注册了<em>map_images</em>和<em>load_images</em>两个回调函数，看到这里熟悉应用启动流程的同学应该想到了，这不就是可执行文件的mmap和load么。但是新的问题又来了，这个<em>_objc_init</em>又是在什么时候被调用的呢？我们直接在里面搞个断点看看调用堆栈：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">(lldb) bt</div><div class="line">* thread #1, queue = &apos;com.apple.main-thread&apos;, stop reason = breakpoint 3.1</div><div class="line">    frame #0: 0x00000001c0d4ce0c libobjc.A.dylib`_objc_init</div><div class="line">  * frame #1: 0x00000001003b88f8 libdispatch.dylib`_os_object_init + 20</div><div class="line">    frame #2: 0x00000001003c7ea0 libdispatch.dylib`libdispatch_init + 292</div><div class="line">    frame #3: 0x00000001dadfd888 libSystem.B.dylib`libSystem_initializer + 200</div><div class="line">    frame #4: 0x0000000100120810 dyld`ImageLoaderMachO::doModInitFunctions(ImageLoader::LinkContext const&amp;) + 424</div><div class="line">    frame #5: 0x0000000100120bd8 dyld`ImageLoaderMachO::doInitialization(ImageLoader::LinkContext const&amp;) + 52</div><div class="line">    frame #6: 0x000000010011b600 dyld`ImageLoader::recursiveInitialization(ImageLoader::LinkContext const&amp;, unsigned int, char const*, ImageLoader::InitializerTimingList&amp;, ImageLoader::UninitedUpwards&amp;) + 536</div><div class="line">    frame #7: 0x000000010011b56c dyld`ImageLoader::recursiveInitialization(ImageLoader::LinkContext const&amp;, unsigned int, char const*, ImageLoader::InitializerTimingList&amp;, ImageLoader::UninitedUpwards&amp;) + 388</div><div class="line">    frame #8: 0x0000000100119878 dyld`ImageLoader::processInitializers(ImageLoader::LinkContext const&amp;, unsigned int, ImageLoader::InitializerTimingList&amp;, ImageLoader::UninitedUpwards&amp;) + 184</div><div class="line">    frame #9: 0x0000000100119940 dyld`ImageLoader::runInitializers(ImageLoader::LinkContext const&amp;, ImageLoader::InitializerTimingList&amp;) + 92</div><div class="line">    frame #10: 0x000000010010a688 dyld`dyld::initializeMainExecutable() + 136</div><div class="line">    frame #11: 0x000000010010f928 dyld`dyld::_main(macho_header const*, unsigned long, int, char const**, char const**, char const**, unsigned long*) + 5216</div><div class="line">    frame #12: 0x0000000100109208 dyld`dyldbootstrap::start(dyld3::MachOLoaded const*, int, char const**, dyld3::MachOLoaded const*, unsigned long*) + 396</div><div class="line">    frame #13: 0x0000000100109038 dyld`_dyld_start + 56</div></pre></td></tr></table></figure>
+<p>前面我们已经看过的函数跳过，直接从<em>ImageLoaderMachO::doInitialization</em>开始。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">bool ImageLoaderMachO::doInitialization(const LinkContext&amp; context)</div><div class="line">&#123;</div><div class="line">	CRSetCrashLogMessage2(this-&gt;getPath());</div><div class="line"></div><div class="line">	// mach-o has -init and static initializers</div><div class="line">	doImageInit(context);</div><div class="line">	doModInitFunctions(context);</div><div class="line">	</div><div class="line">	CRSetCrashLogMessage2(NULL);</div><div class="line">	</div><div class="line">	return (fHasDashInit || fHasInitializers);</div><div class="line">&#125;</div><div class="line"></div><div class="line">void ImageLoaderMachO::doModInitFunctions(const LinkContext&amp; context)</div><div class="line">&#123;</div><div class="line">	// 去掉我们不关心的信息 我眼里只有下面这句话</div><div class="line">	if ( ! dyld::gProcessInfo-&gt;libSystemInitialized ) &#123;</div><div class="line">		// &lt;rdar://problem/17973316&gt; libSystem initializer must run first</div><div class="line">		const char* installPath = getInstallPath();</div><div class="line">		if ( (installPath == NULL) || (strcmp(installPath, libSystemPath(context)) != 0) )</div><div class="line">			dyld::throwf(&quot;initializer in image (%s) that does not link with libSystem.dylib\n&quot;, this-&gt;getPath());</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>看注释和异常文案，<em>libSystem</em>必须最先被初始化，这也解释了上面的堆栈情况。行吧，那我们再去<em>libSystem</em>的源码中看看有没有<em>libSystem_initializer</em>这个初始化方法。</p>
+<p>果然是有的，去掉一些不关系的信息，大概如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div></pre></td><td class="code"><pre><div class="line">// libsyscall_initializer() initializes all of libSystem.dylib</div><div class="line">// &lt;rdar://problem/4892197&gt;</div><div class="line">__attribute__((constructor))</div><div class="line">static void</div><div class="line">libSystem_initializer(int argc,</div><div class="line">		      const char* argv[],</div><div class="line">		      const char* envp[],</div><div class="line">		      const char* apple[],</div><div class="line">		      const struct ProgramVars* vars)</div><div class="line">&#123;</div><div class="line">		</div><div class="line">	_libSystem_ktrace0(ARIADNE_LIFECYCLE_libsystem_init | DBG_FUNC_START);</div><div class="line"></div><div class="line">	__libkernel_init(&amp;libkernel_funcs, envp, apple, vars);</div><div class="line">	_libSystem_ktrace_init_func(KERNEL);</div><div class="line"></div><div class="line">	__libplatform_init(NULL, envp, apple, vars);</div><div class="line">	_libSystem_ktrace_init_func(PLATFORM);</div><div class="line"></div><div class="line">	__pthread_init(&amp;libpthread_funcs, envp, apple, vars);</div><div class="line">	_libSystem_ktrace_init_func(PTHREAD);</div><div class="line"></div><div class="line">	_libc_initializer(&amp;libc_funcs, envp, apple, vars);</div><div class="line">	_libSystem_ktrace_init_func(LIBC);</div><div class="line"></div><div class="line">	// TODO: Move __malloc_init before __libc_init after breaking malloc&apos;s upward link to Libc</div><div class="line">	__malloc_init(apple);</div><div class="line">	_libSystem_ktrace_init_func(MALLOC);</div><div class="line"></div><div class="line">#if TARGET_OS_OSX</div><div class="line">	/* &lt;rdar://problem/9664631&gt; */</div><div class="line">	__keymgr_initializer();</div><div class="line">	_libSystem_ktrace_init_func(KEYMGR);</div><div class="line">#endif</div><div class="line"></div><div class="line">	// No ASan interceptors are invoked before this point. ASan is normally initialized via the malloc interceptor:</div><div class="line">	// _dyld_initializer() -&gt; tlv_load_notification -&gt; wrap_malloc -&gt; ASanInitInternal</div><div class="line"></div><div class="line">	_dyld_initializer();</div><div class="line">	_libSystem_ktrace_init_func(DYLD);</div><div class="line"></div><div class="line">	libdispatch_init();</div><div class="line">	_libSystem_ktrace_init_func(LIBDISPATCH);</div><div class="line"></div><div class="line">#if !TARGET_OS_DRIVERKIT</div><div class="line">	_libxpc_initializer();</div><div class="line">	_libSystem_ktrace_init_func(LIBXPC);</div><div class="line"></div><div class="line">#if CURRENT_VARIANT_asan</div><div class="line">	setenv(&quot;DT_BYPASS_LEAKS_CHECK&quot;, &quot;1&quot;, 1);</div><div class="line">#endif</div><div class="line">#endif // !TARGET_OS_DRIVERKIT</div><div class="line"></div><div class="line">	// must be initialized after dispatch</div><div class="line">	_libtrace_init();</div><div class="line">	_libSystem_ktrace_init_func(LIBTRACE);</div><div class="line"></div><div class="line">#if !TARGET_OS_DRIVERKIT</div><div class="line">#if defined(HAVE_SYSTEM_SECINIT)</div><div class="line">	_libsecinit_initializer();</div><div class="line">	_libSystem_ktrace_init_func(SECINIT);</div><div class="line">#endif</div><div class="line"></div><div class="line">#if defined(HAVE_SYSTEM_CONTAINERMANAGER)</div><div class="line">	_container_init(apple);</div><div class="line">	_libSystem_ktrace_init_func(CONTAINERMGR);</div><div class="line">#endif</div><div class="line"></div><div class="line">	__libdarwin_init();</div><div class="line">	_libSystem_ktrace_init_func(DARWIN);</div><div class="line">#endif // !TARGET_OS_DRIVERKIT</div><div class="line"></div><div class="line">	//...</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>可以看到，里面做了很多系统库的初始化工作，我们也看到了熟悉的身影</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">// 这里有点意思，因为libSystem的初始化流程就是从dyld进来的，但是进来后才对dyld做初始化。</div><div class="line">_dyld_initializer();</div><div class="line">_libSystem_ktrace_init_func(DYLD);</div><div class="line"></div><div class="line">// 堆栈里面的</div><div class="line">libdispatch_init();</div><div class="line">_libSystem_ktrace_init_func(LIBDISPATCH);</div></pre></td></tr></table></figure>
+<p>看了一堆初始化方法，还是没有找到我们要的<em>_objc_init</em>呀，这货到底藏哪了。我们回到堆栈，发现在<em>libdispatch</em>的初始化后又调用了<em>_os_object_init</em>这个方法，猜测是不是跟这个方法有关系呢？没办法，我们还得去<em>libdispatch</em>的源码中看一下。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">void</div><div class="line">_os_object_init(void)</div><div class="line">&#123;</div><div class="line">	_objc_init(); //我在这里哦~~~</div><div class="line">	</div><div class="line">	Block_callbacks_RR callbacks = &#123;</div><div class="line">		sizeof(Block_callbacks_RR),</div><div class="line">		(void (*)(const void *))&amp;objc_retain,</div><div class="line">		(void (*)(const void *))&amp;objc_release,</div><div class="line">		(void (*)(const void *))&amp;_os_objc_destructInstance</div><div class="line">	&#125;;</div><div class="line">	_Block_use_RR2(&amp;callbacks);</div><div class="line">#if DISPATCH_COCOA_COMPAT</div><div class="line">	const char *v = getenv(&quot;OBJC_DEBUG_MISSING_POOLS&quot;);</div><div class="line">	if (v) _os_object_debug_missing_pools = _dispatch_parse_bool(v);</div><div class="line">	v = getenv(&quot;DISPATCH_DEBUG_MISSING_POOLS&quot;);</div><div class="line">	if (v) _os_object_debug_missing_pools = _dispatch_parse_bool(v);</div><div class="line">	v = getenv(&quot;LIBDISPATCH_DEBUG_MISSING_POOLS&quot;);</div><div class="line">	if (v) _os_object_debug_missing_pools = _dispatch_parse_bool(v);</div><div class="line">#endif</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>呵呵，妖怪哪里跑！！！</p>
+<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>现在我们终于把OC类从app启动到加载的整个流程跑通了，但是光知道流程显然还是不够啊，类是如何从二进制文件被创建成类对象的呢？我们之后再继续探索这一块的内容吧。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/01/04/OC的消息转发流程底层探究/" rel="next" title="OC的消息转发流程底层探究">
+                <i class="fa fa-chevron-left"></i> OC的消息转发流程底层探究
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2021/01/05/OC类从应用启动到加载流程探究/"
+           data-title="OC类从应用启动到加载流程探究" data-url="http://yoursite.com/2021/01/05/OC类从应用启动到加载流程探究/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/head.png"
+               alt="lly" />
+          <p class="site-author-name" itemprop="name">lly</p>
+          <p class="site-description motion-element" itemprop="description">耿直的一Boy</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">76</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#小结"><span class="nav-number">1.</span> <span class="nav-text">小结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lly</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"llyblog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
