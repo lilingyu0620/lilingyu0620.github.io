@@ -229,6 +229,119 @@
             
               
                 
+                <a class="post-title-link" href="/2021/11/14/iOS音视频编辑系列-视频过渡动画/" itemprop="url">
+                  iOS音视频编辑系列-视频过渡动画
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2021-11-14T14:32:06+08:00" content="2021-11-14">
+              2021-11-14
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2021/11/14/iOS音视频编辑系列-视频过渡动画/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/11/14/iOS音视频编辑系列-视频过渡动画/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>在上一篇的结尾我们提到，现在两个视频之间是没有过渡动画的，一般的视频编辑软件都会提供一些片段之间的过渡动画，这一篇我们也来简单给两个视频加上几个过渡动画。</p>
+<h3 id="相关类"><a href="#相关类" class="headerlink" title="相关类"></a>相关类</h3><p>在视频合成的基础上，本节内容又会增加几个新的类，而且理解上比较有挑战。</p>
+<h4 id="AVVideoComposition"><a href="#AVVideoComposition" class="headerlink" title="AVVideoComposition"></a>AVVideoComposition</h4><p>这个类和AVComposition完全没有关系，不是继承至avasset，所有不能直接播放，主要回来管理视频渲染相关的内容。比如render的size,scale等。当然还有一个比较重要也就是我们这节需要用到的instructions属性，该属性是一个AVMutableVideoCompositionInstruction对象的数组。这些对象存储了渲染过程中的一些指令。</p>
+<h4 id="AVMutableVideoCompositionInstruction-amp-amp-AVMutableVideoCompositionLayerInstruction"><a href="#AVMutableVideoCompositionInstruction-amp-amp-AVMutableVideoCompositionLayerInstruction" class="headerlink" title="AVMutableVideoCompositionInstruction &amp;&amp; AVMutableVideoCompositionLayerInstruction"></a>AVMutableVideoCompositionInstruction &amp;&amp; AVMutableVideoCompositionLayerInstruction</h4><p>AVMutableVideoCompositionInstruction类存储了一个视频的过渡动画相关信息，其中比较重要的是layerInstructions，这是一个存储AVMutableVideoCompositionLayerInstruction对象的数组，一个AVMutableVideoCompositionLayerInstruction对象表示一个具体的转场效果。</p>
+<h3 id="具体编码"><a href="#具体编码" class="headerlink" title="具体编码"></a>具体编码</h3><p>基于上一节的代码，我们给01和02视频之间添加一些过渡动画。</p>
+<h4 id="step0-创建两个videotrack，"><a href="#step0-创建两个videotrack，" class="headerlink" title="step0 创建两个videotrack，"></a>step0 创建两个videotrack，</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">/// compposition</div><div class="line">let composition = AVMutableComposition.init()</div><div class="line">/// video track</div><div class="line">let videoTrack01 = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid)</div><div class="line">let videoTrack02 = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid)</div><div class="line">let audioTrack = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)</div></pre></td></tr></table></figure>
+<h4 id="step1-给videotrack插入视频片段"><a href="#step1-给videotrack插入视频片段" class="headerlink" title="step1 给videotrack插入视频片段"></a>step1 给videotrack插入视频片段</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">//将01.mp4插入videoTrack01</div><div class="line">let track01 = asset01.tracks(withMediaType: .video).first</div><div class="line">do &#123;</div><div class="line">    try videoTrack01?.insertTimeRange(videoTimeRange, of: track01!, at: cursorTime)</div><div class="line">    &#125; catch let error as NSError &#123;</div><div class="line">        print(&quot;error when adding video to mix = \(error)&quot;)</div><div class="line">    &#125;</div><div class="line"></div><div class="line">//将02.mp4插入videotrack02</div><div class="line">cursorTime = CMTimeAdd(cursorTime, videoDuration)</div><div class="line">//这里需要预留转场动画的时间</div><div class="line">cursorTime = CMTimeSubtract(cursorTime, transitionDuration)</div><div class="line">let track02 = asset02.tracks(withMediaType: .video).first</div><div class="line">do &#123;</div><div class="line">    try videoTrack02?.insertTimeRange(videoTimeRange, of: track02!, at: cursorTime)</div><div class="line">    &#125; catch let error as NSError &#123;</div><div class="line">        print(&quot;error when adding video to mix = \(error)&quot;)</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<h4 id="step2-获取默认过渡对象"><a href="#step2-获取默认过渡对象" class="headerlink" title="step2 获取默认过渡对象"></a>step2 获取默认过渡对象</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">let videoComposition = AVVideoComposition.init(propertiesOf: composition)</div><div class="line">let compositionInstructions = videoComposition.instructions</div><div class="line">var fromLayer : AVMutableVideoCompositionLayerInstruction?</div><div class="line">var toLayer : AVMutableVideoCompositionLayerInstruction?</div><div class="line">let fromTimeRange : CMTimeRange?</div><div class="line">var toTimeRange : CMTimeRange?</div><div class="line">let instruction01 : AVMutableVideoCompositionInstruction?</div><div class="line">var instruction02 : AVMutableVideoCompositionInstruction?</div><div class="line">// 01.mp4的默认转场</div><div class="line">if let first = compositionInstructions[0] as? AVMutableVideoCompositionInstruction &#123;</div><div class="line">    instruction01 = first</div><div class="line">	fromLayer = first.layerInstructions.first! as! AVMutableVideoCompositionLayerInstruction</div><div class="line">    fromTimeRange = first.timeRange</div><div class="line">&#125;</div><div class="line">// 02.mp4的默认转场</div><div class="line">if let second = compositionInstructions[1] as? AVMutableVideoCompositionInstruction &#123;</div><div class="line">    instruction02 = second</div><div class="line">    fromLayer = second.layerInstructions.first! as! AVMutableVideoCompositionLayerInstruction</div><div class="line">    toLayer = second.layerInstructions.last! as! AVMutableVideoCompositionLayerInstruction</div><div class="line">    toTimeRange = second.timeRange</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="step3-自定义过渡效果"><a href="#step3-自定义过渡效果" class="headerlink" title="step3 自定义过渡效果"></a>step3 自定义过渡效果</h4><p>默认转场是没有添加任何效果的，这里我们来加一些自己的过渡效果。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line">// 渐隐</div><div class="line">fromLayer!.setOpacityRamp(fromStartOpacity: 1.0, toEndOpacity: 0.0, timeRange: toTimeRange!)</div><div class="line">toLayer?.setOpacityRamp(fromStartOpacity: 0.0, toEndOpacity: 1.0, timeRange: toTimeRange!)</div><div class="line">if let fl = fromLayer,let tl = toLayer &#123;</div><div class="line">    instruction02?.layerInstructions = [fl,tl]</div><div class="line">&#125;</div><div class="line"></div><div class="line">//擦除</div><div class="line">let videoWidth = videoComposition.renderSize.width</div><div class="line">let videoHeight = videoComposition.renderSize.height</div><div class="line">let startRect = CGRect(x: 0, y: 0, width: videoWidth, height: videoHeight)</div><div class="line">let endRect = CGRect(x: 0, y: videoHeight, width: videoWidth, height: 0)</div><div class="line">fromLayer?.setCropRectangleRamp(fromStartCropRectangle: startRect, toEndCropRectangle: endRect, timeRange: toTimeRange!)</div><div class="line">if let fl = fromLayer,let tl = toLayer &#123;</div><div class="line">    instruction02?.layerInstructions = [fl,tl]</div><div class="line">&#125;</div><div class="line"></div><div class="line">//渐入</div><div class="line">let identityTransform = CGAffineTransform.identity</div><div class="line">let videoWidth = videoComposition.renderSize.width</div><div class="line">let fromTransform = CGAffineTransform.init().translatedBy(x: -videoWidth, y: 0)</div><div class="line">let toTransform = CGAffineTransform.init().translatedBy(x: videoWidth, y: 0)</div><div class="line">fromLayer?.setTransformRamp(fromStart: identityTransform, toEnd: fromTransform, timeRange: toTimeRange!)</div><div class="line">toLayer?.setTransformRamp(fromStart: toTransform, toEnd: identityTransform, timeRange: toTimeRange!)</div><div class="line">if let fl = fromLayer,let tl = toLayer &#123;</div><div class="line">    instruction02?.layerInstructions = [fl,tl]</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="step4-预览"><a href="#step4-预览" class="headerlink" title="step4 预览"></a>step4 预览</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">//将videoComposition赋值playerItem，其他和上一节一致。</div><div class="line">self.playerItem?.videoComposition = videoComposition</div></pre></td></tr></table></figure>
+<h4 id="step5-导出"><a href="#step5-导出" class="headerlink" title="step5 导出"></a>step5 导出</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">//将videoComposition赋值exportSession，其他和上一节一致。</div><div class="line">exportSession?.videoComposition = videoComposition</div></pre></td></tr></table></figure>
+<p>经过以上步骤，简单的视频过渡效果就完成了，这里只是实现了几个比较基础的效果，更多内容可以后续在扩展。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2021/11/13/iOS音视频编辑系列-音视频合成/" itemprop="url">
                   iOS音视频编辑系列-音视频合成
                 </a>
@@ -1336,129 +1449,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2021/01/01/从【class-getInstanceSize方法】探究iOS的内存分配策略/" itemprop="url">
-                  从【class_getInstanceSize方法】探究iOS的内存分配策略
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2021-01-01T21:39:15+08:00" content="2021-01-01">
-              2021-01-01
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2021/01/01/从【class-getInstanceSize方法】探究iOS的内存分配策略/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2021/01/01/从【class-getInstanceSize方法】探究iOS的内存分配策略/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h4 id="先抛问题"><a href="#先抛问题" class="headerlink" title="先抛问题"></a>先抛问题</h4><p>各位看官请看下面两种case的输出分别是多少：</p>
-<h5 id="case1"><a href="#case1" class="headerlink" title="case1:"></a>case1:</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">@interface LLYModel : NSObject</div><div class="line"></div><div class="line">@property (nonatomic, copy) NSString *name;</div><div class="line">@property (nonatomic, copy) NSString *nickName;</div><div class="line">@property (nonatomic, assign) int age;</div><div class="line">@property (nonatomic, assign) long height;</div><div class="line"></div><div class="line">@end</div><div class="line"></div><div class="line"></div><div class="line">LLYModel *objc = [LLYModel alloc];</div><div class="line">objc.name = @&quot;lly&quot;;</div><div class="line">objc.nickName = @&quot;123&quot;;</div><div class="line">objc.age = 18;</div><div class="line">objc.height = 180;</div><div class="line">NSLog(@&quot;%@ - %lu - %lu - %lu&quot;,objc,sizeof(objc),class_getInstanceSize([LLYModel class]),malloc_size((__bridge const void *)(objc)));</div></pre></td></tr></table></figure>
-<h5 id="case2"><a href="#case2" class="headerlink" title="case2:"></a>case2:</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">@interface LLYModel : NSObject</div><div class="line"></div><div class="line">@property (nonatomic, copy) NSString *name;</div><div class="line">@property (nonatomic, copy) NSString *nickName;</div><div class="line">@property (nonatomic, assign) int age;</div><div class="line">@property (nonatomic, assign) long height;</div><div class="line">@property (nonatomic, assign) long weight;</div><div class="line"></div><div class="line">@end</div><div class="line"></div><div class="line"></div><div class="line">LLYModel *objc = [LLYModel alloc];</div><div class="line">objc.name = @&quot;lly&quot;;</div><div class="line">objc.nickName = @&quot;123&quot;;</div><div class="line">objc.age = 18;</div><div class="line">objc.height = 180;</div><div class="line">objc.weight = 180;</div><div class="line">NSLog(@&quot;%@ - %lu - %lu - %lu&quot;,objc,sizeof(objc),class_getInstanceSize([LLYModel class]),malloc_size((__bridge const void *)(objc)));</div></pre></td></tr></table></figure>
-<p>可以先分析一下打印情况，我这里直接上结果：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">case1:&lt;LLYModel: 0x1006cf490&gt; - 8 - 40 - 48</div><div class="line">case2:&lt;LLYModel: 0x1006cf490&gt; - 8 - 48 - 48</div></pre></td></tr></table></figure>
-<p>这就有点意思了，class_getInstanceSize获取到的大小并不完全和对象的真实大小完全一致，通过对相关源码的探究，最终发现了原因，这里先上结论：</p>
-<p><strong>class_getInstanceSize获取的大小是根据8字节对齐计算，而内存的实际分配策略是根据16字节对齐计算</strong></p>
-<h4 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h4><p>我们首先来看看runtime中class_getInstanceSize的实现，通过调用栈的追踪，最终定位到下面几个比较重要的函数：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">// Class&apos;s ivar size rounded up to a pointer-size boundary. </div><div class="line">// 这里返回类的实例变量的大小 因为只有实例变量是存放在类对象中的。</div><div class="line">uint32_t alignedInstanceSize() const &#123;</div><div class="line">    return word_align(unalignedInstanceSize());</div><div class="line">&#125;</div><div class="line"></div><div class="line">// May be unaligned depending on class&apos;s ivars.</div><div class="line">// 未对齐的实例变量的大小</div><div class="line">uint32_t unalignedInstanceSize() const &#123;</div><div class="line">    ASSERT(isRealized());</div><div class="line">    return data()-&gt;ro()-&gt;instanceSize;</div><div class="line">&#125;</div><div class="line"></div><div class="line">#ifdef __LP64__</div><div class="line">#   define WORD_SHIFT 3UL</div><div class="line">#   define WORD_MASK 7UL</div><div class="line">#   define WORD_BITS 64</div><div class="line">#else</div><div class="line">#   define WORD_SHIFT 2UL</div><div class="line">#   define WORD_MASK 3UL</div><div class="line">#   define WORD_BITS 32</div><div class="line">#endif</div><div class="line"></div><div class="line">// 64位下8字节对齐 32位下4字节对齐 </div><div class="line">static inline uint32_t word_align(uint32_t x) &#123;</div><div class="line">    return (x + WORD_MASK) &amp; ~WORD_MASK;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>通过以上几个函数的调用，就可以验证上面的结论<strong>class_getInstanceSize是以8字节对齐的</strong>，<br>在上面的函数中，我们还发现了一个很熟悉的身影，就是下面这个结构：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">class_ro_t *ro()</div></pre></td></tr></table></figure>
-<p>我们知道，这里面的数据都是只读数据，是在程序编译期就决定了的，我们常用的实例变量就存放在这个结构体中，这也是为什么类在初始化后不能再动态添加实例变量的原因。</p>
-<p>然后我们再来看看类的创建过程，还是从源码入手，不过内存创建的函数调用栈比较复杂，我画个简单的流程图来表示下先：</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Alloc分析/alloc01.png" alt=""></p>
-<p>在runtime库中，这个调用堆栈跟到最后两个标黄部分就进不去了，不过我们还是通过一些细节找到了这两个函数的出处，并最终定位到了负责内存分配过程中size计算的函数，该部分代码位于libsystem_malloc库中，具体代码实现如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">static MALLOC_INLINE size_t</div><div class="line">segregated_size_to_fit(nanozone_t *nanozone, size_t size, size_t *pKey)</div><div class="line">&#123;</div><div class="line">	size_t k, slot_bytes;</div><div class="line"></div><div class="line">	//最小16字节</div><div class="line">	if (0 == size) &#123;</div><div class="line">		size = NANO_REGIME_QUANTA_SIZE; // Historical behavior </div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	//先加上16个字节 然后抹掉零头</div><div class="line">	k = (size + NANO_REGIME_QUANTA_SIZE - 1) &gt;&gt; SHIFT_NANO_QUANTUM; // round up and shift for number of quanta </div><div class="line">	slot_bytes = k &lt;&lt; SHIFT_NANO_QUANTUM;							// multiply by power of two quanta size</div><div class="line">	*pKey = k - 1;													// Zero-based!</div><div class="line"></div><div class="line">	return slot_bytes;</div><div class="line">&#125;</div><div class="line"></div><div class="line">#define NANO_MAX_SIZE			256 /* Buckets sized &#123;16, 32, 48, ..., 256&#125; */</div><div class="line">#define SHIFT_NANO_QUANTUM		4</div><div class="line">#define NANO_REGIME_QUANTA_SIZE	(1 &lt;&lt; SHIFT_NANO_QUANTUM)	// 16</div><div class="line">#define NANO_QUANTA_MASK		(NANO_REGIME_QUANTA_SIZE - 1)</div><div class="line">#define NANO_SIZE_CLASSES		(NANO_MAX_SIZE/NANO_REGIME_QUANTA_SIZE)</div></pre></td></tr></table></figure>
-<p>通过以上源码也证明了上面的结论<strong>内存的实际分配策略是根据16字节对齐计算</strong></p>
-<h4 id="补充部分"><a href="#补充部分" class="headerlink" title="补充部分"></a>补充部分</h4><p>因为iOS中的类本质上都是结构体，所以他们的内存大小应该也需要满足c语言中结构体对齐的原则，这里简单介绍下c语言中如何进行字节对齐：</p>
-<h5 id="内部对齐"><a href="#内部对齐" class="headerlink" title="内部对齐"></a>内部对齐</h5><p>即结构体内部变量的起始地址需要是变量自身大小的倍数。具体对齐逻辑参考下图：</p>
-<p><img src="https://github.com/lilingyu0620/LLYBlogImageSource/raw/master/Alloc分析/alig.png" alt=""></p>
-<h5 id="外部对齐"><a href="#外部对齐" class="headerlink" title="外部对齐"></a>外部对齐</h5><p>即结构体的整体大小需要和当前运行环境的字对齐。</p>
-<p><strong>这里还有一个知识点需要提及，为了更高效的利用内存，xcode编译器会对实例变量进行重排序，这个在我上面的LLYModel中并未体现，感兴趣的同学可以自行实验</strong></p>
-<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>以上就是这次对iOS类分配内存大小探索的全部内容，首先是发现问题，然后通过源码的分析找到问题产生的原因，中间的探索过程一度中断，不过最后还是通过一些小的线索定位到问题的所在，在源码分析过程中，我们应该做到抓住关键问题，忽略干扰条件，多一些细心和耐心。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1504,7 +1494,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">77</span>
+              <span class="site-state-item-count">78</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
